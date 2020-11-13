@@ -1,6 +1,6 @@
 {
   "name": "react-graph-state-todo-app",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "scripts": {
     "dev": "parcel index.html",
     "build": "parcel build index.html"
@@ -8,10 +8,10 @@
   "dependencies": {
     "@geist-ui/react": "^2.1.0-canary.2",
     "@geist-ui/react-icons": "^1.0.1",
-    "graph-state": "0.6.1",
+    "graph-state": "1.0.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-graph-state": "0.8.3"
+    "react-graph-state": "1.0.0"
   },
   "devDependencies": {
     "@types/react": "^16.9.55",
