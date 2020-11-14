@@ -1,5 +1,6 @@
 import {
   addMutationListener,
+  getMutation,
   MutationListener,
   MutationResult,
   removeMutationListener,
@@ -14,6 +15,20 @@ export function trigger(
   shouldRevalidate = true,
 ): void {
   setRevalidation(key, shouldRevalidate);
+}
+
+export function hydrate<T>(
+  key: string,
+  data: MutationResult<T>,
+): void {
+  if (!getMutation(key)) {
+    setMutation(key, {
+      result: {
+        ...data,
+      },
+      timestamp: Date.now(),
+    });
+  }
 }
 
 export function mutate<T>(

@@ -42,7 +42,12 @@ import {
 } from './cache/revalidation-cache';
 import DEFAULT_OPTIONS from './core/default-options';
 import registerRevalidation from './core/register-revalidation';
-import { mutate, subscribe, trigger } from './global';
+import {
+  hydrate,
+  mutate,
+  subscribe,
+  trigger,
+} from './global';
 import {
   SWRGraphNodeFactoryFullOptions,
   SWRGraphNodeFactoryInterface,
@@ -213,6 +218,9 @@ export default function createSWRGraphNodeFactory<T, P extends any[] = []>(
   });
 
   return {
+    hydrate: (args, data) => {
+      hydrate(fullOptions.key(...args), data);
+    },
     mutate: (args, data, shouldRevalidate = true) => {
       mutate(fullOptions.key(...args), data, shouldRevalidate);
     },

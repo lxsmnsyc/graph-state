@@ -30,6 +30,8 @@ export type SWRGraphNodeFetcher<T> =
 
 export type SWRGraphNodeMutate<T> =
   (value: MutationResult<T>, shouldRevalidate?: boolean) => void;
+export type SWRGraphNodeHydrate<T> =
+  (value: MutationResult<T>) => void;
 export type SWRGraphNodeTrigger =
   (shouldRevalidate?: boolean) => void;
 export type SWRGraphNodeSubscribe<T> =
@@ -39,6 +41,7 @@ export interface SWRGraphNodeInterface<T> {
   mutate: SWRGraphNodeMutate<T>;
   trigger: SWRGraphNodeTrigger;
   resource: GraphNodeResource<T>;
+  hydrate: SWRGraphNodeHydrate<T>;
   subscribe: SWRGraphNodeSubscribe<T>;
 }
 
@@ -70,14 +73,17 @@ export type SWRGraphNodeFactoryFullOptions<T, Args extends any[] = []> =
 
 export type SWRGraphNodeFactoryMutate<T, Args extends any[] = []> =
   (args: Args, value: MutationResult<T>, shouldRevalidate?: boolean) => void;
+export type SWRGraphNodeFactoryHydrate<T, Args extends any[] = []> =
+(args: Args, value: MutationResult<T>) => void;
 export type SWRGraphNodeFactoryTrigger<Args extends any[] = []> =
   (args: Args, shouldRevalidate?: boolean) => void;
 export type SWRGraphNodeFactorySubscribe<T, Args extends any[] = []> =
   (args: Args, listener: MutationListener<T>) => () => void;
 
 export interface SWRGraphNodeFactoryInterface<T, Args extends any[] = []> {
-  mutate: SWRGraphNodeFactoryMutate<T, Args>;
   trigger: SWRGraphNodeFactoryTrigger<Args>;
+  mutate: SWRGraphNodeFactoryMutate<T, Args>;
   resource: GraphNodeResourceFactory<T, Args>;
+  hydrate: SWRGraphNodeFactoryHydrate<T, Args>;
   subscribe: SWRGraphNodeFactorySubscribe<T, Args>;
 }

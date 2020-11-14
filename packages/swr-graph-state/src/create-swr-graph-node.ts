@@ -43,6 +43,7 @@ import {
 import DEFAULT_OPTIONS from './core/default-options';
 import registerRevalidation from './core/register-revalidation';
 import {
+  hydrate,
   mutate,
   subscribe,
   trigger,
@@ -205,6 +206,7 @@ export default function createSWRGraphNode<T>(
   });
 
   return {
+    hydrate: (data) => hydrate(key, data),
     subscribe: (listener) => subscribe(key, listener),
     trigger: (shouldRevalidate = true) => trigger(key, shouldRevalidate),
     mutate: (data, shouldRevalidate = true) => mutate(key, data, shouldRevalidate),
