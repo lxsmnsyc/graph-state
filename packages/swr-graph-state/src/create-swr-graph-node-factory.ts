@@ -27,338 +27,199 @@
  */
 import {
   createGraphNodeFactory,
-  GraphNodeAsyncPending,
-  GraphNodeAsyncResult,
-  GraphNodeAsyncSuccess,
   GraphNodeDraftState,
-  GraphNodeFactory,
-  GraphNodeResourceFactory,
 } from 'graph-state';
 import {
-  SWRGraphNodeBaseOptions,
-  SWRGraphNodeFetcher,
-} from './create-swr-graph-node';
-import { getMutationMap, getRevalidationMap, getTimeMap } from './global-cache';
+  getMutation,
+  setMutation,
+  MutationResult,
+} from './cache/mutation-cache';
 import {
-  getSWRMapRef,
-  setSWRMap,
-} from './swr-map';
+  addRevalidationListener,
+  getRevalidation,
+  removeRevalidationListener,
+  setRevalidation,
+} from './cache/revalidation-cache';
+import DEFAULT_OPTIONS from './core/default-options';
+import registerRevalidation from './core/register-revalidation';
+import { mutate, subscribe, trigger } from './global';
 import {
-  addSWRValueListener,
-  removeSWRValueListener,
-} from './swr-value';
-import IS_SERVER from './utils/is-server';
+  SWRGraphNodeFactoryFullOptions,
+  SWRGraphNodeFactoryInterface,
+  SWRGraphNodeFactoryOptions,
+} from './types';
+import IS_CLIENT from './utils/is-client';
 import NoServerFetchError from './utils/no-server-fetch-error';
-
-export interface SWRGraphNodeFactoryOptions<T, P extends any[] = []>
-  extends SWRGraphNodeBaseOptions<T> {
-  fetch: (...args: P) => SWRGraphNodeFetcher<T>;
-  key: (...args: P) => string,
-}
-
-export interface SWRGraphNodeFactoryInterface<T, P extends any[] = []> {
-  mutate: (args: P, value: T, shouldRevalidate?: boolean) => void;
-  trigger: (args: P, shouldRevalidate?: boolean) => void;
-  resource: GraphNodeResourceFactory<T, P>;
-}
-
-type RevalidateNode<P extends any[] = []> =
-  GraphNodeFactory<boolean, GraphNodeDraftState<boolean>, P>;
-
-type MutationValue<T> = GraphNodeAsyncResult<T> | undefined;
-type MutationNode<T, P extends any[] = []> =
-  GraphNodeFactory<MutationValue<T>, GraphNodeDraftState<MutationValue<T>>, P>;
-
-type ResourceValue<T> = GraphNodeAsyncResult<T>;
-type ResourceNode<T, P extends any[] = []> =
-  GraphNodeFactory<ResourceValue<T>, GraphNodeDraftState<ResourceValue<T>>, P>;
 
 export default function createSWRGraphNodeFactory<T, P extends any[] = []>(
   options: SWRGraphNodeFactoryOptions<T, P>,
 ): SWRGraphNodeFactoryInterface<T, P> {
-  const mutation = getMutationMap<T>(options.useOwnCache);
-  const revalidate = getRevalidationMap(options.useOwnCache);
-  const time = getTimeMap(options.useOwnCache);
+  const fullOptions: SWRGraphNodeFactoryFullOptions<T, P> = {
+    ...DEFAULT_OPTIONS,
+    ...options,
+  };
 
-  const revalidateNode: RevalidateNode<P> = createGraphNodeFactory({
-    key: (...args) => `SWR.Revalidate[${options.key(...args)}]`,
-    get: (...args) => {
-      const key = options.key(...args);
-
-      const ref = getSWRMapRef(revalidate, key, false);
-
+  const revalidateNode = createGraphNodeFactory<boolean, GraphNodeDraftState<boolean>, P>({
+    key: (...args: P) => `SWR.Revalidate[${fullOptions.key(...args)}]`,
+    get: (...args: P) => {
+      const key = fullOptions.key(...args);
+      registerRevalidation(
+        key,
+        fullOptions,
+        fullOptions.refreshInterval,
+      );
       return ({ mutateSelf, subscription }) => {
         subscription(() => {
-          addSWRValueListener(ref, mutateSelf);
+          addRevalidationListener(key, mutateSelf);
           return () => {
-            removeSWRValueListener(ref, mutateSelf);
+            removeRevalidationListener(key, mutateSelf);
           };
         });
 
-        if (!IS_SERVER) {
-          const onRevalidate = () => {
-            mutateSelf(true);
-          };
-
-          // Register polling interval
-          if (options.refreshInterval != null) {
-            if (options.refreshWhenBlur) {
-              subscription(() => {
-                let interval: undefined | number;
-
-                const enter = () => {
-                  clearInterval(interval);
-                  interval = setInterval(onRevalidate, options.refreshInterval);
-                };
-                const exit = () => {
-                  clearInterval(interval);
-                  interval = undefined;
-                };
-
-                window.addEventListener('blur', enter, false);
-                window.addEventListener('focus', exit, false);
-
-                return () => {
-                  window.removeEventListener('blur', enter, false);
-                  window.removeEventListener('focus', exit, false);
-                  clearInterval(interval);
-                };
-              });
-            }
-            if (options.refreshWhenOffline) {
-              subscription(() => {
-                let interval: undefined | number;
-
-                const enter = () => {
-                  clearInterval(interval);
-                  interval = setInterval(onRevalidate, options.refreshInterval);
-                };
-                const exit = () => {
-                  clearInterval(interval);
-                  interval = undefined;
-                };
-
-                window.addEventListener('offline', enter, false);
-                window.addEventListener('online', exit, false);
-
-                return () => {
-                  window.removeEventListener('offline', enter, false);
-                  window.removeEventListener('online', exit, false);
-                  clearInterval(interval);
-                };
-              });
-            }
-            if (options.refreshWhenHidden) {
-              subscription(() => {
-                let interval: undefined | number;
-
-                const onVisibility = () => {
-                  clearInterval(interval);
-                  if (document.visibilityState === 'visible') {
-                    interval = undefined;
-                  } else {
-                    interval = setInterval(onRevalidate, options.refreshInterval);
-                  }
-                };
-
-                window.addEventListener('visibilitychange', onVisibility, false);
-
-                return () => {
-                  window.removeEventListener('visibilitychange', onVisibility, false);
-                  clearInterval(interval);
-                };
-              });
-            }
-            if (
-              !(options.refreshWhenHidden
-              || options.refreshWhenBlur
-              || options.refreshWhenOffline)
-            ) {
-              subscription(() => {
-                const interval = setInterval(onRevalidate, options.refreshInterval);
-
-                return () => {
-                  clearInterval(interval);
-                };
-              });
-            }
-          }
-
-          if (options.revalidateOnFocus) {
-            subscription(() => {
-              window.addEventListener('focus', onRevalidate, false);
-
-              return () => {
-                window.removeEventListener('focus', onRevalidate, false);
-              };
-            });
-          }
-          if (options.revalidateOnNetwork) {
-            subscription(() => {
-              window.addEventListener('online', onRevalidate, false);
-
-              return () => {
-                window.removeEventListener('online', onRevalidate, false);
-              };
-            });
-          }
-          if (options.revalidateOnVisibility) {
-            subscription(() => {
-              const onVisible = () => {
-                if (document.visibilityState === 'visible') {
-                  onRevalidate();
-                }
-              };
-
-              window.addEventListener('visibilitychange', onVisible, false);
-
-              return () => {
-                window.removeEventListener('visibilitychange', onVisible, false);
-              };
-            });
-          }
-        }
-
-        return ref.value;
+        return !!getRevalidation(key);
       };
     },
   });
 
-  const mutationNode: MutationNode<T, P> = createGraphNodeFactory({
-    key: (...args) => `SWR.Mutation[${options.key(...args)}]`,
-    get: (...args) => {
-      const key = options.key(...args);
+  const { initialData, freshAge, staleAge } = fullOptions;
 
-      const ref = getSWRMapRef(mutation, key, options.initialData == null ? undefined : {
-        status: 'success',
-        data: options.initialData,
-      });
-
-      return ({ mutateSelf, subscription }) => {
-        subscription(() => {
-          addSWRValueListener(ref, mutateSelf);
-          return () => {
-            removeSWRValueListener(ref, mutateSelf);
-          };
-        });
-
-        return ref.value;
-      };
-    },
-  });
-
-  const resource: ResourceNode<T, P> = createGraphNodeFactory({
-    key: (...args) => `SWR[${options.key(...args)}]`,
-    get: (...args) => {
-      const key = options.key(...args);
-      const mNode = mutationNode(...args);
+  const resource = createGraphNodeFactory<
+    MutationResult<T>,
+    GraphNodeDraftState<MutationResult<T>>,
+    P
+  >({
+    key: (...args: P) => `SWR[${fullOptions.key(...args)}]`,
+    get: (...args: P) => {
+      const key = fullOptions.key(...args);
       const rNode = revalidateNode(...args);
-      const fetcher = options.fetch(...args);
+      const fetcher = fullOptions.fetch(...args);
 
       return (methods) => {
-        const value = methods.get(mNode);
         const shouldRevalidate = methods.get(rNode);
 
-        const prefetch = () => {
-          const currentTime = Date.now();
-          setSWRMap(time, key, currentTime, false);
-          const newValue = fetcher(methods);
+        // Capture timestamp
+        const timestamp = Date.now();
 
-          if (newValue instanceof Promise) {
-            newValue.then(
-              (data) => {
-                const timeRef = time.get(key);
+        // Get current mutation
+        let currentMutation = getMutation<T>(key);
 
-                if (timeRef && timeRef.value === currentTime) {
-                  setSWRMap(mutation, key, {
-                    status: 'success',
-                    data,
-                  });
-                }
-              },
-              (data: Error) => {
-                const timeRef = time.get(key);
+        // Hydrate mutation
+        if (!currentMutation && initialData) {
+          currentMutation = {
+            result: {
+              data: initialData,
+              status: 'success',
+            },
+            timestamp,
+          };
+          setMutation(key, currentMutation);
+        }
 
-                if (timeRef && timeRef.value === currentTime) {
-                  setSWRMap(mutation, key, {
-                    status: 'failure',
-                    data,
-                  });
-                }
-              },
-            );
-          }
-
-          return newValue;
-        };
-
-        if (value == null) {
-          if (!options.ssr && IS_SERVER) {
+        // Opt-out of fetching process
+        // if running on server
+        if (!IS_CLIENT) {
+          // If there is no mutation, throw an error
+          if (!currentMutation) {
             throw new NoServerFetchError();
           }
-          const newValue = prefetch();
-
-          if (newValue instanceof Promise) {
-            const result: GraphNodeAsyncPending<T> = {
-              status: 'pending',
-              data: newValue,
-            };
-            setSWRMap(mutation, key, result);
-            return result;
-          }
-
-          const result: GraphNodeAsyncSuccess<T> = {
-            status: 'success',
-            data: newValue,
+          return {
+            ...currentMutation.result,
           };
-          setSWRMap(mutation, key, result);
-          return result;
         }
 
-        if (shouldRevalidate && (options.ssr || !IS_SERVER)) {
-          setSWRMap(revalidate, key, false);
-
-          const newValue = prefetch();
-
-          if (newValue instanceof Promise) {
-            if (value.data == null) {
-              const result: GraphNodeAsyncPending<T> = {
-                status: 'pending',
-                data: newValue,
-              };
-              setSWRMap(mutation, key, result);
-              return result;
-            }
-          } else {
-            const result: GraphNodeAsyncSuccess<T> = {
-              status: 'success',
-              data: newValue,
+        if (currentMutation) {
+          if (!shouldRevalidate) {
+            return {
+              ...currentMutation.result,
             };
-            setSWRMap(mutation, key, result);
-            return result;
+          }
+          // If mutation is still fresh, return mutation
+          if (currentMutation.timestamp + freshAge > timestamp) {
+            return {
+              ...currentMutation.result,
+            };
           }
         }
 
-        return value;
+        setRevalidation(key, false, false);
+
+        // Perform fetch
+        const pendingData = fetcher(methods);
+
+        let result: MutationResult<T>;
+
+        if (pendingData instanceof Promise) {
+          // Capture result
+          result = {
+            data: pendingData,
+            status: 'pending',
+          };
+
+          // Watch for promise resolutions
+          // to update cache data
+          pendingData.then(
+            (data) => {
+              const current = getMutation(key)?.timestamp;
+              if (current && current <= timestamp) {
+                mutate(key, {
+                  data,
+                  status: 'success',
+                });
+              }
+            },
+            (data) => {
+              const current = getMutation(key)?.timestamp;
+              if (current && current <= timestamp) {
+                mutate(key, {
+                  data,
+                  status: 'failure',
+                });
+              }
+            },
+          );
+
+          // If there's an existing mutation
+          // and mutation is stale
+          // update timestamp and return
+          if (
+            currentMutation
+            && currentMutation.timestamp + freshAge + staleAge > timestamp
+          ) {
+            // Updating this means that the freshness or the staleness
+            // of a mutation resets
+            currentMutation.timestamp = timestamp;
+            return {
+              ...currentMutation.result,
+            };
+          }
+        } else {
+          result = {
+            data: pendingData,
+            status: 'success',
+          };
+        }
+
+        // Otherwise, set the new mutation
+        setMutation(key, {
+          result,
+          timestamp,
+        });
+
+        return {
+          ...result,
+        };
       };
     },
   });
 
   return {
-    mutate: (args, value, shouldRevalidate = true) => {
-      const key = options.key(...args);
-      setSWRMap(time, key, Date.now(), false);
-      setSWRMap(revalidate, key, shouldRevalidate);
-      setSWRMap(mutation, key, {
-        data: value,
-        status: 'success',
-      });
+    mutate: (args, data, shouldRevalidate = true) => {
+      mutate(fullOptions.key(...args), data, shouldRevalidate);
     },
     trigger: (args, shouldRevalidate = true) => {
-      const key = options.key(...args);
-      setSWRMap(time, key, Date.now(), false);
-      setSWRMap(revalidate, key, shouldRevalidate);
+      trigger(fullOptions.key(...args), shouldRevalidate);
     },
+    subscribe: (args, listener) => subscribe(fullOptions.key(...args), listener),
     resource,
   };
 }

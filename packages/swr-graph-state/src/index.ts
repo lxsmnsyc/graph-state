@@ -26,7 +26,12 @@
  * @copyright Alexis Munsayac 2020
  */
 export { default as createSWRGraphNode } from './create-swr-graph-node';
-export * from './create-swr-graph-node';
 export { default as createSWRGraphNodeFactory } from './create-swr-graph-node-factory';
-export * from './create-swr-graph-node-factory';
-export { mutate, trigger } from './global-cache';
+export * from './types';
+export { mutate, trigger, subscribe } from './global';
+export {
+  MutationResult,
+  MutationPending,
+  MutationFailure,
+  MutationSuccess,
+} from './cache/mutation-cache';

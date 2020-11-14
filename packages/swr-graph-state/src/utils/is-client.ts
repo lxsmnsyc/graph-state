@@ -25,6 +25,8 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-const IS_SERVER = typeof window === 'undefined';
+const IS_CLIENT = typeof window !== 'undefined'
+  && typeof window.document !== 'undefined'
+  && typeof window.document.createElement !== 'undefined';
 
-export default IS_SERVER;
+export default IS_CLIENT;

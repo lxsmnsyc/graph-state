@@ -27,344 +27,187 @@
  */
 import {
   createGraphNode,
-  GraphNodeAsyncPending,
   GraphNodeAsyncResult,
-  GraphNodeAsyncSuccess,
-  GraphNodeGetInterface,
-  GraphNodeResource,
 } from 'graph-state';
 import {
-  createMutationRef,
-  createRevalidationRef,
-  createTimeRef,
-} from './global-cache';
+  getMutation,
+  setMutation,
+  MutationResult,
+} from './cache/mutation-cache';
 import {
-  addSWRValueListener,
-  removeSWRValueListener,
-  setSWRValue,
-} from './swr-value';
-import IS_SERVER from './utils/is-server';
+  addRevalidationListener,
+  removeRevalidationListener,
+  getRevalidation,
+  setRevalidation,
+} from './cache/revalidation-cache';
+import DEFAULT_OPTIONS from './core/default-options';
+import registerRevalidation from './core/register-revalidation';
+import {
+  mutate,
+  subscribe,
+  trigger,
+} from './global';
+import {
+  SWRGraphNodeFullOptions,
+  SWRGraphNodeInterface,
+  SWRGraphNodeOptions,
+} from './types';
+import IS_CLIENT from './utils/is-client';
 import NoServerFetchError from './utils/no-server-fetch-error';
-
-export type SWRGraphNodeRawValue<T> = T | Promise<T>;
-
-export interface SWRGraphNodeBaseOptions<T> {
-  revalidateOnFocus?: boolean;
-  revalidateOnNetwork?: boolean;
-  revalidateOnVisibility?: boolean;
-  refreshInterval?: number;
-  refreshWhenBlur?: boolean;
-  refreshWhenHidden?: boolean;
-  refreshWhenOffline?: boolean;
-  initialData?: T;
-  useOwnCache?: boolean;
-  ssr?: boolean;
-}
-
-export type SWRGraphNodeFetcher<T> =
-  (methods: GraphNodeGetInterface<GraphNodeAsyncResult<T>>) => SWRGraphNodeRawValue<T>;
-
-export interface SWRGraphNodeOptions<T> extends SWRGraphNodeBaseOptions<T> {
-  fetch: SWRGraphNodeFetcher<T>;
-  key: string;
-}
-
-export interface SWRGraphNodeInterface<T> {
-  mutate: (value: T, shouldRevalidate?: boolean) => void;
-  trigger: (shouldRevalidate?: boolean) => void;
-  resource: GraphNodeResource<T>;
-}
 
 export default function createSWRGraphNode<T>(
   options: SWRGraphNodeOptions<T>,
 ): SWRGraphNodeInterface<T> {
-  const mutation = createMutationRef<T>(
-    options.key,
-    // Hydrate cache if initialData is provided.
-    options.initialData == null ? undefined : {
-      status: 'success',
-      data: options.initialData,
-    },
-    options.useOwnCache,
-  );
-  const revalidate = createRevalidationRef(options.key, false, options.useOwnCache);
-  const time = createTimeRef(options.key, Date.now(), options.useOwnCache);
+  const fullOptions: SWRGraphNodeFullOptions<T> = {
+    ...DEFAULT_OPTIONS,
+    ...options,
+  };
+
+  registerRevalidation(fullOptions.key, fullOptions, fullOptions.refreshInterval);
+
+  const { key, initialData } = fullOptions;
 
   // This is a graph node that manages
   // the revalidation state of the resource node.
   const revalidateNode = createGraphNode<boolean>({
-    key: options.key != null ? `SWR.Revalidate[${options.key}]` : undefined,
+    key: `SWR.Revalidate[${key}]`,
     get: ({ mutateSelf, subscription }) => {
-      // Subscribe to the revalidate cache for external trigger.
       subscription(() => {
-        addSWRValueListener(revalidate, mutateSelf);
+        addRevalidationListener(key, mutateSelf);
         return () => {
-          removeSWRValueListener(revalidate, mutateSelf);
+          removeRevalidationListener(key, mutateSelf);
         };
       });
 
-      // Only perform most window events on server-side
-      if (!IS_SERVER) {
-        const onRevalidate = () => {
-          mutateSelf(true);
-        };
-
-        // Register polling interval
-        if (options.refreshInterval != null) {
-          if (options.refreshWhenBlur) {
-            subscription(() => {
-              let interval: undefined | number;
-
-              const enter = () => {
-                clearInterval(interval);
-                interval = setInterval(onRevalidate, options.refreshInterval);
-              };
-              const exit = () => {
-                clearInterval(interval);
-                interval = undefined;
-              };
-
-              window.addEventListener('blur', enter, false);
-              window.addEventListener('focus', exit, false);
-
-              return () => {
-                window.removeEventListener('blur', enter, false);
-                window.removeEventListener('focus', exit, false);
-                clearInterval(interval);
-              };
-            });
-          }
-          if (options.refreshWhenOffline) {
-            subscription(() => {
-              let interval: undefined | number;
-
-              const enter = () => {
-                clearInterval(interval);
-                interval = setInterval(onRevalidate, options.refreshInterval);
-              };
-              const exit = () => {
-                clearInterval(interval);
-                interval = undefined;
-              };
-
-              window.addEventListener('offline', enter, false);
-              window.addEventListener('online', exit, false);
-
-              return () => {
-                window.removeEventListener('offline', enter, false);
-                window.removeEventListener('online', exit, false);
-                clearInterval(interval);
-              };
-            });
-          }
-          if (options.refreshWhenHidden) {
-            subscription(() => {
-              let interval: undefined | number;
-
-              const onVisibility = () => {
-                clearInterval(interval);
-                if (document.visibilityState === 'visible') {
-                  interval = undefined;
-                } else {
-                  interval = setInterval(onRevalidate, options.refreshInterval);
-                }
-              };
-
-              window.addEventListener('visibilitychange', onVisibility, false);
-
-              return () => {
-                window.removeEventListener('visibilitychange', onVisibility, false);
-                clearInterval(interval);
-              };
-            });
-          }
-          if (
-            !(options.refreshWhenHidden
-            || options.refreshWhenBlur
-            || options.refreshWhenOffline)
-          ) {
-            subscription(() => {
-              const interval = setInterval(onRevalidate, options.refreshInterval);
-
-              return () => {
-                clearInterval(interval);
-              };
-            });
-          }
-        }
-
-        // Registers a focus event for revalidation.
-        if (options.revalidateOnFocus) {
-          subscription(() => {
-            window.addEventListener('focus', onRevalidate, false);
-
-            return () => {
-              window.removeEventListener('focus', onRevalidate, false);
-            };
-          });
-        }
-
-        // Registers a online event for revalidation.
-        if (options.revalidateOnNetwork) {
-          subscription(() => {
-            window.addEventListener('online', onRevalidate, false);
-
-            return () => {
-              window.removeEventListener('online', onRevalidate, false);
-            };
-          });
-        }
-
-        // Registers a visibility change event for revalidation.
-        if (options.revalidateOnVisibility) {
-          subscription(() => {
-            const onVisible = () => {
-              if (document.visibilityState === 'visible') {
-                onRevalidate();
-              }
-            };
-
-            window.addEventListener('visibilitychange', onVisible, false);
-
-            return () => {
-              window.removeEventListener('visibilitychange', onVisible, false);
-            };
-          });
-        }
-      }
-
-      return revalidate.value;
+      return !!getRevalidation(key);
     },
   });
 
-  // This node manages the cache mutation
-  const mutationNode = createGraphNode<GraphNodeAsyncResult<T> | undefined>({
-    key: options.key != null ? `SWR.Mutation[${options.key}]` : undefined,
-    get: ({ mutateSelf, subscription }) => {
-      subscription(() => {
-        addSWRValueListener(mutation, mutateSelf);
-        return () => {
-          removeSWRValueListener(mutation, mutateSelf);
-        };
-      });
-
-      return mutation.value;
-    },
-  });
+  const { freshAge, staleAge } = fullOptions;
 
   const resource = createGraphNode<GraphNodeAsyncResult<T>>({
-    key: options.key != null ? `SWR[${options.key}]` : undefined,
+    key: `SWR[${key}]`,
     get: (methods) => {
-      // Read the mutation value
-      const value = methods.get(mutationNode);
-      // Subscribe to revalidation
       const shouldRevalidate = methods.get(revalidateNode);
 
-      const prefetch = () => {
-        const currentTime = Date.now();
-        time.value = currentTime;
-        // Perform fetch
-        const newValue = options.fetch(methods);
+      // Capture timestamp
+      const timestamp = Date.now();
 
-        // Subscribe to Promise resolution for cache updates
-        if (newValue instanceof Promise) {
-          newValue.then(
-            (data) => {
-              if (time.value === currentTime) {
-                setSWRValue(mutation, {
-                  status: 'success',
-                  data,
-                });
-              }
-            },
-            (data: Error) => {
-              if (time.value === currentTime) {
-                setSWRValue(mutation, {
-                  status: 'failure',
-                  data,
-                });
-              }
-            },
-          );
-        }
+      // Get current mutation
+      let currentMutation = getMutation<T>(key);
 
-        return newValue;
-      };
+      // Hydrate mutation
+      if (!currentMutation && initialData) {
+        currentMutation = {
+          result: {
+            data: initialData,
+            status: 'success',
+          },
+          timestamp,
+        };
+        setMutation(key, currentMutation);
+      }
 
-      // Check if cache is not hydrated
-      if (value == null) {
-        // Only perform inital data fetch on client-side
-        if (!options.ssr && IS_SERVER) {
+      // Opt-out of fetching process
+      // if running on server
+      if (!IS_CLIENT) {
+        // If there is no mutation, throw an error
+        if (!currentMutation) {
           throw new NoServerFetchError();
         }
-
-        // Perform initial fetch
-        const newValue = prefetch();
-
-        // Set state to pending if new value is a promise.
-        if (newValue instanceof Promise) {
-          const result: GraphNodeAsyncPending<T> = {
-            status: 'pending',
-            data: newValue,
-          };
-          setSWRValue(mutation, result);
-          return result;
-        }
-
-        // Otherwise, set to success
-        const result: GraphNodeAsyncSuccess<T> = {
-          status: 'success',
-          data: newValue,
+        return {
+          ...currentMutation.result,
         };
-        setSWRValue(mutation, result);
-        return result;
       }
 
-      // Only revalidate on client-side
-      if (shouldRevalidate && (options.ssr || !IS_SERVER)) {
-        // Reset revalidation flag
-        setSWRValue(revalidate, false);
-
-        const newValue = prefetch();
-
-        // Only set state to pending if previous data is nullish
-        if (newValue instanceof Promise) {
-          if (value.data == null) {
-            const result: GraphNodeAsyncPending<T> = {
-              status: 'pending',
-              data: newValue,
-            };
-            setSWRValue(mutation, result);
-            return result;
-          }
-        } else {
-          const result: GraphNodeAsyncSuccess<T> = {
-            status: 'success',
-            data: newValue,
+      if (currentMutation) {
+        if (!shouldRevalidate) {
+          return {
+            ...currentMutation.result,
           };
-          setSWRValue(mutation, result);
-          return result;
+        }
+        // If mutation is still fresh, return mutation
+        if (currentMutation.timestamp + freshAge > timestamp) {
+          return {
+            ...currentMutation.result,
+          };
         }
       }
 
-      return value;
+      setRevalidation(key, false, false);
+
+      // Perform fetch
+      const pendingData = fullOptions.fetch(methods);
+
+      let result: MutationResult<T>;
+
+      if (pendingData instanceof Promise) {
+        // Capture result
+        result = {
+          data: pendingData,
+          status: 'pending',
+        };
+
+        // Watch for promise resolutions
+        // to update cache data
+        pendingData.then(
+          (data) => {
+            const current = getMutation(key)?.timestamp;
+            if (current && current <= timestamp) {
+              mutate(key, {
+                data,
+                status: 'success',
+              });
+            }
+          },
+          (data) => {
+            const current = getMutation(key)?.timestamp;
+            if (current && current <= timestamp) {
+              mutate(key, {
+                data,
+                status: 'failure',
+              });
+            }
+          },
+        );
+
+        // If there's an existing mutation
+        // and mutation is stale
+        // update timestamp and return
+        if (
+          currentMutation
+          && currentMutation.timestamp + freshAge + staleAge > timestamp
+        ) {
+          // Updating this means that the freshness or the staleness
+          // of a mutation resets
+          currentMutation.timestamp = timestamp;
+          return {
+            ...currentMutation.result,
+          };
+        }
+      } else {
+        result = {
+          data: pendingData,
+          status: 'success',
+        };
+      }
+
+      // Otherwise, set the new mutation
+      setMutation(key, {
+        result,
+        timestamp,
+      });
+
+      return {
+        ...result,
+      };
     },
   });
 
   return {
-    mutate: (value, shouldRevalidate = true) => {
-      time.value = Date.now();
-      setSWRValue(revalidate, shouldRevalidate);
-
-      setSWRValue(mutation, {
-        status: 'success',
-        data: value,
-      });
-    },
-    trigger: (shouldRevalidate = true) => {
-      time.value = Date.now();
-      setSWRValue(revalidate, shouldRevalidate);
-    },
+    subscribe: (listener) => subscribe(key, listener),
+    trigger: (shouldRevalidate = true) => trigger(key, shouldRevalidate),
+    mutate: (data, shouldRevalidate = true) => mutate(key, data, shouldRevalidate),
     resource,
   };
 }

@@ -27,7 +27,6 @@ const dogAPI = createSWRGraphNode<APIResult>({
   },
   revalidateOnFocus: true,
   revalidateOnNetwork: true,
-  ssr: false,
 });
 
 function DogImage(): JSX.Element {
