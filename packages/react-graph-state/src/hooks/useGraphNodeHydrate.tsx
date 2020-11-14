@@ -25,16 +25,24 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-export { default as useGraphNodeValue } from './hooks/useGraphNodeValue';
-export { default as useGraphNodeState } from './hooks/useGraphNodeState';
-export { default as useGraphNodeReset } from './hooks/useGraphNodeReset';
-export { default as useGraphNodeMutate } from './hooks/useGraphNodeMutate';
-export { default as useGraphNodeHydrate } from './hooks/useGraphNodeHydrate';
-export { default as useGraphNodeDispatch } from './hooks/useGraphNodeDispatch';
-export { default as useGraphNodeResource } from './hooks/useGraphNodeResource';
-export { default as useGraphNodeSnapshot } from './hooks/useGraphNodeSnapshot';
-export { default as GraphDomain } from './GraphDomain';
+import { GraphNode } from 'graph-state';
+import { useGraphDomainInterface } from '../GraphDomainContext';
+import useIsomorphicEffect from './useIsomorphicEffect';
 
-export { GraphNodeDispatch } from './hooks/useGraphNodeDispatchBase';
-export { GraphNodeReset } from './hooks/useGraphNodeResetBase';
-export * from './GraphDomain';
+export default function useGraphNodeHydrate<S, A>(
+  node: GraphNode<S, A>,
+  value: S,
+): void {
+  const logic = useGraphDomainInterface();
+
+  const notHydrated = !logic.hasNodeState(node);
+  if (notHydrated) {
+    logic.mutateState(node, value);
+  }
+
+  useIsomorphicEffect(() => {
+    if (notHydrated) {
+      logic.resetState(node);
+    }
+  }, [logic, node]);
+}

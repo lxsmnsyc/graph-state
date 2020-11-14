@@ -36,11 +36,12 @@ function App() {
 }
 ```
 
-There are also 6 hooks:
+There are also 8 hooks:
 - `useGraphNodeValue`: reads a graph node's value. Subscribes to the graph node's state updates.
 - `useGraphNodeDispatch`: provides a callback that allows graph node's state mutation or runs `set` field.
 - `useGraphNodeReset`: provides a callback for resetting (recomputing) a graph node's value.
 - `useGraphNodeState`: a combination of `useGraphNodeValue`, `useGraphNodeDispatch` and `useGraphNodeReset` in a form of a tuple.
+- `useGraphNodeHydrate`: hydrates a node instance with a given initial state, then resets the node after commit. Useful for prefetched data.
 - `useGraphNodeResource`: treats the graph node as a valid Preact resource, suspending the component if the graph node's resource is pending.
 - `useGraphNodeSnapshot`: attaches a listener to the node for state updates.
 - `useGraphNodeMutate`: silently mutates a graph node's state. **USE WITH CAUTION**: this hook is only recommended to be used by independent nodes.
