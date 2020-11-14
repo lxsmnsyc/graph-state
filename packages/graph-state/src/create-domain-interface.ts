@@ -41,7 +41,7 @@ import setNodeState from './set-node-state';
 
 export type GraphDomainMutateState =
   <S, A = GraphNodeDraftState<S>>(node: GraphNode<S, A>, value: S) => void;
-export type GraphDomainHasNode =
+export type GraphDomainCheckNode =
   <S, A = GraphNodeDraftState<S>>(node: GraphNode<S, A>) => boolean;
 export type GraphDomainAddListener =
   <S, A = GraphNodeDraftState<S>>(node: GraphNode<S, A>, listener: GraphNodeListener<S>) => void;
@@ -55,7 +55,8 @@ export interface GraphDomainInterface {
   mutateState: GraphDomainMutateState;
   addListener: GraphDomainAddListener;
   removeListener: GraphDomainRemoveListener;
-  hasNode: GraphDomainHasNode;
+  hasNode: GraphDomainCheckNode;
+  hasNodeState: GraphDomainCheckNode;
 }
 /**
  * Provides interfaces for accessing, modifying and subscribing
@@ -90,5 +91,6 @@ export default function createGraphDomainInterface(
       unregisterNodeListener(memory, node, listener);
     },
     hasNode: (node) => memory.nodes.has(node.key),
+    hasNodeState: (node) => memory.state.has(node.key),
   };
 }
