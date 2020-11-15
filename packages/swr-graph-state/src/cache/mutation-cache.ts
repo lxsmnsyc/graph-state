@@ -1,3 +1,4 @@
+import IS_CLIENT from '../utils/is-client';
 import {
   addReactiveCacheListener,
   createReactiveCache,
@@ -64,4 +65,14 @@ export function getMutationListenerSize(
   key: string,
 ): number {
   return getReactiveCacheListenerSize(MUTATION_CACHE, key);
+}
+
+interface WithSWRMutation {
+  SWR_MUTATION: typeof MUTATION_CACHE;
+}
+
+declare const window: Window & typeof globalThis & WithSWRMutation;
+
+if (IS_CLIENT && process.env.NODE_ENV !== 'production') {
+  window.SWR_MUTATION = MUTATION_CACHE;
 }

@@ -28,13 +28,13 @@
 export default class NoServerFetchError extends Error {
   constructor(key: string) {
     super(`
-  There was an attempt to perform initial data fetch with SWR Graph Node in the
+  There was an attempt to perform initial data fetch with SWR Graph Node '${key}' in the
   server-side.
   
   Make sure that the SWR graph node is hydrated first (through options.initialData, mutate or hydrate)
-  before trying to use the SWR Graph Node instance.\
-  
-  (Key: ${key})
+  before trying to use the SWR Graph Node instance.
+
+  (Key: '${key}')
 `);
   }
 }
