@@ -125,7 +125,7 @@ export default function createSWRGraphNodeFactory<T, P extends any[] = []>(
         if (!IS_CLIENT) {
           // If there is no mutation, throw an error
           if (!currentMutation) {
-            throw new NoServerFetchError();
+            throw new NoServerFetchError(key);
           }
           return {
             ...currentMutation.result,

@@ -114,7 +114,7 @@ export default function createSWRGraphNode<T>(
       if (!IS_CLIENT) {
         // If there is no mutation, throw an error
         if (!currentMutation) {
-          throw new NoServerFetchError();
+          throw new NoServerFetchError(key);
         }
         return {
           ...currentMutation.result,
