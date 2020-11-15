@@ -50,12 +50,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LXSMNSYC/scoped-model.git"
+    "url": "git+https://github.com/lxsmnsyc/graph-state.git"
   },
   "bugs": {
-    "url": "https://github.com/LXSMNSYC/scoped-model/issues"
+    "url": "https://github.com/lxsmnsyc/graph-state/issues"
   },
-  "homepage": "https://github.com/lxsmnsyc/scoped-model",
+  "homepage": "https://github.com/lxsmnsyc/graph-state",
   "keywords": [
     "graph-state",
     "graph",

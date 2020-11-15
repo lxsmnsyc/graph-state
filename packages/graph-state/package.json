@@ -37,12 +37,12 @@
   "description": "Digraph-based state management",
   "author": "Alexis Munsayac",
   "repository": {
-    "url": "https://github.com/lxsmnsyc/scoped-model.git",
+    "url": "https://github.com/lxsmnsyc/graph-state.git",
     "type": "git"
   },
-  "homepage": "https://github.com/lxsmnsyc/scoped-model",
+  "homepage": "https://github.com/lxsmnsyc/graph-state",
   "bugs": {
-    "url": "https://github.com/lxsmnsyc/scoped-model/issues"
+    "url": "https://github.com/lxsmnsyc/graph-state/issues"
   },
   "keywords": [
     "graph-state",
