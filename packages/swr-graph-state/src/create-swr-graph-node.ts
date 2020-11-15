@@ -54,7 +54,7 @@ import {
   SWRGraphNodeOptions,
 } from './types';
 import IS_CLIENT from './utils/is-client';
-import NoServerFetchError from './utils/no-server-fetch-error';
+import NEVER_PROMISE from './utils/never-promise';
 
 export default function createSWRGraphNode<T>(
   options: SWRGraphNodeOptions<T>,
@@ -112,9 +112,12 @@ export default function createSWRGraphNode<T>(
       // Opt-out of fetching process
       // if running on server
       if (!IS_CLIENT) {
-        // If there is no mutation, throw an error
+        // If there is no mutation, resolve to pending
         if (!currentMutation) {
-          throw new NoServerFetchError(key);
+          return {
+            status: 'pending',
+            data: NEVER_PROMISE as Promise<T>,
+          };
         }
         return {
           ...currentMutation.result,

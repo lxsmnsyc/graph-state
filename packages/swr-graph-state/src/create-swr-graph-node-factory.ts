@@ -54,7 +54,7 @@ import {
   SWRGraphNodeFactoryOptions,
 } from './types';
 import IS_CLIENT from './utils/is-client';
-import NoServerFetchError from './utils/no-server-fetch-error';
+import NEVER_PROMISE from './utils/never-promise';
 
 export default function createSWRGraphNodeFactory<T, P extends any[] = []>(
   options: SWRGraphNodeFactoryOptions<T, P>,
@@ -125,7 +125,10 @@ export default function createSWRGraphNodeFactory<T, P extends any[] = []>(
         if (!IS_CLIENT) {
           // If there is no mutation, throw an error
           if (!currentMutation) {
-            throw new NoServerFetchError(key);
+            return {
+              status: 'pending',
+              data: NEVER_PROMISE as Promise<T>,
+            };
           }
           return {
             ...currentMutation.result,
