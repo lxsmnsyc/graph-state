@@ -15,7 +15,7 @@
     "react-graph-state": "1.1.1"
   },
   "devDependencies": {
-    "@types/react": "^16.9.55",
+    "@types/react": "^16.9.56",
     "@types/react-dom": "^16.9.8",
     "eslint": "^7.14.0",
     "eslint-config-lxsmnsyc": "^0.1.20",
