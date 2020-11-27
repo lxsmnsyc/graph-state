@@ -25,41 +25,66 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { useRef, Ref } from 'preact/hooks';
-import useConstantCallback from './useConstantCallback';
+import { useDebugValue } from 'preact/hooks';
+import { MemoCompare, defaultCompare } from './useFreshLazyRef';
+import useFreshState from './useFreshState';
 import useIsomorphicEffect from './useIsomorphicEffect';
 
-export type Compare<T> = (a: T, b: T) => boolean;
-export type Enqueue<T> = (node: T, compare?: Compare<T>) => void;
-export type QueueReset = () => void;
+type ReadSource<T> = () => T;
+type Subscribe = (callback: () => void) => () => void;
 
-export default function useWorkQueue<T>(): [Ref<T[]>, Enqueue<T>, QueueReset] {
-  const queue = useRef<T[]>([]);
+export interface Subscription<T> {
+  read: ReadSource<T>;
+  subscribe: Subscribe;
+  shouldUpdate?: MemoCompare<T>;
+}
 
-  const lifecycle = useRef(false);
+export default function useSubscription<T>({
+  read, subscribe, shouldUpdate = defaultCompare,
+}: Subscription<T>): T {
+  const [state, setState] = useFreshState(
+    () => ({
+      read,
+      subscribe,
+      shouldUpdate,
+      value: read(),
+    }),
+    [read, subscribe, shouldUpdate],
+  );
+
+  useDebugValue(state.value);
 
   useIsomorphicEffect(() => {
-    lifecycle.current = true;
-    return () => {
-      lifecycle.current = false;
+    let mounted = true;
+
+    const readCurrent = () => {
+      if (mounted) {
+        setState((prev) => {
+          if (
+            prev.read !== read
+            || prev.subscribe !== subscribe
+            || prev.shouldUpdate !== shouldUpdate
+          ) {
+            return prev;
+          }
+          const nextValue = read();
+          if (!shouldUpdate(prev.value, nextValue)) {
+            return prev;
+          }
+          return { ...prev, value: nextValue };
+        });
+      }
     };
-  }, []);
 
-  const schedule = useConstantCallback((node: T, compare?: Compare<T>) => {
-    if (lifecycle.current) {
-      const { current } = queue;
-      const newQueue = compare
-        ? current.filter((value) => compare(node, value))
-        : current;
-      queue.current = [...newQueue, node];
-    }
-  });
+    readCurrent();
 
-  const reset = useConstantCallback(() => {
-    if (lifecycle.current) {
-      queue.current = [];
-    }
-  });
+    const unsubscribe = subscribe(readCurrent);
 
-  return [queue, schedule, reset];
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, [read, subscribe, shouldUpdate]);
+
+  return state.value;
 }

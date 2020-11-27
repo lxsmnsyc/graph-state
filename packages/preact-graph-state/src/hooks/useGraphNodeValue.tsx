@@ -25,17 +25,15 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphNode } from 'graph-state';
 import { useDebugValue } from 'preact/hooks';
+import { GraphNode } from 'graph-state';
 import { useGraphDomainInterface } from '../GraphDomainContext';
-import useGraphNodeSnapshotBase from './useGraphNodeSnapshotBase';
-import useGraphNodeStateBase from './useGraphNodeStateBase';
+import useGraphNodeValueBase from './useGraphNodeValueBase';
 
 export default function useGraphNodeValue<S, A>(node: GraphNode<S, A>): S {
   const logic = useGraphDomainInterface();
 
-  const [state, setState] = useGraphNodeStateBase(logic, node);
-  useGraphNodeSnapshotBase(logic, node, setState);
-  useDebugValue(state);
-  return state;
+  const current = useGraphNodeValueBase(logic, node);
+  useDebugValue(current);
+  return current;
 }
