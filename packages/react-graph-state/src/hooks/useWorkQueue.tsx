@@ -25,7 +25,7 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { useRef, useState } from 'react';
+import { MutableRefObject, useRef } from 'react';
 import useConstantCallback from './useConstantCallback';
 import useIsomorphicEffect from './useIsomorphicEffect';
 
@@ -33,13 +33,8 @@ export type Compare<T> = (a: T, b: T) => boolean;
 export type Enqueue<T> = (node: T, compare?: Compare<T>) => void;
 export type QueueReset = () => void;
 
-function defer(cb: () => void, catchError: (error: any) => void): void {
-  Promise.resolve(true).then(cb, catchError);
-}
-
-export default function useWorkQueue<T>(): [T[], Enqueue<T>, QueueReset] {
-  const [state, setState] = useState<T[]>([]);
-  const [error, setError] = useState<Error | undefined>();
+export default function useWorkQueue<T>(): [MutableRefObject<T[]>, Enqueue<T>, QueueReset] {
+  const queue = useRef<T[]>([]);
 
   const lifecycle = useRef(false);
 
@@ -51,29 +46,20 @@ export default function useWorkQueue<T>(): [T[], Enqueue<T>, QueueReset] {
   }, []);
 
   const schedule = useConstantCallback((node: T, compare?: Compare<T>) => {
-    defer(() => {
-      if (lifecycle.current) {
-        setState((current) => {
-          const queue = compare
-            ? current.filter((value) => compare(node, value))
-            : current;
-          return [...queue, node];
-        });
-      }
-    }, setError);
+    if (lifecycle.current) {
+      const { current } = queue;
+      const newQueue = compare
+        ? current.filter((value) => compare(node, value))
+        : current;
+      queue.current = [...newQueue, node];
+    }
   });
 
   const reset = useConstantCallback(() => {
-    defer(() => {
-      if (lifecycle.current) {
-        setState([]);
-      }
-    }, setError);
+    if (lifecycle.current) {
+      queue.current = [];
+    }
   });
 
-  if (error) {
-    throw error;
-  }
-
-  return [state, schedule, reset];
+  return [queue, schedule, reset];
 }

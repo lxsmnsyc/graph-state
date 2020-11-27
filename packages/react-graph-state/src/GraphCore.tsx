@@ -63,8 +63,26 @@ function useGraphCoreProcess() {
   current.value = methods;
 
   useIsomorphicEffect(() => {
-    performWorkLoop(memory, scheduler, methods, workQueue, resetWork);
-  }, [workQueue]);
+    let raf: number;
+    const loop = () => {
+      performWorkLoop(
+        memory,
+        scheduler,
+        methods,
+        workQueue.current,
+        resetWork,
+      );
+
+      raf = requestAnimationFrame(loop);
+    };
+
+    loop();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      cleanDomainMemory(memory);
+    };
+  }, []);
 
   useDebugValue(memory.state);
 }
