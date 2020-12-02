@@ -62,5 +62,8 @@
     "atomic",
     "swr",
     "data fetching"
-  ]
+  ],
+  "dependencies": {
+    "dequal": "^2.0.2"
+  }
 }

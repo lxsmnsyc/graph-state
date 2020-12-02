@@ -4,8 +4,8 @@ import IS_CLIENT from '../utils/is-client';
 
 const INITIALIZED = new Map<string, boolean>();
 
-function registerPassiveNetworkRevalidation(
-  options: SWRGraphNodeBaseOptions,
+function registerPassiveNetworkRevalidation<T>(
+  options: SWRGraphNodeBaseOptions<T>,
   onRevalidate: () => void,
 ): void {
   if (options.revalidateOnNetwork) {
@@ -13,8 +13,8 @@ function registerPassiveNetworkRevalidation(
   }
 }
 
-function registerPassiveVisibilityRevalidation(
-  options: SWRGraphNodeBaseOptions,
+function registerPassiveVisibilityRevalidation<T>(
+  options: SWRGraphNodeBaseOptions<T>,
   onRevalidate: () => void,
 ): void {
   if (options.revalidateOnVisibility) {
@@ -26,8 +26,8 @@ function registerPassiveVisibilityRevalidation(
   }
 }
 
-function registerPassiveFocusRevalidation(
-  options: SWRGraphNodeBaseOptions,
+function registerPassiveFocusRevalidation<T>(
+  options: SWRGraphNodeBaseOptions<T>,
   onRevalidate: () => void,
 ): void {
   if (options.revalidateOnFocus) {
@@ -35,8 +35,8 @@ function registerPassiveFocusRevalidation(
   }
 }
 
-function registerPassiveRevalidation(
-  options: SWRGraphNodeBaseOptions,
+function registerPassiveRevalidation<T>(
+  options: SWRGraphNodeBaseOptions<T>,
   onRevalidate: () => void,
 ): void {
   registerPassiveNetworkRevalidation(options, onRevalidate);
@@ -44,8 +44,8 @@ function registerPassiveRevalidation(
   registerPassiveFocusRevalidation(options, onRevalidate);
 }
 
-function registerActiveBlurRevalidation(
-  options: SWRGraphNodeBaseOptions,
+function registerActiveBlurRevalidation<T>(
+  options: SWRGraphNodeBaseOptions<T>,
   onRevalidate: () => void,
   refreshInterval: number,
 ): void {
@@ -62,8 +62,8 @@ function registerActiveBlurRevalidation(
   }
 }
 
-function registerActiveOfflineRevalidation(
-  options: SWRGraphNodeBaseOptions,
+function registerActiveOfflineRevalidation<T>(
+  options: SWRGraphNodeBaseOptions<T>,
   onRevalidate: () => void,
   refreshInterval: number,
 ): void {
@@ -79,8 +79,8 @@ function registerActiveOfflineRevalidation(
   }
 }
 
-function registerActiveHiddenRevalidation(
-  options: SWRGraphNodeBaseOptions,
+function registerActiveHiddenRevalidation<T>(
+  options: SWRGraphNodeBaseOptions<T>,
   onRevalidate: () => void,
   refreshInterval: number,
 ): void {
@@ -98,8 +98,8 @@ function registerActiveHiddenRevalidation(
   }
 }
 
-function registerActivePollRevalidation(
-  options: SWRGraphNodeBaseOptions,
+function registerActivePollRevalidation<T>(
+  options: SWRGraphNodeBaseOptions<T>,
   onRevalidate: () => void,
   refreshInterval: number,
 ): void {
@@ -112,8 +112,8 @@ function registerActivePollRevalidation(
   }
 }
 
-function registerActiveRevalidation(
-  options: SWRGraphNodeBaseOptions,
+function registerActiveRevalidation<T>(
+  options: SWRGraphNodeBaseOptions<T>,
   onRevalidate: () => void,
   refreshInterval?: number,
 ) {
@@ -125,9 +125,9 @@ function registerActiveRevalidation(
   }
 }
 
-function registerEventRevalidation(
+function registerEventRevalidation<T>(
   key: string,
-  options: SWRGraphNodeBaseOptions,
+  options: SWRGraphNodeBaseOptions<T>,
   refreshInterval?: number,
 ) {
   const onRevalidate = () => {
@@ -138,9 +138,9 @@ function registerEventRevalidation(
   registerActiveRevalidation(options, onRevalidate, refreshInterval);
 }
 
-export default function registerRevalidation(
+export default function registerRevalidation<T>(
   key: string,
-  options: SWRGraphNodeBaseOptions,
+  options: SWRGraphNodeBaseOptions<T>,
   refreshInterval?: number,
 ): void {
   if (!IS_CLIENT || INITIALIZED.has(key)) {

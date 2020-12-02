@@ -9,8 +9,9 @@ import {
 } from './cache/mutation-cache';
 
 export type SWRGraphNodeRawValue<T> = T | Promise<T>;
+export type SWRCompare<T> = (a: T, b: T) => boolean;
 
-export interface SWRGraphNodeBaseOptions {
+export interface SWRGraphNodeBaseOptions<T> {
   revalidateOnFocus: boolean;
   revalidateOnVisibility: boolean;
   revalidateOnNetwork: boolean;
@@ -21,9 +22,11 @@ export interface SWRGraphNodeBaseOptions {
 
   freshAge: number;
   staleAge: number;
+
+  compare: SWRCompare<T>;
 }
 
-export type SWRGraphNodePartialOptions = Partial<SWRGraphNodeBaseOptions>;
+export type SWRGraphNodePartialOptions<T> = Partial<SWRGraphNodeBaseOptions<T>>;
 
 export type SWRGraphNodeFetcher<T> =
   (methods: GraphNodeGetInterface<MutationResult<T>>) => SWRGraphNodeRawValue<T>;
@@ -53,10 +56,10 @@ export interface SWRGraphNodeAtomicOptions<T> {
 }
 
 export type SWRGraphNodeOptions<T> =
-  SWRGraphNodePartialOptions & SWRGraphNodeAtomicOptions<T>;
+  SWRGraphNodePartialOptions<T> & SWRGraphNodeAtomicOptions<T>;
 
 export type SWRGraphNodeFullOptions<T> =
-  SWRGraphNodeBaseOptions & SWRGraphNodeAtomicOptions<T>;
+  SWRGraphNodeBaseOptions<T> & SWRGraphNodeAtomicOptions<T>;
 
 export interface SWRGraphNodeFactoryAtomicOptions<T, Args extends any[] = []> {
   fetch: (...args: Args) => SWRGraphNodeFetcher<T>;
@@ -66,15 +69,15 @@ export interface SWRGraphNodeFactoryAtomicOptions<T, Args extends any[] = []> {
 }
 
 export type SWRGraphNodeFactoryOptions<T, Args extends any[] = []> =
-  SWRGraphNodePartialOptions & SWRGraphNodeFactoryAtomicOptions<T, Args>;
+  SWRGraphNodePartialOptions<T> & SWRGraphNodeFactoryAtomicOptions<T, Args>;
 
 export type SWRGraphNodeFactoryFullOptions<T, Args extends any[] = []> =
-  SWRGraphNodeBaseOptions & SWRGraphNodeFactoryAtomicOptions<T, Args>;
+  SWRGraphNodeBaseOptions<T> & SWRGraphNodeFactoryAtomicOptions<T, Args>;
 
 export type SWRGraphNodeFactoryMutate<T, Args extends any[] = []> =
   (args: Args, value: MutationResult<T>, shouldRevalidate?: boolean) => void;
 export type SWRGraphNodeFactoryHydrate<T, Args extends any[] = []> =
-(args: Args, value: MutationResult<T>) => void;
+  (args: Args, value: MutationResult<T>) => void;
 export type SWRGraphNodeFactoryTrigger<Args extends any[] = []> =
   (args: Args, shouldRevalidate?: boolean) => void;
 export type SWRGraphNodeFactorySubscribe<T, Args extends any[] = []> =

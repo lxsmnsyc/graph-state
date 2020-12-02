@@ -1,3 +1,4 @@
+import { dequal } from 'dequal/lite';
 import {
   addMutationListener,
   getMutation,
@@ -35,14 +36,26 @@ export function mutate<T>(
   key: string,
   data: MutationResult<T>,
   shouldRevalidate = true,
+  compare: (a: T, b: T) => boolean = dequal,
 ): void {
+  setRevalidation(key, shouldRevalidate);
+
+  const current = getMutation<T>(key);
+
+  if (
+    current
+    && current.result.status === 'success' && data.status === 'success'
+    && compare(current.result.data, data.data)
+  ) {
+    return;
+  }
+
   setMutation(key, {
     result: {
       ...data,
     },
     timestamp: Date.now(),
   });
-  setRevalidation(key, shouldRevalidate);
 }
 
 export function subscribe<T>(

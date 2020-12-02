@@ -165,22 +165,70 @@ export default function createSWRGraphNodeFactory<T, P extends any[] = []>(
 
           // Watch for promise resolutions
           // to update cache data
+
           pendingData.then(
             (data) => {
-              const current = getMutation(key)?.timestamp;
-              if (current && current <= timestamp) {
-                mutate(key, {
-                  data,
-                  status: 'success',
+              const mutation = getMutation<T>(key);
+
+              const shouldUpdate = (): boolean => {
+                // Case 1: There's no mutation
+                if (mutation == null) {
+                  return true;
+                }
+
+                // Case 2: Timestamp expired
+                if (mutation.timestamp > timestamp) {
+                  return false;
+                }
+
+                // Case 3: There's a stale data
+                if (mutation.result.status === 'success') {
+                  // Deep compare stale data
+                  return !fullOptions.compare(
+                    mutation.result.data,
+                    data,
+                  );
+                }
+
+                // Always update
+                return true;
+              };
+
+              if (shouldUpdate()) {
+                setMutation(key, {
+                  result: {
+                    data,
+                    status: 'success',
+                  },
+                  timestamp: mutation?.timestamp ?? Date.now(),
                 });
               }
             },
             (data) => {
-              const current = getMutation(key)?.timestamp;
-              if (current && current <= timestamp) {
-                mutate(key, {
-                  data,
-                  status: 'failure',
+              const mutation = getMutation<T>(key);
+
+              const shouldUpdate = (): boolean => {
+                // Case 1: There's no mutation
+                if (mutation == null) {
+                  return true;
+                }
+
+                // Case 2: Timestamp expired
+                if (mutation.timestamp > timestamp) {
+                  return false;
+                }
+
+                // Always update
+                return true;
+              };
+
+              if (shouldUpdate()) {
+                setMutation(key, {
+                  result: {
+                    data,
+                    status: 'failure',
+                  },
+                  timestamp: mutation?.timestamp ?? Date.now(),
                 });
               }
             },
