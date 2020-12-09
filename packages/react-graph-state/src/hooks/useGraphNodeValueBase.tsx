@@ -32,14 +32,13 @@ import {
   ExternalSubject,
   useExternalSubject,
 } from 'react-external-subject';
-import useMemoCondition from './useMemoCondition';
-import { compareArray } from '../utils/compareTuple';
+import { useDisposableMemo } from 'use-dispose';
 
 export default function useGraphNodeValueBase<S, A>(
   logic: GraphDomainInterface,
   node: GraphNode<S, A>,
 ): S {
-  const sub = useMemoCondition(
+  const sub = useDisposableMemo(
     (): ExternalSubject<S> => createExternalSubject({
       read: () => logic.getState(node),
       subscribe: (callback) => {
@@ -49,8 +48,8 @@ export default function useGraphNodeValueBase<S, A>(
         };
       },
     }),
+    (instance) => instance.destroy(),
     [logic, node],
-    compareArray,
   );
 
   const current = useExternalSubject(sub, false);
