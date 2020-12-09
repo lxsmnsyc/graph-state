@@ -26,33 +26,17 @@
  * @copyright Alexis Munsayac 2020
  */
 import { useDebugValue } from 'react';
-import { GraphDomainInterface, GraphNode } from 'graph-state';
+import { GraphNode } from 'graph-state';
 import {
-  createExternalSubject,
-  ExternalSubject,
   useExternalSubject,
 } from 'react-external-subject';
-import { useDisposableMemo } from 'use-dispose';
+import { GraphCoreInterface } from '../types';
 
 export default function useGraphNodeValueBase<S, A>(
-  logic: GraphDomainInterface,
+  logic: GraphCoreInterface,
   node: GraphNode<S, A>,
 ): S {
-  const sub = useDisposableMemo(
-    (): ExternalSubject<S> => createExternalSubject({
-      read: () => logic.getState(node),
-      subscribe: (callback) => {
-        logic.addListener(node, callback);
-        return () => {
-          logic.removeListener(node, callback);
-        };
-      },
-    }),
-    (instance) => instance.destroy(),
-    [logic, node],
-  );
-
-  const current = useExternalSubject(sub, false);
+  const current = useExternalSubject(logic.getSubject(node), false);
   useDebugValue(current);
   return current;
 }
