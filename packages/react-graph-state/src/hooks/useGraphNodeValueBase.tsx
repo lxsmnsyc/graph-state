@@ -27,8 +27,12 @@
  */
 import { useDebugValue } from 'react';
 import { GraphDomainInterface, GraphNode } from 'graph-state';
+import {
+  createExternalSubject,
+  ExternalSubject,
+  useExternalSubject,
+} from 'react-external-subject';
 import useMemoCondition from './useMemoCondition';
-import useSubscription, { Subscription } from './useSubscription';
 import { compareArray } from '../utils/compareTuple';
 
 export default function useGraphNodeValueBase<S, A>(
@@ -36,7 +40,7 @@ export default function useGraphNodeValueBase<S, A>(
   node: GraphNode<S, A>,
 ): S {
   const sub = useMemoCondition(
-    (): Subscription<S> => ({
+    (): ExternalSubject<S> => createExternalSubject({
       read: () => logic.getState(node),
       subscribe: (callback) => {
         logic.addListener(node, callback);
@@ -49,7 +53,7 @@ export default function useGraphNodeValueBase<S, A>(
     compareArray,
   );
 
-  const current = useSubscription(sub);
+  const current = useExternalSubject(sub, false);
   useDebugValue(current);
   return current;
 }
