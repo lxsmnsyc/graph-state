@@ -1908,6 +1908,11 @@
     npmlog "^4.1.2"
     write-file-atomic "^2.3.0"
 
+"@lyonph/react-hooks@^0.1.2":
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/@lyonph/react-hooks/-/react-hooks-0.1.2.tgz#add78885179d427e62613fdf19eb712ffcba349e"
+  integrity sha512-dum2rHq1TDcOq1TrD2Kg7RmOPAfyrEdE9+tS9FXOX0YvZmchiXxLyyekSft6qYuqPz01pQ7PiL6LfDchHRjROg==
+
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/@mrmlnc/readdir-enhanced/-/readdir-enhanced-2.2.1.tgz#524af240d1a360527b730475ecfa1344aa540dde"
@@ -5267,10 +5272,15 @@ es6-promisify@^5.0.0:
   dependencies:
     es6-promise "^4.0.3"
 
-esbuild@^0.8.10, esbuild@^0.8.12:
+esbuild@^0.8.12:
   version "0.8.16"
   resolved "https://registry.yarnpkg.com/esbuild/-/esbuild-0.8.16.tgz#8ae34b15d938e8b8b5ac2459414fe3e7fd7dd6b2"
   integrity sha512-HMvPNxDIhEGO/YUh8oO8oxQ1g+ttWz2anUF7NJmQglj2XfJS8zd8mP0Sb2y+jE1SVk3UjD/rYhdsEOFULN9/xw==
+
+esbuild@^0.8.21:
+  version "0.8.21"
+  resolved "https://registry.yarnpkg.com/esbuild/-/esbuild-0.8.21.tgz#c431f8af457795c2fecb1b2873cb8eaef4e5b53c"
+  integrity sha512-vRRx5MZmiekw2R7jK5BppvBUFCJA0Zkl0wYxrDmyUvMPBcQC/xJvxJUM4R+Hgjgb3gp5P1W655AsuoqDeQQDVw==
 
 escalade@^3.1.1:
   version "3.1.1"
@@ -10200,15 +10210,15 @@ pretty-format@^26.0.0, pretty-format@^26.6.2:
     ansi-styles "^4.0.0"
     react-is "^17.0.1"
 
-pridepack@^0.3.7:
-  version "0.3.7"
-  resolved "https://registry.yarnpkg.com/pridepack/-/pridepack-0.3.7.tgz#3aba02978d7fd4da201a5c5bff56dbe493c97d55"
-  integrity sha512-HfKaFJYW7QkQGRRg1UrErwffkMhK0DbUKefJq0warY5P+zY6VrFwlFg23KiZYvMkOUIiYuHCtjnQ1QH5rpjvcw==
+pridepack@^0.4.1:
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/pridepack/-/pridepack-0.4.1.tgz#06bd210432a34ce955bf81955843ec6b592ccf28"
+  integrity sha512-K5C3EtfslMEggPNAiE03kOK2L83HVRZO8bKEwIJCLrf3/G89FNRUFEKuCS9XC+X4ZeQ/F94T3DpwKIY6tM1YHg==
   dependencies:
     "@jest/types" "^26.6.2"
     chalk "^4.1.0"
     dotenv "^8.2.0"
-    esbuild "^0.8.10"
+    esbuild "^0.8.21"
     eslint "^7.13.0"
     execa "^4.1.0"
     fs-extra "^9.0.1"
@@ -10444,6 +10454,13 @@ react-dom@^16.13.1:
     object-assign "^4.1.1"
     prop-types "^15.6.2"
     scheduler "^0.19.1"
+
+react-external-subject@^0.1.6:
+  version "0.1.6"
+  resolved "https://registry.yarnpkg.com/react-external-subject/-/react-external-subject-0.1.6.tgz#be29582765a0651a2598b03406264b7255f5b58f"
+  integrity sha512-ra4uAQ8z6h3dxE1aMwCre8q5jl4mdOhpfaXAN0DWarnVjvNLoy7L6yM9up0C2zNsgmaltDzBzoOI7u61Rh2f1g==
+  dependencies:
+    "@lyonph/react-hooks" "^0.1.2"
 
 react-is@^16.8.1, react-is@^16.8.6:
   version "16.13.1"
