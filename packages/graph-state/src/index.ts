@@ -26,16 +26,6 @@
  * @copyright Alexis Munsayac 2020
  */
 export * from './graph-node';
+export * from './core';
 
-export * from './create-domain-memory';
-export * from './create-domain-scheduler';
-export * from './create-domain-interface';
-
-export { default as createGraphDomainMemory } from './create-domain-memory';
-export { default as createGraphDomainScheduler } from './create-domain-scheduler';
-export { default as createGraphDomainInterface } from './create-domain-interface';
-
-export { default as performWorkLoop } from './perform-work-loop';
-export { default as cleanDomainMemory } from './clean-domain-memory';
-
-export { GraphNodeDebugData } from './expose-to-window';
+export { default as GraphCore } from './core';
