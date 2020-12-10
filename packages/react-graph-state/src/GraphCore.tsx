@@ -36,19 +36,12 @@ import {
   Work,
   performWorkLoop,
   cleanDomainMemory,
-  GraphNodeDraftState,
-  GraphNode,
-  GraphNodeKey,
+  GraphDomainInterface,
 } from 'graph-state';
-import {
-  createExternalSubject,
-  ExternalSubject,
-} from 'react-external-subject';
 import useConstant from './hooks/useConstant';
 import useIsomorphicEffect from './hooks/useIsomorphicEffect';
 import { useGraphDomainContext } from './GraphDomainContext';
 import useWorkQueue from './hooks/useWorkQueue';
-import { GraphCoreInterface } from './types';
 
 function useGraphCoreProcess() {
   const { current } = useGraphDomainContext();
@@ -60,36 +53,11 @@ function useGraphCoreProcess() {
     // Dispose the current memory to prevent leaks to external sources.
     cleanDomainMemory,
   );
-  const subjects = useConstant<Map<GraphNodeKey, ExternalSubject<any>>>(() => (
-    new Map()
-  ));
   const scheduler = useConstant<GraphDomainScheduler>(
     () => createGraphDomainScheduler(scheduleWork),
   );
-  const methods = useConstant<GraphCoreInterface>(
-    () => {
-      const logic = createGraphDomainInterface(memory, scheduler);
-      return {
-        ...logic,
-        getSubject: <S, A = GraphNodeDraftState<S>>(node: GraphNode<S, A>) => {
-          const subject = subjects.get(node.key);
-          if (subject) {
-            return subject as ExternalSubject<S>;
-          }
-          const newSubject = createExternalSubject({
-            read: () => logic.getState(node),
-            subscribe: (handler) => {
-              logic.addListener(node, handler);
-              return () => {
-                logic.removeListener(node, handler);
-              };
-            },
-          });
-          subjects.set(node.key, newSubject);
-          return newSubject;
-        },
-      };
-    },
+  const methods = useConstant<GraphDomainInterface>(
+    () => createGraphDomainInterface(memory, scheduler),
   );
 
   current.value = methods;

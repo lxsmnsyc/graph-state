@@ -25,14 +25,13 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
+import { GraphDomainInterface } from 'graph-state';
 import { createContext, MutableRefObject, useContext } from 'react';
 import OutOfGraphDomainError from './utils/OutOfGraphDomainError';
 import IllegalGraphDomainInterfaceAccessError from './utils/IllegalGraphDomainInterfaceAccessError';
 
-import { GraphCoreInterface } from './types';
-
 export interface GraphCoreValue {
-  value?: GraphCoreInterface;
+  value?: GraphDomainInterface;
 }
 
 export const GraphDomainContext = (
@@ -49,7 +48,7 @@ export function useGraphDomainContext(): MutableRefObject<GraphCoreValue> {
   throw new OutOfGraphDomainError();
 }
 
-export function useGraphDomainInterface(): GraphCoreInterface {
+export function useGraphDomainInterface(): GraphDomainInterface {
   const { current } = useGraphDomainContext();
 
   if (current.value) {

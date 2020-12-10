@@ -25,30 +25,16 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { useDebugValue } from 'react';
-import { GraphDomainInterface, GraphNode } from 'graph-state';
-import useSubscription, { Subscription } from './useSubscription';
-import useMemoCondition from './useMemoCondition';
-import { compareArray } from '../utils/compareTuple';
+import useFreshLazyRef, { defaultCompare, MemoCompare } from './useFreshLazyRef';
 
-export default function useGraphNodeValueBase<S, A>(
-  logic: GraphDomainInterface,
-  node: GraphNode<S, A>,
-): S {
-  const sub = useMemoCondition(
-    (): Subscription<S> => ({
-      read: () => logic.getState(node),
-      subscribe: (handler) => {
-        logic.addListener(node, handler);
-        return () => {
-          logic.removeListener(node, handler);
-        };
-      },
-    }),
-    [logic, node],
-    compareArray,
-  );
-  const current = useSubscription(sub);
-  useDebugValue(current);
-  return current;
+export default function useMemoCondition<T, R>(
+  supplier: () => T,
+  dependency: R,
+  shouldUpdate: MemoCompare<R> = defaultCompare,
+): T {
+  return useFreshLazyRef(
+    supplier,
+    dependency,
+    shouldUpdate,
+  ).current;
 }
