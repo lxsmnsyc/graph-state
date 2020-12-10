@@ -26,29 +26,28 @@
  * @copyright Alexis Munsayac 2020
  */
 import { useDebugValue } from 'preact/hooks';
-import { GraphDomainInterface, GraphNode } from 'graph-state';
-import useMemoCondition from './useMemoCondition';
+import { GraphCore, GraphNode } from 'graph-state';
 import useSubscription, { Subscription } from './useSubscription';
+import useMemoCondition from './useMemoCondition';
 import { compareArray } from '../utils/compareTuple';
 
 export default function useGraphNodeValueBase<S, A>(
-  logic: GraphDomainInterface,
+  core: GraphCore,
   node: GraphNode<S, A>,
 ): S {
   const sub = useMemoCondition(
     (): Subscription<S> => ({
-      read: () => logic.getState(node),
-      subscribe: (callback) => {
-        logic.addListener(node, callback);
+      read: () => core.getNodeState(node, 'get'),
+      subscribe: (handler) => {
+        core.registerNodeListener(node, handler);
         return () => {
-          logic.removeListener(node, callback);
+          core.unregisterNodeListener(node, handler);
         };
       },
     }),
-    [logic, node],
+    [core, node],
     compareArray,
   );
-
   const current = useSubscription(sub);
   useDebugValue(current);
   return current;

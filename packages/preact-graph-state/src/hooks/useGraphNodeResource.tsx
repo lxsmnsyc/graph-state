@@ -38,5 +38,16 @@ export default function useGraphNodeResource<T>(node: GraphNodeResource<T>): T {
     return value.data;
   }
 
+  if (value.status === 'pending') {
+    // This is a hack/patch since Preact's Suspense has
+    // a different timing than React
+
+    // This hack defers the resolving Promise further than
+    // the observed promise. This ensures that when
+    // the node value is read, it is already resolved.
+    throw value.data.then(() => new Promise((resolve) => {
+      setTimeout(resolve);
+    }));
+  }
   throw value.data;
 }

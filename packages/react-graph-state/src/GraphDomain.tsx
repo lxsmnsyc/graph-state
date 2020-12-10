@@ -26,8 +26,8 @@
  * @copyright Alexis Munsayac 2020
  */
 import React, { ReactNode, useRef } from 'react';
-import GraphCore from './GraphCore';
-import { GraphCoreValue, GraphDomainContext } from './GraphDomainContext';
+import GraphCoreComponent from './GraphCoreComponent';
+import { GraphCoreValue, GraphCoreContext } from './GraphCoreContext';
 
 export interface GraphDomainProps {
   children?: ReactNode;
@@ -37,9 +37,9 @@ export default function GraphDomain({ children }: GraphDomainProps): JSX.Element
   const ref = useRef<GraphCoreValue>({});
 
   return (
-    <GraphDomainContext.Provider value={ref}>
-      <GraphCore />
+    <GraphCoreContext.Provider value={ref}>
+      <GraphCoreComponent />
       { children }
-    </GraphDomainContext.Provider>
+    </GraphCoreContext.Provider>
   );
 }

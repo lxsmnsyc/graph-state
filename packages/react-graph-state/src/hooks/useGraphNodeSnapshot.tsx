@@ -26,14 +26,12 @@
  * @copyright Alexis Munsayac 2020
  */
 import { GraphNode, GraphNodeListener } from 'graph-state';
-import { useGraphDomainInterface } from '../GraphDomainContext';
+import { useGraphCore } from '../GraphCoreContext';
 import useGraphNodeSnapshotBase from './useGraphNodeSnapshotBase';
 
 export default function useGraphNodeSnapshot<S, A>(
   node: GraphNode<S, A>,
   listener: GraphNodeListener<S>,
 ): void {
-  const logic = useGraphDomainInterface();
-
-  useGraphNodeSnapshotBase(logic, node, listener);
+  useGraphNodeSnapshotBase(useGraphCore(), node, listener);
 }

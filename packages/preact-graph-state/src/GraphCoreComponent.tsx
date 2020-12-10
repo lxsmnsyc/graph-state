@@ -25,44 +25,33 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphNode, GraphNodeKey, GraphNodeSubscriptionCleanup } from './graph-node';
+import { memo, useDebugValue } from 'preact/compat';
+import { GraphCore } from 'graph-state';
+import { useGraphCoreContext } from './GraphCoreContext';
+import useConstant from './hooks/useConstant';
+import useIsomorphicEffect from './hooks/useIsomorphicEffect';
 
-export type GraphNodeDependencies = Set<GraphNode<any, any>>;
+function useGraphCoreProcess() {
+  const { current } = useGraphCoreContext();
 
-export interface GraphNodeBaseVersion {
-  alive: boolean;
+  const core = useConstant<GraphCore>(
+    () => new GraphCore(),
+  );
+
+  current.value = core;
+
+  useDebugValue(core.memory.state);
+
+  useIsomorphicEffect(() => () => {
+    core.destroy();
+  });
 }
 
-export interface GraphNodeVersion extends GraphNodeBaseVersion {
-  // Dependencies
-  dependencies: GraphNodeDependencies;
-  cleanups: GraphNodeSubscriptionCleanup[];
+function GraphCoreProcess(): null {
+  useGraphCoreProcess();
+  return null;
 }
 
-export type GraphNodeListener<T> = (value: T) => void;
-export type GraphNodeListeners<T> = Set<GraphNodeListener<T>>;
+const GraphCoreComponent = memo(GraphCoreProcess, () => true);
 
-export interface GraphNodeInstance<T> {
-  version: GraphNodeVersion;
-  setterVersion: GraphNodeBaseVersion;
-  listeners: GraphNodeListeners<T>;
-  dependents: GraphNodeDependencies;
-}
-
-export interface GraphNodeState<T> {
-  value: T;
-}
-export type GraphNodeInstanceMap = Map<GraphNodeKey, GraphNodeInstance<any>>;
-export type GraphNodeStateMap = Map<GraphNodeKey, GraphNodeState<any>>;
-
-export interface GraphDomainMemory {
-  nodes: GraphNodeInstanceMap;
-  state: GraphNodeStateMap;
-}
-
-export default function createGraphDomainMemory(): GraphDomainMemory {
-  return {
-    nodes: new Map(),
-    state: new Map(),
-  };
-}
+export default GraphCoreComponent;

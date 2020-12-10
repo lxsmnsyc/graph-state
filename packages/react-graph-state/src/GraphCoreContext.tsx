@@ -25,23 +25,35 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphNode, GraphNodeDraftState } from './graph-node';
-import createNodeVersion from './create-node-version';
-import getNodeBaseInstance from './get-node-instance';
-import unregisterNodeDependency from './unregister-node-dependency';
-import { GraphDomainMemory } from './create-domain-memory';
+import { GraphCore } from 'graph-state';
+import { createContext, MutableRefObject, useContext } from 'react';
+import OutOfGraphDomainError from './utils/OutOfGraphDomainError';
+import IllegalGraphCoreAccessError from './utils/IllegalGraphCoreAccessError';
 
-export default function deprecateNodeVersion<S, A = GraphNodeDraftState<S>>(
-  memory: GraphDomainMemory,
-  node: GraphNode<S, A>,
-  actualNode = getNodeBaseInstance(memory, node),
-): void {
-  actualNode.version.dependencies.forEach((dependency) => {
-    unregisterNodeDependency(memory, dependency, node);
-  });
-  actualNode.version.cleanups.forEach((cleanup) => {
-    cleanup();
-  });
-  actualNode.version.alive = false;
-  actualNode.version = createNodeVersion();
+export interface GraphCoreValue {
+  value?: GraphCore;
+}
+
+export const GraphCoreContext = (
+  createContext<MutableRefObject<GraphCoreValue> | undefined>(undefined)
+);
+
+export function useGraphCoreContext(): MutableRefObject<GraphCoreValue> {
+  const context = useContext(GraphCoreContext);
+
+  if (context) {
+    return context;
+  }
+
+  throw new OutOfGraphDomainError();
+}
+
+export function useGraphCore(): GraphCore {
+  const { current } = useGraphCoreContext();
+
+  if (current.value) {
+    return current.value;
+  }
+
+  throw new IllegalGraphCoreAccessError();
 }

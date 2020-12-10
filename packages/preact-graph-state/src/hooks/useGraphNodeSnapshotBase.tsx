@@ -25,11 +25,11 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphDomainInterface, GraphNode, GraphNodeListener } from 'graph-state';
+import { GraphCore, GraphNode, GraphNodeListener } from 'graph-state';
 import useIsomorphicEffect from './useIsomorphicEffect';
 
 export default function useGraphNodeSnapshotBase<S, A>(
-  logic: GraphDomainInterface,
+  core: GraphCore,
   node: GraphNode<S, A>,
   listener: GraphNodeListener<S>,
 ): void {
@@ -41,10 +41,10 @@ export default function useGraphNodeSnapshotBase<S, A>(
       }
     };
 
-    logic.addListener(node, internalListener);
+    core.registerNodeListener(node, internalListener);
     return () => {
       mounted = false;
-      logic.removeListener(node, internalListener);
+      core.unregisterNodeListener(node, internalListener);
     };
-  }, [logic, node, listener]);
+  }, [core, node, listener]);
 }

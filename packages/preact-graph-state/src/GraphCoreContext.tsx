@@ -25,25 +25,36 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import {
-  GraphNode,
-  GraphNodeDraftState,
-  GraphNodeGet,
-  GraphNodeGetInterface,
-  GraphNodeGetSupplier,
-} from './graph-node';
+import { GraphCore } from 'graph-state';
+import { createContext } from 'preact';
+import { Ref, useContext } from 'preact/hooks';
+import OutOfGraphDomainError from './utils/OutOfGraphDomainError';
+import IllegalGraphCoreAccessError from './utils/IllegalGraphCoreAccessError';
 
-function isNodeValueFunc<S, A = GraphNodeDraftState<S>>(
-  nodeValue: GraphNodeGet<S, A>,
-): nodeValue is GraphNodeGetSupplier<S, A> {
-  return typeof nodeValue === 'function';
+export interface GraphCoreValue {
+  value?: GraphCore;
 }
 
-export default function createNodeValue<S, A = GraphNodeDraftState<S>>(
-  node: GraphNode<S, A>,
-  methods: GraphNodeGetInterface<S, A>,
-): S {
-  return isNodeValueFunc(node.get)
-    ? node.get(methods)
-    : node.get;
+export const GraphCoreContext = (
+  createContext<Ref<GraphCoreValue> | undefined>(undefined)
+);
+
+export function useGraphCoreContext(): Ref<GraphCoreValue> {
+  const context = useContext(GraphCoreContext);
+
+  if (context) {
+    return context;
+  }
+
+  throw new OutOfGraphDomainError();
+}
+
+export function useGraphCore(): GraphCore {
+  const { current } = useGraphCoreContext();
+
+  if (current.value) {
+    return current.value;
+  }
+
+  throw new IllegalGraphCoreAccessError();
 }

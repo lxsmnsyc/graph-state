@@ -25,27 +25,31 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphNode, GraphNodeDraftState } from './graph-node';
-import computeNode from './compute-node';
-import { GraphDomainMemory } from './create-domain-memory';
-import { GraphDomainScheduler } from './create-domain-scheduler';
+import { memo, useDebugValue } from 'react';
+import { useDisposableMemo } from 'use-dispose';
+import { GraphCore } from 'graph-state';
+import { useGraphCoreContext } from './GraphCoreContext';
 
-export default function getNodeState<S, A = GraphNodeDraftState<S>>(
-  memory: GraphDomainMemory,
-  scheduler: GraphDomainScheduler,
-  node: GraphNode<S, A>,
-): S {
-  const currentState = memory.state.get(node.key);
+function useGraphCoreProcess() {
+  const { current } = useGraphCoreContext();
 
-  if (currentState) {
-    return currentState.value;
-  }
+  const core = useDisposableMemo<GraphCore>(
+    () => new GraphCore(),
+    // Component renders twice before side-effects and commits run.
+    // Dispose the current memory to prevent leaks to external sources.
+    (instance) => instance.destroy(),
+  );
 
-  const newState = {
-    value: computeNode(memory, scheduler, node),
-  };
+  current.value = core;
 
-  memory.state.set(node.key, newState);
-
-  return newState.value;
+  useDebugValue(core.memory.state);
 }
+
+function GraphCoreProcess(): null {
+  useGraphCoreProcess();
+  return null;
+}
+
+const GraphCoreComponent = memo(GraphCoreProcess, () => true);
+
+export default GraphCoreComponent;

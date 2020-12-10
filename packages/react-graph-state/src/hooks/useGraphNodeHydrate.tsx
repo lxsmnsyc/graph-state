@@ -26,23 +26,23 @@
  * @copyright Alexis Munsayac 2020
  */
 import { GraphNode } from 'graph-state';
-import { useGraphDomainInterface } from '../GraphDomainContext';
+import { useGraphCore } from '../GraphCoreContext';
 import useIsomorphicEffect from './useIsomorphicEffect';
 
 export default function useGraphNodeHydrate<S, A>(
   node: GraphNode<S, A>,
   value: S,
 ): void {
-  const logic = useGraphDomainInterface();
+  const core = useGraphCore();
 
-  const notHydrated = !logic.hasNodeState(node);
+  const notHydrated = !core.hasNodeState(node);
   if (notHydrated) {
-    logic.mutateState(node, value);
+    core.setNodeState(node, value, false);
   }
 
   useIsomorphicEffect(() => {
     if (notHydrated) {
-      logic.resetState(node);
+      core.runCompute(node);
     }
-  }, [logic, node]);
+  }, [core, node]);
 }
