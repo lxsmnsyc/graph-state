@@ -25,21 +25,21 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphDomainInterface } from 'graph-state';
+import { GraphCore } from 'graph-state';
 import { createContext, MutableRefObject, useContext } from 'react';
 import OutOfGraphDomainError from './utils/OutOfGraphDomainError';
-import IllegalGraphDomainInterfaceAccessError from './utils/IllegalGraphDomainInterfaceAccessError';
+import IllegalGraphCoreAccessError from './utils/IllegalGraphCoreAccessError';
 
 export interface GraphCoreValue {
-  value?: GraphDomainInterface;
+  value?: GraphCore;
 }
 
-export const GraphDomainContext = (
+export const GraphCoreContext = (
   createContext<MutableRefObject<GraphCoreValue> | undefined>(undefined)
 );
 
-export function useGraphDomainContext(): MutableRefObject<GraphCoreValue> {
-  const context = useContext(GraphDomainContext);
+export function useGraphCoreContext(): MutableRefObject<GraphCoreValue> {
+  const context = useContext(GraphCoreContext);
 
   if (context) {
     return context;
@@ -48,12 +48,12 @@ export function useGraphDomainContext(): MutableRefObject<GraphCoreValue> {
   throw new OutOfGraphDomainError();
 }
 
-export function useGraphDomainInterface(): GraphDomainInterface {
-  const { current } = useGraphDomainContext();
+export function useGraphCore(): GraphCore {
+  const { current } = useGraphCoreContext();
 
   if (current.value) {
     return current.value;
   }
 
-  throw new IllegalGraphDomainInterfaceAccessError();
+  throw new IllegalGraphCoreAccessError();
 }

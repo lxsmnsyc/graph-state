@@ -25,19 +25,19 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphDomainInterface, GraphNode } from 'graph-state';
+import { GraphCore, GraphNode } from 'graph-state';
 import { compareArray } from '../utils/compareTuple';
 import useCallbackCondition from './useCallbackCondition';
 
 export type GraphNodeDispatch<A> = (action: A) => void;
 
 export default function useGraphNodeDispatchBase<S, A>(
-  logic: GraphDomainInterface,
+  core: GraphCore,
   node: GraphNode<S, A>,
 ): GraphNodeDispatch<A> {
   return useCallbackCondition(
-    (action: A) => logic.setState(node, action),
-    [logic, node],
+    (action: A) => core.runDispatch(node, action),
+    [core, node],
     compareArray,
   );
 }

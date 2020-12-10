@@ -26,13 +26,11 @@
  * @copyright Alexis Munsayac 2020
  */
 import { GraphNode } from 'graph-state';
-import { useGraphDomainInterface } from '../GraphDomainContext';
+import { useGraphCore } from '../GraphCoreContext';
 
 export default function useGraphNodeMutate<S, A>(
   node: GraphNode<S, A>,
   value: S,
 ): void {
-  const logic = useGraphDomainInterface();
-
-  logic.mutateState(node, value);
+  useGraphCore().setNodeState(node, value, false);
 }
