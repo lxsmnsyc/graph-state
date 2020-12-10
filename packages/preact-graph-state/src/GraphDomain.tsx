@@ -28,8 +28,8 @@
 /** @jsx h */
 import { ComponentChildren, h, VNode } from 'preact';
 import { useRef } from 'preact/hooks';
-import GraphCore from './GraphCore';
-import { GraphCoreValue, GraphDomainContext } from './GraphDomainContext';
+import GraphCoreComponent from './GraphCoreComponent';
+import { GraphCoreValue, GraphCoreContext } from './GraphCoreContext';
 
 export interface GraphDomainProps {
   children?: ComponentChildren;
@@ -39,9 +39,9 @@ export default function GraphDomain({ children }: GraphDomainProps): VNode {
   const ref = useRef<GraphCoreValue>({});
 
   return (
-    <GraphDomainContext.Provider value={ref}>
-      <GraphCore />
+    <GraphCoreContext.Provider value={ref}>
+      <GraphCoreComponent />
       { children }
-    </GraphDomainContext.Provider>
+    </GraphCoreContext.Provider>
   );
 }

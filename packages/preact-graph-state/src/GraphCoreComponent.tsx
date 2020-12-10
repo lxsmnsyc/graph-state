@@ -25,41 +25,33 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { useRef, Ref } from 'preact/hooks';
-import useConstantCallback from './useConstantCallback';
-import useIsomorphicEffect from './useIsomorphicEffect';
+import { memo, useDebugValue } from 'preact/compat';
+import { GraphCore } from 'graph-state';
+import { useGraphCoreContext } from './GraphCoreContext';
+import useConstant from './hooks/useConstant';
+import useIsomorphicEffect from './hooks/useIsomorphicEffect';
 
-export type Compare<T> = (a: T, b: T) => boolean;
-export type Enqueue<T> = (node: T, compare?: Compare<T>) => void;
-export type QueueReset = () => void;
+function useGraphCoreProcess() {
+  const { current } = useGraphCoreContext();
 
-export default function useWorkQueue<T>(): [Ref<T[]>, Enqueue<T>, QueueReset] {
-  const queue = useRef<T[]>([]);
+  const core = useConstant<GraphCore>(
+    () => new GraphCore(),
+  );
 
-  const lifecycle = useRef(false);
+  current.value = core;
 
-  useIsomorphicEffect(() => {
-    lifecycle.current = true;
-    return () => {
-      lifecycle.current = false;
-    };
-  }, []);
+  useDebugValue(core.memory.state);
 
-  const schedule = useConstantCallback((node: T, compare?: Compare<T>) => {
-    if (lifecycle.current) {
-      const { current } = queue;
-      const newQueue = compare
-        ? current.filter((value) => compare(node, value))
-        : current;
-      queue.current = [...newQueue, node];
-    }
+  useIsomorphicEffect(() => () => {
+    core.destroy();
   });
-
-  const reset = useConstantCallback(() => {
-    if (lifecycle.current) {
-      queue.current = [];
-    }
-  });
-
-  return [queue, schedule, reset];
 }
+
+function GraphCoreProcess(): null {
+  useGraphCoreProcess();
+  return null;
+}
+
+const GraphCoreComponent = memo(GraphCoreProcess, () => true);
+
+export default GraphCoreComponent;
