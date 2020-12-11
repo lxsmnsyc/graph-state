@@ -183,7 +183,6 @@ export default function createSWRGraphNode<T>(
             };
 
             if (shouldUpdate()) {
-              console.log('test');
               setMutation(key, {
                 result: {
                   data,
