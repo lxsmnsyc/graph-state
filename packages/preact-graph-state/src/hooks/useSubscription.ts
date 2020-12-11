@@ -25,13 +25,12 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { useDebugValue } from 'preact/hooks';
+import { useDebugValue, useState } from 'preact/hooks';
 import { MemoCompare, defaultCompare } from './useFreshLazyRef';
-import useFreshState from './useFreshState';
 import useIsomorphicEffect from './useIsomorphicEffect';
 
 type ReadSource<T> = () => T;
-type Subscribe = (callback: () => void) => () => void;
+type Subscribe = (callback: () => void) => (() => void) | undefined | void;
 
 export interface Subscription<T> {
   read: ReadSource<T>;
@@ -42,17 +41,31 @@ export interface Subscription<T> {
 export default function useSubscription<T>({
   read, subscribe, shouldUpdate = defaultCompare,
 }: Subscription<T>): T {
-  const [state, setState] = useFreshState(
-    () => ({
+  const [state, setState] = useState(() => ({
+    read,
+    subscribe,
+    shouldUpdate,
+    value: read(),
+  }));
+
+  let currentValue = state.value;
+
+  if (
+    state.read !== read
+    || state.subscribe !== subscribe
+    || state.shouldUpdate !== shouldUpdate
+  ) {
+    currentValue = read();
+
+    setState({
       read,
       subscribe,
       shouldUpdate,
-      value: read(),
-    }),
-    [read, subscribe, shouldUpdate],
-  );
+      value: currentValue,
+    });
+  }
 
-  useDebugValue(state.value);
+  useDebugValue(currentValue);
 
   useIsomorphicEffect(() => {
     let mounted = true;
@@ -82,9 +95,11 @@ export default function useSubscription<T>({
 
     return () => {
       mounted = false;
-      unsubscribe();
+      if (unsubscribe) {
+        unsubscribe();
+      }
     };
   }, [read, subscribe, shouldUpdate]);
 
-  return state.value;
+  return currentValue;
 }
