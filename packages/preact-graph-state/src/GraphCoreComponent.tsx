@@ -25,11 +25,10 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { memo, useDebugValue } from 'preact/compat';
+import { memo, useDebugValue, useEffect } from 'preact/compat';
 import { GraphCore } from 'graph-state';
 import { useGraphCoreContext } from './GraphCoreContext';
 import useConstant from './hooks/useConstant';
-import useIsomorphicEffect from './hooks/useIsomorphicEffect';
 
 function useGraphCoreProcess() {
   const { current } = useGraphCoreContext();
@@ -42,7 +41,7 @@ function useGraphCoreProcess() {
 
   useDebugValue(core.memory.state);
 
-  useIsomorphicEffect(() => () => {
+  useEffect(() => () => {
     core.destroy();
   });
 }

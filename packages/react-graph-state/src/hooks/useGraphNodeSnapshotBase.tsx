@@ -25,15 +25,15 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
+import { useEffect } from 'react';
 import { GraphCore, GraphNode, GraphNodeListener } from 'graph-state';
-import useIsomorphicEffect from './useIsomorphicEffect';
 
 export default function useGraphNodeSnapshotBase<S, A>(
   core: GraphCore,
   node: GraphNode<S, A>,
   listener: GraphNodeListener<S>,
 ): void {
-  useIsomorphicEffect(() => {
+  useEffect(() => {
     let mounted = true;
     const internalListener = (value: S) => {
       if (mounted) {

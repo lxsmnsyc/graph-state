@@ -26,8 +26,8 @@
  * @copyright Alexis Munsayac 2020
  */
 import { GraphNode } from 'graph-state';
+import { useEffect } from 'preact/hooks';
 import { useGraphCore } from '../GraphCoreContext';
-import useIsomorphicEffect from './useIsomorphicEffect';
 
 export default function useGraphNodeHydrate<S, A>(
   node: GraphNode<S, A>,
@@ -40,9 +40,9 @@ export default function useGraphNodeHydrate<S, A>(
     core.setNodeState(node, value, false);
   }
 
-  useIsomorphicEffect(() => {
+  useEffect(() => {
     if (notHydrated) {
       core.runCompute(node);
     }
-  }, [core, node]);
+  }, [core, node, notHydrated]);
 }
