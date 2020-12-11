@@ -317,11 +317,9 @@ export default class GraphCore {
     dependency: GraphNode<R, T>,
     actualNode = this.getNodeInstance(node),
   ): void {
-    if (actualNode.version.alive) {
-      actualNode.version.dependencies.delete(dependency);
+    actualNode.version.dependencies.delete(dependency);
 
-      this.getNodeInstance(dependency).dependents.delete(node);
-    }
+    this.getNodeInstance(dependency).dependents.delete(node);
   }
 
   deprecateNodeVersion<S, A = GraphNodeDraftState<S>>(
