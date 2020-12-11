@@ -75,17 +75,6 @@ function createGraphDomainMemory(): GraphDomainMemory {
     state: new Map(),
   };
 }
-
-type ReadMode = 'get' | 'set';
-
-function runWithMode(mode: ReadMode, callback: () => void): void {
-  if (mode === 'set') {
-    callback();
-  } else {
-    setTimeout(callback, 0);
-  }
-}
-
 function isNodeValueFunc<S, A = GraphNodeDraftState<S>>(
   nodeValue: GraphNodeGet<S, A>,
 ): nodeValue is GraphNodeGetSupplier<S, A> {
@@ -203,7 +192,6 @@ export default class GraphCore {
 
   getNodeState<S, A = GraphNodeDraftState<S>>(
     node: GraphNode<S, A>,
-    mode: ReadMode,
   ): S {
     const currentState = this.memory.state.get(node.key);
 
@@ -212,7 +200,7 @@ export default class GraphCore {
     }
 
     const newState = {
-      value: this.computeNode(node, mode),
+      value: this.computeNode(node),
     };
 
     this.memory.state.set(node.key, newState);
@@ -242,7 +230,6 @@ export default class GraphCore {
 
   computeNode<S, A = GraphNodeDraftState<S>>(
     node: GraphNode<S, A>,
-    mode: ReadMode,
     actualNode = this.getNodeInstance(node),
   ): S {
     // Get the current version handle
@@ -253,7 +240,7 @@ export default class GraphCore {
       {
         get: (dependency) => {
           // Read dependency state
-          const currentState = this.getNodeState(dependency, mode);
+          const currentState = this.getNodeState(dependency);
           // If the version is still alive, register dependency
           if (version.alive) {
             this.registerNodeDependency(node, dependency, actualNode);
@@ -262,38 +249,28 @@ export default class GraphCore {
         },
         mutate: (target, value) => {
           if (version.alive) {
-            runWithMode(mode, () => {
-              this.setNodeState(target, value);
-            });
+            this.setNodeState(target, value);
           }
         },
         mutateSelf: (value) => {
           if (version.alive) {
-            runWithMode(mode, () => {
-              this.setNodeState(node, value);
-            });
+            this.setNodeState(node, value);
           }
         },
         setSelf: (action: A) => {
           // If the version is still alive, schedule a state update.
           if (version.alive) {
-            runWithMode(mode, () => {
-              this.runDispatch(node, action);
-            });
+            this.runDispatch(node, action);
           }
         },
         set: (target, action) => {
           if (version.alive) {
-            runWithMode(mode, () => {
-              this.runDispatch(target, action);
-            });
+            this.runDispatch(target, action);
           }
         },
         reset: (target) => {
           if (version.alive) {
-            runWithMode(mode, () => {
-              this.runCompute(target);
-            });
+            this.runCompute(target);
           }
         },
         subscription: (callback) => {
@@ -375,7 +352,7 @@ export default class GraphCore {
     actualNode = this.getNodeInstance(node),
   ): void {
     // Get instance node
-    const currentState = this.getNodeState(node, 'set');
+    const currentState = this.getNodeState(node);
 
     if (node.set) {
       // Deprecate setter version
@@ -384,7 +361,7 @@ export default class GraphCore {
       const { setterVersion } = actualNode;
       // Run the node setter for further effects
       node.set({
-        get: (target) => this.getNodeState(target, 'set'),
+        get: (target) => this.getNodeState(target),
         set: (target, targetAction) => {
           if (setterVersion.alive) {
             this.runDispatch(target, targetAction);
@@ -442,7 +419,7 @@ export default class GraphCore {
      */
     this.setNodeState(
       node,
-      this.computeNode(node, 'set', actualNode),
+      this.computeNode(node, actualNode),
     );
 
     if (process.env.NODE_ENV !== 'production') {
@@ -454,12 +431,12 @@ export default class GraphCore {
     node: GraphNode<S, A>,
     actualNode = this.getNodeInstance(node),
   ): void {
-    const nodeValue = this.getNodeState(node, 'set');
-    actualNode.dependents.forEach((dependent) => {
-      this.runCompute(dependent);
-    });
+    const nodeValue = this.getNodeState(node);
     actualNode.listeners.forEach((subscriber) => {
       subscriber(nodeValue);
+    });
+    actualNode.dependents.forEach((dependent) => {
+      this.runCompute(dependent);
     });
     if (process.env.NODE_ENV !== 'production') {
       exposeToWindow(this.memory);
