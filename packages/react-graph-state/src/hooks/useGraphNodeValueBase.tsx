@@ -37,7 +37,7 @@ export default function useGraphNodeValueBase<S, A>(
 ): S {
   const sub = useMemoCondition(
     (): Subscription<S> => ({
-      read: () => core.getNodeState(node, 'get'),
+      read: () => core.getNodeState(node),
       subscribe: (handler) => {
         core.registerNodeListener(node, handler);
         return () => {
