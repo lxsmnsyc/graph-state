@@ -10205,10 +10205,10 @@ pretty-format@^26.0.0, pretty-format@^26.6.2:
     ansi-styles "^4.0.0"
     react-is "^17.0.1"
 
-pridepack@^0.4.1:
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/pridepack/-/pridepack-0.4.1.tgz#06bd210432a34ce955bf81955843ec6b592ccf28"
-  integrity sha512-K5C3EtfslMEggPNAiE03kOK2L83HVRZO8bKEwIJCLrf3/G89FNRUFEKuCS9XC+X4ZeQ/F94T3DpwKIY6tM1YHg==
+pridepack@^0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/pridepack/-/pridepack-0.5.0.tgz#1882fabcde924ed7e6be5b715585432b88f6fe33"
+  integrity sha512-/luWGYA+JX+DPfGsCcbLrbO0L4VNYavSsTWEn/X0sLsFpLEe3RrC3+KW2Elx0RMiCd/ylAW+PpGKsdzdMzzd9g==
   dependencies:
     "@jest/types" "^26.6.2"
     chalk "^4.1.0"
@@ -10222,7 +10222,6 @@ pridepack@^0.4.1:
     jest "^26.6.3"
     package-json-type "^1.0.3"
     react "^16.13.1"
-    ts-jest "^26.4.4"
     tslib "^2.0.3"
     typescript "^4.0.5"
     yargs "^16.1.1"
