@@ -25,17 +25,15 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { useDebugValue } from 'preact/hooks';
+import { useDebugValue, useMemo } from 'preact/hooks';
 import { GraphCore, GraphNode } from 'graph-state';
 import useSubscription, { Subscription } from './useSubscription';
-import useMemoCondition from './useMemoCondition';
-import { compareArray } from '../utils/compareTuple';
 
 export default function useGraphNodeValueBase<S, A>(
   core: GraphCore,
   node: GraphNode<S, A>,
 ): S {
-  const sub = useMemoCondition(
+  const sub = useMemo(
     (): Subscription<S> => ({
       read: () => core.getNodeState(node),
       subscribe: (handler) => {
@@ -46,7 +44,6 @@ export default function useGraphNodeValueBase<S, A>(
       },
     }),
     [core, node],
-    compareArray,
   );
   const current = useSubscription(sub);
   useDebugValue(current);
