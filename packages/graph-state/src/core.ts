@@ -284,20 +284,16 @@ export default class GraphCore {
     );
   }
 
-  registerNodeListener<S, A = GraphNodeDraftState<S>>(
+  subscribe<S, A = GraphNodeDraftState<S>>(
     node: GraphNode<S, A>,
     listener: GraphNodeListener<S>,
-    actualNode = this.getNodeInstance(node),
-  ): void {
+  ): () => void {
+    const actualNode = this.getNodeInstance(node);
     actualNode.listeners.add(listener);
-  }
 
-  unregisterNodeListener<S, A = GraphNodeDraftState<S>>(
-    node: GraphNode<S, A>,
-    listener: GraphNodeListener<S>,
-    actualNode = this.getNodeInstance(node),
-  ): void {
-    actualNode.listeners.delete(listener);
+    return () => {
+      actualNode.listeners.delete(listener);
+    };
   }
 
   registerNodeDependency<S, A, R, T>(

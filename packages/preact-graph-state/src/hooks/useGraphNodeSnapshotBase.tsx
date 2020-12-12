@@ -41,10 +41,10 @@ export default function useGraphNodeSnapshotBase<S, A>(
       }
     };
 
-    core.registerNodeListener(node, internalListener);
+    const unsubscribe = core.subscribe(node, internalListener);
     return () => {
       mounted = false;
-      core.unregisterNodeListener(node, internalListener);
+      unsubscribe();
     };
   }, [core, node, listener]);
 }
