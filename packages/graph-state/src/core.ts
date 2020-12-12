@@ -433,12 +433,8 @@ export default class GraphCore {
     actualNode.dependents.forEach((dependent) => {
       this.runCompute(dependent);
     });
-    Promise.resolve().then(() => {
-      actualNode.listeners.forEach((subscriber) => {
-        subscriber(nodeValue);
-      });
-    }, () => {
-      //
+    actualNode.listeners.forEach((subscriber) => {
+      subscriber(nodeValue);
     });
     if (process.env.NODE_ENV !== 'production') {
       exposeToWindow(this.memory);
