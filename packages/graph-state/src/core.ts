@@ -223,9 +223,7 @@ export default class GraphCore {
       });
     }
 
-    if (notify) {
-      this.runUpdate(node);
-    }
+    this.runUpdate(node, notify);
   }
 
   computeNode<S, A = GraphNodeDraftState<S>>(
@@ -400,10 +398,6 @@ export default class GraphCore {
         ),
       );
     }
-
-    if (process.env.NODE_ENV !== 'production') {
-      exposeToWindow(this.memory);
-    }
   }
 
   runCompute<S, A = GraphNodeDraftState<S>>(
@@ -423,14 +417,11 @@ export default class GraphCore {
       node,
       this.computeNode(node, actualNode),
     );
-
-    if (process.env.NODE_ENV !== 'production') {
-      exposeToWindow(this.memory);
-    }
   }
 
   runUpdate<S, A = GraphNodeDraftState<S>>(
     node: GraphNode<S, A>,
+    notify = true,
     actualNode = this.getNodeInstance(node),
   ): void {
     const nodeValue = this.getNodeState(node);
@@ -449,14 +440,16 @@ export default class GraphCore {
     this.isBatching = parent;
 
     if (this.isBatching === 0) {
-      this.batched.forEach(([subscriber, value]) => {
-        subscriber(value);
-      });
+      if (notify) {
+        this.batched.forEach(([subscriber, value]) => {
+          subscriber(value);
+        });
+      }
       this.batched = [];
-    }
 
-    if (process.env.NODE_ENV !== 'production') {
-      exposeToWindow(this.memory);
+      if (process.env.NODE_ENV !== 'production') {
+        exposeToWindow(this.memory);
+      }
     }
   }
 
