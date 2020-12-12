@@ -25,10 +25,16 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { memo, useDebugValue } from 'react';
+import {
+  memo,
+  useDebugValue,
+  useEffect,
+  useState,
+} from 'react';
 import { useDisposableMemo } from 'use-dispose';
 import { GraphCore } from 'graph-state';
 import { useGraphCoreContext } from './GraphCoreContext';
+import useConstantCallback from './hooks/useConstantCallback';
 
 function useGraphCoreProcess() {
   const { current } = useGraphCoreContext();
@@ -40,7 +46,26 @@ function useGraphCoreProcess() {
     (instance) => instance.destroy(),
   );
 
-  current.value = core;
+  const [state, setState] = useState<(() => void)[]>([]);
+
+  const batch = useConstantCallback((cb: () => void) => {
+    setState((prev) => [...prev, cb]);
+  });
+
+  current.value = {
+    instance: core,
+    batch,
+  };
+
+  useEffect(() => {
+    if (state.length > 0) {
+      setState([]);
+
+      state.forEach((batched) => {
+        batched();
+      });
+    }
+  }, [state]);
 
   useDebugValue(core.memory.state);
 }

@@ -35,14 +35,14 @@ export default function useGraphNodeHydrate<S, A>(
 ): void {
   const core = useGraphCore();
 
-  const notHydrated = !core.hasNodeState(node);
+  const notHydrated = !core.instance.hasNodeState(node);
   if (notHydrated) {
-    core.setNodeState(node, value, false);
+    core.instance.setNodeState(node, value, false);
   }
 
   useEffect(() => {
     if (notHydrated) {
-      core.runCompute(node);
+      core.instance.runCompute(node);
     }
   }, [core, node, notHydrated]);
 }

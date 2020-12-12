@@ -26,10 +26,11 @@
  * @copyright Alexis Munsayac 2020
  */
 import { useEffect } from 'react';
-import { GraphCore, GraphNode, GraphNodeListener } from 'graph-state';
+import { GraphNode, GraphNodeListener } from 'graph-state';
+import { GraphCoreRef } from '../GraphCoreContext';
 
 export default function useGraphNodeSnapshotBase<S, A>(
-  core: GraphCore,
+  core: GraphCoreRef,
   node: GraphNode<S, A>,
   listener: GraphNodeListener<S>,
 ): void {
@@ -41,10 +42,10 @@ export default function useGraphNodeSnapshotBase<S, A>(
       }
     };
 
-    core.registerNodeListener(node, internalListener);
+    core.instance.registerNodeListener(node, internalListener);
     return () => {
       mounted = false;
-      core.unregisterNodeListener(node, internalListener);
+      core.instance.unregisterNodeListener(node, internalListener);
     };
   }, [core, node, listener]);
 }

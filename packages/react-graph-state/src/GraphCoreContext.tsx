@@ -30,8 +30,13 @@ import { createContext, MutableRefObject, useContext } from 'react';
 import OutOfGraphDomainError from './utils/OutOfGraphDomainError';
 import IllegalGraphCoreAccessError from './utils/IllegalGraphCoreAccessError';
 
+export interface GraphCoreRef {
+  instance: GraphCore;
+  batch: (cb: () => void) => void;
+}
+
 export interface GraphCoreValue {
-  value?: GraphCore;
+  value?: GraphCoreRef;
 }
 
 export const GraphCoreContext = (
@@ -48,7 +53,7 @@ export function useGraphCoreContext(): MutableRefObject<GraphCoreValue> {
   throw new OutOfGraphDomainError();
 }
 
-export function useGraphCore(): GraphCore {
+export function useGraphCore(): GraphCoreRef {
   const { current } = useGraphCoreContext();
 
   if (current.value) {
