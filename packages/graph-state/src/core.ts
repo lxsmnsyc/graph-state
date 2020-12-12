@@ -344,6 +344,10 @@ export default class GraphCore {
     actualNode.setterVersion = createNodeBaseVersion();
   }
 
+  private batched: [GraphNodeListener<any>, any][] = [];
+
+  private isBatching = 0;
+
   runDispatch<S, A = GraphNodeDraftState<S>>(
     node: GraphNode<S, A>,
     action: A,
@@ -430,12 +434,27 @@ export default class GraphCore {
     actualNode = this.getNodeInstance(node),
   ): void {
     const nodeValue = this.getNodeState(node);
+
+    const parent = this.isBatching;
+    this.isBatching = parent + 1;
+
     actualNode.dependents.forEach((dependent) => {
       this.runCompute(dependent);
     });
+
     actualNode.listeners.forEach((subscriber) => {
-      subscriber(nodeValue);
+      this.batched.push([subscriber, nodeValue]);
     });
+
+    this.isBatching = parent;
+
+    if (this.isBatching === 0) {
+      this.batched.forEach(([subscriber, value]) => {
+        subscriber(value);
+      });
+      this.batched = [];
+    }
+
     if (process.env.NODE_ENV !== 'production') {
       exposeToWindow(this.memory);
     }
