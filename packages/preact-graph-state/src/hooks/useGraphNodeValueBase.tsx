@@ -25,7 +25,7 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { useDebugValue, useMemo } from 'preact/hooks';
+import { useMemo } from 'preact/hooks';
 import { GraphCore, GraphNode } from 'graph-state';
 import useSubscription, { Subscription } from './useSubscription';
 
@@ -45,7 +45,5 @@ export default function useGraphNodeValueBase<S, A>(
     }),
     [core, node],
   );
-  const current = useSubscription(sub);
-  useDebugValue(current);
-  return current;
+  return useSubscription(sub);
 }
