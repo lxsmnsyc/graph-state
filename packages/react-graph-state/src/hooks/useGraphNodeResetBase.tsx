@@ -25,22 +25,19 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphNode } from 'graph-state';
-import { GraphCoreRef } from '../GraphCoreContext';
+import { GraphCore, GraphNode } from 'graph-state';
 import { compareArray } from '../utils/compareTuple';
 import useCallbackCondition from './useCallbackCondition';
 
 export type GraphNodeReset = () => void;
 
 export default function useGraphNodeResetBase<S, A>(
-  core: GraphCoreRef,
+  core: GraphCore,
   node: GraphNode<S, A>,
 ): GraphNodeReset {
   return useCallbackCondition(
     () => {
-      core.batch(() => {
-        core.instance.runCompute(node);
-      });
+      core.runCompute(node);
     },
     [core, node],
     compareArray,

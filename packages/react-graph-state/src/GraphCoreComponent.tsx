@@ -28,13 +28,10 @@
 import {
   memo,
   useDebugValue,
-  useEffect,
-  useState,
 } from 'react';
 import { useDisposableMemo } from 'use-dispose';
 import { GraphCore } from 'graph-state';
 import { useGraphCoreContext } from './GraphCoreContext';
-import useConstantCallback from './hooks/useConstantCallback';
 
 function useGraphCoreProcess() {
   const { current } = useGraphCoreContext();
@@ -46,26 +43,7 @@ function useGraphCoreProcess() {
     (instance) => instance.destroy(),
   );
 
-  const [state, setState] = useState<(() => void)[]>([]);
-
-  const batch = useConstantCallback((cb: () => void) => {
-    setState((prev) => [...prev, cb]);
-  });
-
-  current.value = {
-    instance: core,
-    batch,
-  };
-
-  useEffect(() => {
-    if (state.length > 0) {
-      setState([]);
-
-      state.forEach((batched) => {
-        batched();
-      });
-    }
-  }, [state]);
+  current.value = core;
 
   useDebugValue(core.memory.state);
 }

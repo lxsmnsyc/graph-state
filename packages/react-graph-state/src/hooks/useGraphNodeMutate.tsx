@@ -32,5 +32,5 @@ export default function useGraphNodeMutate<S, A>(
   node: GraphNode<S, A>,
   value: S,
 ): void {
-  useGraphCore().instance.setNodeState(node, value, false);
+  useGraphCore().setNodeState(node, value, false);
 }

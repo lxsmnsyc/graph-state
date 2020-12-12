@@ -26,23 +26,22 @@
  * @copyright Alexis Munsayac 2020
  */
 import { useDebugValue } from 'react';
-import { GraphNode } from 'graph-state';
+import { GraphCore, GraphNode } from 'graph-state';
 import useSubscription, { Subscription } from './useSubscription';
 import useMemoCondition from './useMemoCondition';
 import { compareArray } from '../utils/compareTuple';
-import { GraphCoreRef } from '../GraphCoreContext';
 
 export default function useGraphNodeValueBase<S, A>(
-  core: GraphCoreRef,
+  core: GraphCore,
   node: GraphNode<S, A>,
 ): S {
   const sub = useMemoCondition(
     (): Subscription<S> => ({
-      read: () => core.instance.getNodeState(node),
+      read: () => core.getNodeState(node),
       subscribe: (handler) => {
-        core.instance.registerNodeListener(node, handler);
+        core.registerNodeListener(node, handler);
         return () => {
-          core.instance.unregisterNodeListener(node, handler);
+          core.unregisterNodeListener(node, handler);
         };
       },
     }),
