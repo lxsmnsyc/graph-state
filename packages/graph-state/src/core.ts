@@ -219,7 +219,7 @@ export default class GraphCore {
 
     if (currentState) {
       currentState.value = value;
-      currentState.value += 1;
+      currentState.version += 1;
     } else {
       this.memory.state.set(node.key, {
         version: 0,
@@ -416,7 +416,6 @@ export default class GraphCore {
     this.setNodeState(
       node,
       this.computeNode(node, actualNode),
-      true,
     );
   }
 
