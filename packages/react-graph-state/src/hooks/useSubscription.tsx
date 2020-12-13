@@ -162,6 +162,7 @@ export default function useSubscription<T>({
     && prevShouldUpdate !== shouldUpdate
   ) {
     currentValue = read();
+    state.current = currentValue;
   }
 
   useDebugValue(currentValue);
