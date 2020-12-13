@@ -91,7 +91,7 @@ function createNodeValue<S, A = GraphNodeDraftState<S>>(
     : node.get;
 }
 
-function createNodeVersion(): GraphNodeVersion {
+function createNodeGetterVersion(): GraphNodeVersion {
   return {
     alive: true,
     dependencies: new Set(),
@@ -99,7 +99,7 @@ function createNodeVersion(): GraphNodeVersion {
   };
 }
 
-function createNodeBaseVersion(): GraphNodeBaseVersion {
+function createNodeSetterVersion(): GraphNodeBaseVersion {
   return {
     alive: true,
   };
@@ -172,14 +172,8 @@ export default class GraphCore {
     if (!currentNode) {
       const baseNode: GraphNodeInstance<S> = {
         version: 0,
-        getterVersion: {
-          alive: true,
-          dependencies: new Set(),
-          cleanups: [],
-        },
-        setterVersion: {
-          alive: true,
-        },
+        getterVersion: createNodeGetterVersion(),
+        setterVersion: createNodeSetterVersion(),
         listeners: new Set(),
         dependents: new Set(),
       };
@@ -330,7 +324,7 @@ export default class GraphCore {
     });
     actualNode.getterVersion.alive = false;
     actualNode.version += 1;
-    actualNode.getterVersion = createNodeVersion();
+    actualNode.getterVersion = createNodeGetterVersion();
   }
 
   deprecateNodeSetterVersion<S, A = GraphNodeDraftState<S>>(
@@ -338,7 +332,7 @@ export default class GraphCore {
     actualNode = this.getNodeInstance(node),
   ): void {
     actualNode.setterVersion.alive = false;
-    actualNode.setterVersion = createNodeBaseVersion();
+    actualNode.setterVersion = createNodeSetterVersion();
   }
 
   private batched: [GraphNodeListener<any>, any][] = [];
