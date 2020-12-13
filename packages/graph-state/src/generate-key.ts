@@ -26,5 +26,5 @@
  * @copyright Alexis Munsayac 2020
  */
 export default function generateKey(): string {
-  return `${Math.random().toString(36).substr(2, 9)}`;
+  return `${Math.random().toString(36).substr(2, 9)}-${Date.now().toString(36).substr(2, 9)}`;
 }
