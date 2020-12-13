@@ -25,20 +25,20 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphCore } from 'graph-state';
+import { GraphDomainMemory } from 'graph-state';
 import { createContext, MutableRefObject, useContext } from 'react';
 import OutOfGraphDomainError from './utils/OutOfGraphDomainError';
 import IllegalGraphCoreAccessError from './utils/IllegalGraphCoreAccessError';
 
 export interface GraphCoreValue {
-  value?: GraphCore;
+  value?: GraphDomainMemory;
 }
 
 export const GraphCoreContext = (
   createContext<MutableRefObject<GraphCoreValue> | undefined>(undefined)
 );
 
-export function useGraphCoreContext(): MutableRefObject<GraphCoreValue> {
+export function useGraphDomainContext(): MutableRefObject<GraphCoreValue> {
   const context = useContext(GraphCoreContext);
 
   if (context) {
@@ -48,8 +48,8 @@ export function useGraphCoreContext(): MutableRefObject<GraphCoreValue> {
   throw new OutOfGraphDomainError();
 }
 
-export function useGraphCore(): GraphCore {
-  const { current } = useGraphCoreContext();
+export function useGraphDomainMemory(): GraphDomainMemory {
+  const { current } = useGraphDomainContext();
 
   if (current.value) {
     return current.value;

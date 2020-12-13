@@ -25,21 +25,21 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphCore, GraphNode } from 'graph-state';
+import { GraphDomainMemory, GraphNode, runGraphNodeCompute } from 'graph-state';
 import { compareArray } from '../utils/compareTuple';
 import useCallbackCondition from './useCallbackCondition';
 
 export type GraphNodeReset = () => void;
 
 export default function useGraphNodeResetBase<S, A>(
-  core: GraphCore,
+  memory: GraphDomainMemory,
   node: GraphNode<S, A>,
 ): GraphNodeReset {
   return useCallbackCondition(
     () => {
-      core.runCompute(node);
+      runGraphNodeCompute(memory, node);
     },
-    [core, node],
+    [memory, node],
     compareArray,
   );
 }

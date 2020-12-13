@@ -27,13 +27,13 @@
  */
 import { GraphNode } from 'graph-state';
 import { useDebugValue } from 'react';
-import { useGraphCore } from '../GraphCoreContext';
+import { useGraphDomainMemory } from '../GraphDomainContext';
 import useGraphNodeDispatchBase, { GraphNodeDispatch } from './useGraphNodeDispatchBase';
 
 export default function useGraphNodeDispatch<S, A>(
   node: GraphNode<S, A>,
 ): GraphNodeDispatch<A> {
-  const dispatch = useGraphNodeDispatchBase(useGraphCore(), node);
+  const dispatch = useGraphNodeDispatchBase(useGraphDomainMemory(), node);
   useDebugValue(dispatch);
   return dispatch;
 }

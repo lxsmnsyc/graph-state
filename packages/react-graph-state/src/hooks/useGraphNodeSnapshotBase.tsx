@@ -26,10 +26,15 @@
  * @copyright Alexis Munsayac 2020
  */
 import { useEffect } from 'react';
-import { GraphCore, GraphNode, GraphNodeListener } from 'graph-state';
+import {
+  GraphDomainMemory,
+  GraphNode,
+  GraphNodeListener,
+  subscribeGraphNode,
+} from 'graph-state';
 
 export default function useGraphNodeSnapshotBase<S, A>(
-  core: GraphCore,
+  memory: GraphDomainMemory,
   node: GraphNode<S, A>,
   listener: GraphNodeListener<S>,
 ): void {
@@ -41,10 +46,10 @@ export default function useGraphNodeSnapshotBase<S, A>(
       }
     };
 
-    const unsubscribe = core.subscribe(node, internalListener);
+    const unsubscribe = subscribeGraphNode(memory, node, internalListener);
     return () => {
       mounted = false;
       unsubscribe();
     };
-  }, [core, node, listener]);
+  }, [memory, node, listener]);
 }

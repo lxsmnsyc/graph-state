@@ -26,8 +26,8 @@
  * @copyright Alexis Munsayac 2020
  */
 import React, { ReactNode, useRef } from 'react';
-import GraphCoreComponent from './GraphCoreComponent';
-import { GraphCoreValue, GraphCoreContext } from './GraphCoreContext';
+import GraphCoreComponent from './GraphDomainCore';
+import { GraphCoreValue, GraphCoreContext } from './GraphDomainContext';
 
 export interface GraphDomainProps {
   children?: ReactNode;

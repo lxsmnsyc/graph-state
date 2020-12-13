@@ -29,30 +29,32 @@ import {
   memo,
   useDebugValue,
 } from 'react';
+import {
+  createGraphDomainMemory,
+  destroyGraphDomainMemory,
+  GraphDomainMemory,
+} from 'graph-state';
 import { useDisposableMemo } from 'use-dispose';
-import { GraphCore } from 'graph-state';
-import { useGraphCoreContext } from './GraphCoreContext';
+import { useGraphDomainContext } from './GraphDomainContext';
 
-function useGraphCoreProcess() {
-  const { current } = useGraphCoreContext();
+function useGraphDomainCore() {
+  const { current } = useGraphDomainContext();
 
-  const core = useDisposableMemo<GraphCore>(
-    () => new GraphCore(),
+  const memory = useDisposableMemo<GraphDomainMemory>(
+    () => createGraphDomainMemory(),
     // Component renders twice before side-effects and commits run.
     // Dispose the current memory to prevent leaks to external sources.
-    (instance) => instance.destroy(),
+    (instance) => destroyGraphDomainMemory(instance),
   );
 
-  current.value = core;
+  current.value = memory;
 
-  useDebugValue(core.memory.state);
+  useDebugValue(memory.state);
 }
 
-function GraphCoreProcess(): null {
-  useGraphCoreProcess();
+const GraphDomainCore = memo(() => {
+  useGraphDomainCore();
   return null;
-}
+}, () => true);
 
-const GraphCoreComponent = memo(GraphCoreProcess, () => true);
-
-export default GraphCoreComponent;
+export default GraphDomainCore;

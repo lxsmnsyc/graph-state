@@ -29,7 +29,13 @@
 // import useSubscription, { Subscription } from './useSubscription';
 // import useMemoCondition from './useMemoCondition';
 // import { compareArray } from '../utils/compareTuple';
-import { GraphCore, GraphNode } from 'graph-state';
+import {
+  getGraphNodeState,
+  getGraphNodeVersion,
+  GraphDomainMemory,
+  GraphNode,
+  subscribeGraphNode,
+} from 'graph-state';
 import { useEffect } from 'react';
 import { compareArray } from '../utils/compareTuple';
 import useCallbackCondition from './useCallbackCondition';
@@ -51,33 +57,33 @@ import useSubscription from './useSubscription';
 //   return useSubscription(sub);
 // }
 export default function useGraphNodeValueBase<S, A>(
-  core: GraphCore,
+  memory: GraphDomainMemory,
   node: GraphNode<S, A>,
 ): S {
   const lastVersion = useFreshLazyRef(
     () => 0,
-    [core, node],
+    [memory, node],
     compareArray,
   );
 
-  const versionDiff = core.getVersion(node) - lastVersion.current;
+  const versionDiff = getGraphNodeVersion(memory, node) - lastVersion.current;
 
   const read = useCallbackCondition(
-    () => core.getNodeState(node),
-    [core, node, versionDiff],
+    () => getGraphNodeState(memory, node),
+    [memory, node, versionDiff],
     compareArray,
   );
   const subscribe = useCallbackCondition(
-    (handler: () => void) => core.subscribe(node, () => {
-      lastVersion.current = core.getVersion(node);
+    (handler: () => void) => subscribeGraphNode(memory, node, () => {
+      lastVersion.current = getGraphNodeVersion(memory, node);
       handler();
     }),
-    [core, node],
+    [memory, node],
     compareArray,
   );
 
   useEffect(() => {
-    lastVersion.current = core.getVersion(node);
+    lastVersion.current = getGraphNodeVersion(memory, node);
   });
 
   return useSubscription({ read, subscribe });

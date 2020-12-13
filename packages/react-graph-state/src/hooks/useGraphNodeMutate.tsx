@@ -25,12 +25,12 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphNode } from 'graph-state';
-import { useGraphCore } from '../GraphCoreContext';
+import { GraphNode, setGraphNodeState } from 'graph-state';
+import { useGraphDomainMemory } from '../GraphDomainContext';
 
 export default function useGraphNodeMutate<S, A>(
   node: GraphNode<S, A>,
   value: S,
 ): void {
-  useGraphCore().setNodeState(node, value, false);
+  setGraphNodeState(useGraphDomainMemory(), node, value, false);
 }
