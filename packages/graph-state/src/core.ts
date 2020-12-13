@@ -52,7 +52,6 @@ export type GraphNodeListener<T> = (value: T) => void;
 export type GraphNodeListeners<T> = Set<GraphNodeListener<T>>;
 
 export interface GraphNodeInstance<T> {
-  version: number;
   getterVersion: GraphNodeVersion;
   setterVersion: GraphNodeBaseVersion;
   listeners: GraphNodeListeners<T>;
@@ -60,6 +59,7 @@ export interface GraphNodeInstance<T> {
 }
 
 export interface GraphNodeState<T> {
+  version: number;
   value: T;
 }
 export type GraphNodeInstanceMap = Map<GraphNodeKey, GraphNodeInstance<any>>;
@@ -171,7 +171,6 @@ export default class GraphCore {
 
     if (!currentNode) {
       const baseNode: GraphNodeInstance<S> = {
-        version: 0,
         getterVersion: createNodeGetterVersion(),
         setterVersion: createNodeSetterVersion(),
         listeners: new Set(),
@@ -186,38 +185,44 @@ export default class GraphCore {
     return currentNode;
   }
 
-  getNodeState<S, A = GraphNodeDraftState<S>>(
+  getNodeStateRef<S, A = GraphNodeDraftState<S>>(
     node: GraphNode<S, A>,
-  ): S {
+  ): GraphNodeState<S> {
     const currentState = this.memory.state.get(node.key);
 
     if (currentState) {
-      return currentState.value;
+      return currentState;
     }
 
     const newState = {
+      version: 0,
       value: this.computeNode(node),
     };
 
     this.memory.state.set(node.key, newState);
 
-    return newState.value;
+    return newState;
+  }
+
+  getNodeState<S, A = GraphNodeDraftState<S>>(
+    node: GraphNode<S, A>,
+  ): S {
+    return this.getNodeStateRef(node).value;
   }
 
   setNodeState<S, A = GraphNodeDraftState<S>>(
     node: GraphNode<S, A>,
     value: S,
     notify = true,
-    actualNode = this.getNodeInstance(node),
   ): void {
-    actualNode.version += 1;
-
     const currentState = this.memory.state.get(node.key);
 
     if (currentState) {
       currentState.value = value;
+      currentState.value += 1;
     } else {
       this.memory.state.set(node.key, {
+        version: 0,
         value,
       });
     }
@@ -251,7 +256,7 @@ export default class GraphCore {
         },
         mutateSelf: (value) => {
           if (getterVersion.alive) {
-            this.setNodeState(node, value, true, actualNode);
+            this.setNodeState(node, value);
           }
         },
         setSelf: (action: A) => {
@@ -374,7 +379,7 @@ export default class GraphCore {
         },
         mutateSelf: (targetValue) => {
           if (setterVersion.alive) {
-            this.setNodeState(node, targetValue, true, actualNode);
+            this.setNodeState(node, targetValue);
           }
         },
         reset: (target) => {
@@ -391,8 +396,6 @@ export default class GraphCore {
           action as unknown as GraphNodeDraftState<S>,
           currentState,
         ),
-        true,
-        actualNode,
       );
     }
   }
@@ -414,7 +417,6 @@ export default class GraphCore {
       node,
       this.computeNode(node, actualNode),
       true,
-      actualNode,
     );
   }
 
@@ -477,6 +479,6 @@ export default class GraphCore {
   getVersion<S, A = GraphNodeDraftState<S>>(
     node: GraphNode<S, A>,
   ): number {
-    return this.getNodeInstance(node).version;
+    return this.getNodeStateRef(node).version;
   }
 }
