@@ -207,14 +207,15 @@ export default class GraphCore {
   setNodeState<S, A = GraphNodeDraftState<S>>(
     node: GraphNode<S, A>,
     value: S,
-    notify = true,
+    retainDependencies = false,
     actualNode = this.getNodeInstance(node),
+    notify = true,
   ): void {
     /**
      * Clean the previous version to prevent
      * asynchronous dependency registration.
      */
-    this.deprecateNodeGetterVersion(node, actualNode);
+    this.deprecateNodeGetterVersion(node, retainDependencies, actualNode);
 
     const currentState = this.memory.state.get(node.key);
 
@@ -226,7 +227,7 @@ export default class GraphCore {
       });
     }
 
-    this.runUpdate(node, notify);
+    this.runUpdate(node, notify, actualNode);
   }
 
   computeNode<S, A = GraphNodeDraftState<S>>(
@@ -250,12 +251,12 @@ export default class GraphCore {
         },
         mutate: (target, value) => {
           if (getterVersion.alive) {
-            this.setNodeState(target, value);
+            this.setNodeState(target, value, true);
           }
         },
         mutateSelf: (value) => {
           if (getterVersion.alive) {
-            this.setNodeState(node, value);
+            this.setNodeState(node, value, true);
           }
         },
         setSelf: (action: A) => {
@@ -321,10 +322,16 @@ export default class GraphCore {
 
   deprecateNodeGetterVersion<S, A = GraphNodeDraftState<S>>(
     node: GraphNode<S, A>,
+    retainDependencies = false,
     actualNode = this.getNodeInstance(node),
   ): void {
+    const newVersion = createNodeGetterVersion();
     actualNode.getterVersion.dependencies.forEach((dependency) => {
       this.unregisterNodeDependency(dependency, node);
+
+      if (retainDependencies) {
+        newVersion.dependencies.add(dependency);
+      }
     });
     actualNode.getterVersion.cleanups.forEach((cleanup) => {
       cleanup();
@@ -369,17 +376,17 @@ export default class GraphCore {
         },
         setSelf: (targetAction) => {
           if (setterVersion.alive) {
-            this.runDispatch(node, targetAction);
+            this.runDispatch(node, targetAction, actualNode);
           }
         },
         mutate: (target, targetValue) => {
           if (setterVersion.alive) {
-            this.setNodeState(target, targetValue);
+            this.setNodeState(target, targetValue, true);
           }
         },
         mutateSelf: (targetValue) => {
           if (setterVersion.alive) {
-            this.setNodeState(node, targetValue);
+            this.setNodeState(node, targetValue, true, actualNode);
           }
         },
         reset: (target) => {
@@ -396,6 +403,8 @@ export default class GraphCore {
           action as unknown as GraphNodeDraftState<S>,
           currentState,
         ),
+        true,
+        actualNode,
       );
     }
   }
@@ -411,6 +420,8 @@ export default class GraphCore {
     this.setNodeState(
       node,
       this.computeNode(node, actualNode),
+      false,
+      actualNode,
     );
   }
 
