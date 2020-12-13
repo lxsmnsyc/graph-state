@@ -11,6 +11,10 @@ module.exports = {
     "@typescript-eslint/no-unsafe-assignment": "off",
     "@typescript-eslint/no-unsafe-return": "off",
     "no-param-reassign": "off",
+    "@typescript-eslint/no-use-before-define": ["error", {
+      "functions": false,
+      "classes": true,
+    }]
   },
 };
 

@@ -27,5 +27,3 @@
  */
 export * from './graph-node';
 export * from './core';
-
-export { default as GraphCore } from './core';
