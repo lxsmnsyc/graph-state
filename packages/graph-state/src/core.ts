@@ -207,15 +207,10 @@ export default class GraphCore {
   setNodeState<S, A = GraphNodeDraftState<S>>(
     node: GraphNode<S, A>,
     value: S,
-    retainDependencies = false,
-    actualNode = this.getNodeInstance(node),
     notify = true,
+    actualNode = this.getNodeInstance(node),
   ): void {
-    /**
-     * Clean the previous version to prevent
-     * asynchronous dependency registration.
-     */
-    this.deprecateNodeGetterVersion(node, retainDependencies, actualNode);
+    actualNode.version += 1;
 
     const currentState = this.memory.state.get(node.key);
 
@@ -227,7 +222,7 @@ export default class GraphCore {
       });
     }
 
-    this.runUpdate(node, notify, actualNode);
+    this.runUpdate(node, notify);
   }
 
   computeNode<S, A = GraphNodeDraftState<S>>(
@@ -251,18 +246,18 @@ export default class GraphCore {
         },
         mutate: (target, value) => {
           if (getterVersion.alive) {
-            this.setNodeState(target, value, true);
+            this.setNodeState(target, value);
           }
         },
         mutateSelf: (value) => {
           if (getterVersion.alive) {
-            this.setNodeState(node, value, true);
+            this.setNodeState(node, value, true, actualNode);
           }
         },
         setSelf: (action: A) => {
           // If the getterVersion is still alive, schedule a state update.
           if (getterVersion.alive) {
-            this.runDispatch(node, action);
+            this.runDispatch(node, action, actualNode);
           }
         },
         set: (target, action) => {
@@ -322,22 +317,15 @@ export default class GraphCore {
 
   deprecateNodeGetterVersion<S, A = GraphNodeDraftState<S>>(
     node: GraphNode<S, A>,
-    retainDependencies = false,
     actualNode = this.getNodeInstance(node),
   ): void {
-    const newVersion = createNodeGetterVersion();
     actualNode.getterVersion.dependencies.forEach((dependency) => {
       this.unregisterNodeDependency(dependency, node);
-
-      if (retainDependencies) {
-        newVersion.dependencies.add(dependency);
-      }
     });
     actualNode.getterVersion.cleanups.forEach((cleanup) => {
       cleanup();
     });
     actualNode.getterVersion.alive = false;
-    actualNode.version += 1;
     actualNode.getterVersion = createNodeGetterVersion();
   }
 
@@ -363,7 +351,7 @@ export default class GraphCore {
 
     if (node.set) {
       // Deprecate setter version
-      this.deprecateNodeSetterVersion(node);
+      this.deprecateNodeSetterVersion(node, actualNode);
 
       const { setterVersion } = actualNode;
       // Run the node setter for further effects
@@ -381,7 +369,7 @@ export default class GraphCore {
         },
         mutate: (target, targetValue) => {
           if (setterVersion.alive) {
-            this.setNodeState(target, targetValue, true);
+            this.setNodeState(target, targetValue);
           }
         },
         mutateSelf: (targetValue) => {
@@ -414,13 +402,18 @@ export default class GraphCore {
     actualNode = this.getNodeInstance(node),
   ): void {
     /**
+     * Clean the previous version to prevent
+     * asynchronous dependency registration.
+     */
+    this.deprecateNodeGetterVersion(node, actualNode);
+    /**
      * Set the new node value by recomputing the node.
      * This may recursively compute.
      */
     this.setNodeState(
       node,
       this.computeNode(node, actualNode),
-      false,
+      true,
       actualNode,
     );
   }
