@@ -77,6 +77,13 @@ export function createGraphDomainMemory(): GraphDomainMemory {
   };
 }
 
+function ensure<T>(value: T | undefined): T {
+  if (value == null) {
+    throw new Error('Unable to return a nullish value.');
+  }
+  return value;
+}
+
 function isNodeValueFunc<S, A = GraphNodeDraftState<S>>(
   nodeValue: GraphNodeGet<S, A>,
 ): nodeValue is GraphNodeGetSupplier<S, A> {
@@ -144,7 +151,7 @@ function parseGraphDomainMemory(
 ): GraphNodeDebugData[] {
   return Array.from(memory.nodes).map(([key, value]) => ({
     id: key,
-    state: memory.state.get(key)?.value,
+    state: ensure(memory.state.get(key)).value,
     dependents: parseDependencies(value.dependents),
     dependencies: parseDependencies(value.getterVersion.dependencies),
   }));
@@ -162,22 +169,19 @@ function getGraphNodeInstance<S, A = GraphNodeDraftState<S>>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
 ): GraphNodeInstance<S> {
-  const currentNode = memory.nodes.get(node.key);
-
-  if (!currentNode) {
-    const baseNode: GraphNodeInstance<S> = {
-      getterVersion: createGraphNodeGetterVersion(),
-      setterVersion: createGraphNodeSetterVersion(),
-      listeners: new Set(),
-      dependents: new Set(),
-    };
-
-    memory.nodes.set(node.key, baseNode);
-
-    return baseNode;
+  if (memory.nodes.has(node.key)) {
+    return ensure(memory.nodes.get(node.key));
   }
+  const baseNode: GraphNodeInstance<S> = {
+    getterVersion: createGraphNodeGetterVersion(),
+    setterVersion: createGraphNodeSetterVersion(),
+    listeners: new Set(),
+    dependents: new Set(),
+  };
 
-  return currentNode;
+  memory.nodes.set(node.key, baseNode);
+
+  return baseNode;
 }
 
 function registerGraphNodeDependency<S, A, R, T>(
@@ -292,10 +296,8 @@ function getGraphNodeStateRef<S, A = GraphNodeDraftState<S>>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
 ): GraphNodeState<S> {
-  const currentState = memory.state.get(node.key);
-
-  if (currentState) {
-    return currentState;
+  if (memory.state.has(node.key)) {
+    return ensure(memory.state.get(node.key));
   }
 
   const newState = {
@@ -433,11 +435,10 @@ export function setGraphNodeState<S, A = GraphNodeDraftState<S>>(
   value: S,
   notify = true,
 ): void {
-  const currentState = memory.state.get(node.key);
-
-  if (currentState) {
-    currentState.value = value;
-    currentState.version += 1;
+  if (memory.state.has(node.key)) {
+    const state = ensure(memory.state.get(node.key));
+    state.value = value;
+    state.version += 1;
   } else {
     memory.state.set(node.key, {
       version: 0,
