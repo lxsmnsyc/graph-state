@@ -52,7 +52,8 @@ export type GraphNodeListener<T> = (value: T) => void;
 export type GraphNodeListeners<T> = Set<GraphNodeListener<T>>;
 
 export interface GraphNodeInstance<T> {
-  version: GraphNodeVersion;
+  version: number;
+  getterVersion: GraphNodeVersion;
   setterVersion: GraphNodeBaseVersion;
   listeners: GraphNodeListeners<T>;
   dependents: GraphNodeDependencies;
@@ -144,7 +145,7 @@ function parseGraphDomainMemory(
     id: key,
     state: memory.state.get(key)?.value,
     dependents: parseDependencies(value.dependents),
-    dependencies: parseDependencies(value.version.dependencies),
+    dependencies: parseDependencies(value.getterVersion.dependencies),
   }));
 }
 
@@ -170,7 +171,8 @@ export default class GraphCore {
 
     if (!currentNode) {
       const baseNode: GraphNodeInstance<S> = {
-        version: {
+        version: 0,
+        getterVersion: {
           alive: true,
           dependencies: new Set(),
           cleanups: [],
@@ -230,8 +232,8 @@ export default class GraphCore {
     node: GraphNode<S, A>,
     actualNode = this.getNodeInstance(node),
   ): S {
-    // Get the current version handle
-    const { version } = actualNode;
+    // Get the current getterVersion handle
+    const { getterVersion } = actualNode;
 
     return createNodeValue<S, A>(
       node,
@@ -239,44 +241,44 @@ export default class GraphCore {
         get: (dependency) => {
           // Read dependency state
           const currentState = this.getNodeState(dependency);
-          // If the version is still alive, register dependency
-          if (version.alive) {
+          // If the getterVersion is still alive, register dependency
+          if (getterVersion.alive) {
             this.registerNodeDependency(node, dependency, actualNode);
           }
           return currentState;
         },
         mutate: (target, value) => {
-          if (version.alive) {
+          if (getterVersion.alive) {
             this.setNodeState(target, value);
           }
         },
         mutateSelf: (value) => {
-          if (version.alive) {
+          if (getterVersion.alive) {
             this.setNodeState(node, value);
           }
         },
         setSelf: (action: A) => {
-          // If the version is still alive, schedule a state update.
-          if (version.alive) {
+          // If the getterVersion is still alive, schedule a state update.
+          if (getterVersion.alive) {
             this.runDispatch(node, action);
           }
         },
         set: (target, action) => {
-          if (version.alive) {
+          if (getterVersion.alive) {
             this.runDispatch(target, action);
           }
         },
         reset: (target) => {
-          if (version.alive) {
+          if (getterVersion.alive) {
             this.runCompute(target);
           }
         },
         subscription: (callback) => {
-          if (version.alive) {
+          if (getterVersion.alive) {
             const cleanup = callback();
 
             if (cleanup) {
-              version.cleanups.push(cleanup);
+              getterVersion.cleanups.push(cleanup);
             }
           }
         },
@@ -301,7 +303,7 @@ export default class GraphCore {
     dependency: GraphNode<R, T>,
     actualNode = this.getNodeInstance(node),
   ): void {
-    actualNode.version.dependencies.add(dependency);
+    actualNode.getterVersion.dependencies.add(dependency);
 
     this.getNodeInstance(dependency).dependents.add(node);
   }
@@ -311,26 +313,27 @@ export default class GraphCore {
     dependency: GraphNode<R, T>,
     actualNode = this.getNodeInstance(node),
   ): void {
-    actualNode.version.dependencies.delete(dependency);
+    actualNode.getterVersion.dependencies.delete(dependency);
 
     this.getNodeInstance(dependency).dependents.delete(node);
   }
 
-  deprecateNodeVersion<S, A = GraphNodeDraftState<S>>(
+  deprecateNodeGetterVersion<S, A = GraphNodeDraftState<S>>(
     node: GraphNode<S, A>,
     actualNode = this.getNodeInstance(node),
   ): void {
-    actualNode.version.dependencies.forEach((dependency) => {
+    actualNode.getterVersion.dependencies.forEach((dependency) => {
       this.unregisterNodeDependency(dependency, node);
     });
-    actualNode.version.cleanups.forEach((cleanup) => {
+    actualNode.getterVersion.cleanups.forEach((cleanup) => {
       cleanup();
     });
-    actualNode.version.alive = false;
-    actualNode.version = createNodeVersion();
+    actualNode.getterVersion.alive = false;
+    actualNode.version += 1;
+    actualNode.getterVersion = createNodeVersion();
   }
 
-  deprecateNodeBaseVersion<S, A = GraphNodeDraftState<S>>(
+  deprecateNodeSetterVersion<S, A = GraphNodeDraftState<S>>(
     node: GraphNode<S, A>,
     actualNode = this.getNodeInstance(node),
   ): void {
@@ -352,7 +355,7 @@ export default class GraphCore {
 
     if (node.set) {
       // Deprecate setter version
-      this.deprecateNodeBaseVersion(node);
+      this.deprecateNodeSetterVersion(node);
 
       const { setterVersion } = actualNode;
       // Run the node setter for further effects
@@ -404,7 +407,7 @@ export default class GraphCore {
      * Clean the previous version to prevent
      * asynchronous dependency registration.
      */
-    this.deprecateNodeVersion(node);
+    this.deprecateNodeGetterVersion(node);
     /**
      * Set the new node value by recomputing the node.
      * This may recursively compute.
@@ -451,7 +454,7 @@ export default class GraphCore {
 
   destroy(): void {
     this.memory.nodes.forEach((node) => {
-      node.version.cleanups.forEach((cleanup) => {
+      node.getterVersion.cleanups.forEach((cleanup) => {
         cleanup();
       });
     });
@@ -469,5 +472,11 @@ export default class GraphCore {
     node: GraphNode<S, A>,
   ): boolean {
     return this.memory.state.has(node.key);
+  }
+
+  getVersion<S, A = GraphNodeDraftState<S>>(
+    node: GraphNode<S, A>,
+  ): number {
+    return this.getNodeInstance(node).version;
   }
 }
