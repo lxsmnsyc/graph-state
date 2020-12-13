@@ -208,7 +208,14 @@ export default class GraphCore {
     node: GraphNode<S, A>,
     value: S,
     notify = true,
+    actualNode = this.getNodeInstance(node),
   ): void {
+    /**
+     * Clean the previous version to prevent
+     * asynchronous dependency registration.
+     */
+    this.deprecateNodeGetterVersion(node, actualNode);
+
     const currentState = this.memory.state.get(node.key);
 
     if (currentState) {
@@ -397,11 +404,6 @@ export default class GraphCore {
     node: GraphNode<S, A>,
     actualNode = this.getNodeInstance(node),
   ): void {
-    /**
-     * Clean the previous version to prevent
-     * asynchronous dependency registration.
-     */
-    this.deprecateNodeGetterVersion(node);
     /**
      * Set the new node value by recomputing the node.
      * This may recursively compute.
