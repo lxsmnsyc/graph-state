@@ -25,65 +25,22 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-// import { GraphCore, GraphNode } from 'graph-state';
-// import useSubscription, { Subscription } from './useSubscription';
-// import useMemoCondition from './useMemoCondition';
-// import { compareArray } from '../utils/compareTuple';
 import { GraphCore, GraphNode } from 'graph-state';
-import { useEffect } from 'react';
+import useSubscription, { Subscription } from './useSubscription';
+import useMemoCondition from './useMemoCondition';
 import { compareArray } from '../utils/compareTuple';
-import useCallbackCondition from './useCallbackCondition';
-import useFreshLazyRef, { defaultCompare } from './useFreshLazyRef';
-import useSubscription from './useSubscription';
 
-// export default function useGraphNodeValueBase<S, A>(
-//   core: GraphCore,
-//   node: GraphNode<S, A>,
-// ): S {
-//   const sub = useMemoCondition(
-//     (): Subscription<S> => ({
-//       read: () => core.getNodeState(node),
-//       subscribe: (handler) => core.subscribe(node, handler),
-//     }),
-//     [core, node],
-//     compareArray,
-//   );
-//   return useSubscription(sub);
-// }
 export default function useGraphNodeValueBase<S, A>(
   core: GraphCore,
   node: GraphNode<S, A>,
 ): S {
-  const lastVersion = useFreshLazyRef(
-    () => ({
-      value: core.getNodeState(node),
-      version: 0,
+  const sub = useMemoCondition(
+    (): Subscription<S> => ({
+      read: () => core.getNodeState(node),
+      subscribe: (handler) => core.subscribe(node, handler),
     }),
     [core, node],
     compareArray,
   );
-
-  if (defaultCompare(lastVersion.current.value, core.getNodeState(node))) {
-    lastVersion.current.version += 1;
-  }
-
-  const read = useCallbackCondition(
-    () => core.getNodeState(node),
-    [core, node, lastVersion.current.version],
-    compareArray,
-  );
-  const subscribe = useCallbackCondition(
-    (handler: () => void) => core.subscribe(node, () => {
-      lastVersion.current.value = core.getNodeState(node);
-      handler();
-    }),
-    [core, node],
-    compareArray,
-  );
-
-  useEffect(() => {
-    lastVersion.current.value = core.getNodeState(node);
-  });
-
-  return useSubscription({ read, subscribe });
+  return useSubscription(sub);
 }
