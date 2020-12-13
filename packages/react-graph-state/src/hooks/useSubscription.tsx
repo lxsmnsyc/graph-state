@@ -25,8 +25,10 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { useDebugValue, useEffect, useState } from 'react';
+import { useDebugValue, useEffect } from 'react';
+import useForceUpdate from './useForceUpdate';
 import { MemoCompare, defaultCompare } from './useFreshLazyRef';
+import useLazyRef from './useLazyRef';
 
 type ReadSource<T> = () => T;
 type Subscribe = (callback: () => void) => (() => void) | undefined | void;
@@ -37,69 +39,132 @@ export interface Subscription<T> {
   shouldUpdate?: MemoCompare<T>;
 }
 
+// export default function useSubscription<T>({
+//   read, subscribe, shouldUpdate = defaultCompare,
+// }: Subscription<T>): T {
+//   const [state, setState] = useState(() => ({
+//     read,
+//     subscribe,
+//     shouldUpdate,
+//     value: read(),
+//   }));
+
+//   let currentValue = state.value;
+
+//   if (
+//     state.read !== read
+//     || state.subscribe !== subscribe
+//     || state.shouldUpdate !== shouldUpdate
+//   ) {
+//     currentValue = read();
+
+//     setState({
+//       read,
+//       subscribe,
+//       shouldUpdate,
+//       value: currentValue,
+//     });
+//   }
+
+//   useDebugValue(currentValue);
+
+//   useEffect(() => {
+//     let mounted = true;
+
+//     const readCurrent = () => {
+//       if (!mounted) {
+//         return;
+//       }
+//       const nextValue = read();
+//       setState((prev) => {
+//         if (
+//           prev.read !== read
+//           || prev.subscribe !== subscribe
+//           || prev.shouldUpdate !== shouldUpdate
+//         ) {
+//           return prev;
+//         }
+//         if (!shouldUpdate(prev.value, nextValue)) {
+//           return prev;
+//         }
+//         return { ...prev, value: nextValue };
+//       });
+//     };
+
+//     const unsubscribe = subscribe(readCurrent);
+
+//     readCurrent();
+
+//     return () => {
+//       mounted = false;
+//       if (unsubscribe) {
+//         unsubscribe();
+//       }
+//     };
+//   }, [read, subscribe, shouldUpdate]);
+
+//   return currentValue;
+// }
+
 export default function useSubscription<T>({
   read, subscribe, shouldUpdate = defaultCompare,
 }: Subscription<T>): T {
-  const [state, setState] = useState(() => ({
+  const forceUpdate = useForceUpdate();
+
+  const state = useLazyRef(read);
+  const prevRefs = useLazyRef(() => ({
     read,
     subscribe,
     shouldUpdate,
-    value: read(),
   }));
 
-  let currentValue = state.value;
-
-  if (
-    state.read !== read
-    || state.subscribe !== subscribe
-    || state.shouldUpdate !== shouldUpdate
-  ) {
-    currentValue = read();
-
-    setState({
-      read,
-      subscribe,
-      shouldUpdate,
-      value: currentValue,
-    });
-  }
-
-  useDebugValue(currentValue);
+  const refs = prevRefs.current;
+  const prevRead = refs.read;
+  const prevSubscribe = refs.subscribe;
+  const prevShouldUpdate = refs.shouldUpdate;
 
   useEffect(() => {
-    let mounted = true;
+    refs.read = read;
+    refs.shouldUpdate = shouldUpdate;
 
-    const readCurrent = () => {
-      if (!mounted) {
-        return;
+    const newState = read();
+    if (shouldUpdate(state.current, newState)) {
+      state.current = newState;
+      forceUpdate();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [read, subscribe, shouldUpdate, refs]);
+
+  useEffect(() => {
+    const handleChange = () => {
+      const newState = refs.read();
+
+      if (refs.shouldUpdate(newState, state.current)) {
+        state.current = newState;
+        forceUpdate();
       }
-      const nextValue = read();
-      setState((prev) => {
-        if (
-          prev.read !== read
-          || prev.subscribe !== subscribe
-          || prev.shouldUpdate !== shouldUpdate
-        ) {
-          return prev;
-        }
-        if (!shouldUpdate(prev.value, nextValue)) {
-          return prev;
-        }
-        return { ...prev, value: nextValue };
-      });
     };
 
-    const unsubscribe = subscribe(readCurrent);
-
-    readCurrent();
+    const unsubscribe = subscribe(handleChange);
 
     return () => {
-      mounted = false;
       if (unsubscribe) {
         unsubscribe();
       }
     };
-  }, [read, subscribe, shouldUpdate]);
+  }, [subscribe, forceUpdate, refs, state]);
+
+  let currentValue = state.current;
+
+  if (
+    prevRead !== read
+    && prevSubscribe !== subscribe
+    && prevShouldUpdate !== shouldUpdate
+  ) {
+    currentValue = read();
+  }
+
+  useDebugValue(currentValue);
 
   return currentValue;
 }
