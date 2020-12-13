@@ -25,22 +25,60 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
+// import { GraphCore, GraphNode } from 'graph-state';
+// import useSubscription, { Subscription } from './useSubscription';
+// import useMemoCondition from './useMemoCondition';
+// import { compareArray } from '../utils/compareTuple';
 import { GraphCore, GraphNode } from 'graph-state';
-import useSubscription, { Subscription } from './useSubscription';
-import useMemoCondition from './useMemoCondition';
+import { useEffect } from 'react';
 import { compareArray } from '../utils/compareTuple';
+import useCallbackCondition from './useCallbackCondition';
+import useFreshLazyRef from './useFreshLazyRef';
+import useSubscription from './useSubscription';
 
+// export default function useGraphNodeValueBase<S, A>(
+//   core: GraphCore,
+//   node: GraphNode<S, A>,
+// ): S {
+//   const sub = useMemoCondition(
+//     (): Subscription<S> => ({
+//       read: () => core.getNodeState(node),
+//       subscribe: (handler) => core.subscribe(node, handler),
+//     }),
+//     [core, node],
+//     compareArray,
+//   );
+//   return useSubscription(sub);
+// }
 export default function useGraphNodeValueBase<S, A>(
   core: GraphCore,
   node: GraphNode<S, A>,
 ): S {
-  const sub = useMemoCondition(
-    (): Subscription<S> => ({
-      read: () => core.getNodeState(node),
-      subscribe: (handler) => core.subscribe(node, handler),
+  const lastVersion = useFreshLazyRef(
+    () => 0,
+    [core, node],
+    compareArray,
+  );
+
+  const versionDiff = core.getVersion(node) - lastVersion.current;
+
+  const read = useCallbackCondition(
+    () => core.getNodeState(node),
+    [core, node, versionDiff],
+    compareArray,
+  );
+  const subscribe = useCallbackCondition(
+    (handler: () => void) => core.subscribe(node, () => {
+      lastVersion.current = core.getVersion(node);
+      handler();
     }),
     [core, node],
     compareArray,
   );
-  return useSubscription(sub);
+
+  useEffect(() => {
+    lastVersion.current = core.getVersion(node);
+  });
+
+  return useSubscription({ read, subscribe });
 }
