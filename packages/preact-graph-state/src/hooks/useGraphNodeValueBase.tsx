@@ -25,20 +25,22 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { useMemo } from 'preact/hooks';
 import { GraphCore, GraphNode } from 'graph-state';
 import useSubscription, { Subscription } from './useSubscription';
+import useMemoCondition from './useMemoCondition';
+import { compareArray } from '../utils/compareTuple';
 
 export default function useGraphNodeValueBase<S, A>(
   core: GraphCore,
   node: GraphNode<S, A>,
 ): S {
-  const sub = useMemo(
+  const sub = useMemoCondition(
     (): Subscription<S> => ({
       read: () => core.getNodeState(node),
       subscribe: (handler) => core.subscribe(node, handler),
     }),
     [core, node],
+    compareArray,
   );
   return useSubscription(sub);
 }
