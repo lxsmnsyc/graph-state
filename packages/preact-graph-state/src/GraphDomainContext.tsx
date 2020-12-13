@@ -25,21 +25,20 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphCore } from 'graph-state';
-import { createContext } from 'preact';
-import { Ref, useContext } from 'preact/hooks';
+import { GraphDomainMemory } from 'graph-state';
+import { createContext, Ref, useContext } from 'preact/compat';
 import OutOfGraphDomainError from './utils/OutOfGraphDomainError';
 import IllegalGraphCoreAccessError from './utils/IllegalGraphCoreAccessError';
 
 export interface GraphCoreValue {
-  value?: GraphCore;
+  value?: GraphDomainMemory;
 }
 
 export const GraphCoreContext = (
   createContext<Ref<GraphCoreValue> | undefined>(undefined)
 );
 
-export function useGraphCoreContext(): Ref<GraphCoreValue> {
+export function useGraphDomainContext(): Ref<GraphCoreValue> {
   const context = useContext(GraphCoreContext);
 
   if (context) {
@@ -49,8 +48,8 @@ export function useGraphCoreContext(): Ref<GraphCoreValue> {
   throw new OutOfGraphDomainError();
 }
 
-export function useGraphCore(): GraphCore {
-  const { current } = useGraphCoreContext();
+export function useGraphDomainMemory(): GraphDomainMemory {
+  const { current } = useGraphDomainContext();
 
   if (current.value) {
     return current.value;

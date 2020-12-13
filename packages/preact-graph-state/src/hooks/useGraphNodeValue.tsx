@@ -27,11 +27,11 @@
  */
 import { useDebugValue } from 'preact/hooks';
 import { GraphNode } from 'graph-state';
-import { useGraphCore } from '../GraphCoreContext';
+import { useGraphDomainMemory } from '../GraphDomainContext';
 import useGraphNodeValueBase from './useGraphNodeValueBase';
 
 export default function useGraphNodeValue<S, A>(node: GraphNode<S, A>): S {
-  const current = useGraphNodeValueBase(useGraphCore(), node);
+  const current = useGraphNodeValueBase(useGraphDomainMemory(), node);
   useDebugValue(current);
   return current;
 }

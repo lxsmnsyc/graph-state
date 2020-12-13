@@ -25,32 +25,38 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { memo, useDebugValue, useEffect } from 'preact/compat';
-import { GraphCore } from 'graph-state';
-import { useGraphCoreContext } from './GraphCoreContext';
+import {
+  memo,
+  useDebugValue,
+  useEffect,
+} from 'preact/compat';
+import {
+  createGraphDomainMemory,
+  destroyGraphDomainMemory,
+  GraphDomainMemory,
+} from 'graph-state';
+import { useGraphDomainContext } from './GraphDomainContext';
 import useConstant from './hooks/useConstant';
 
-function useGraphCoreProcess() {
-  const { current } = useGraphCoreContext();
+function useGraphDomainCore() {
+  const { current } = useGraphDomainContext();
 
-  const core = useConstant<GraphCore>(
-    () => new GraphCore(),
+  const memory = useConstant<GraphDomainMemory>(
+    () => createGraphDomainMemory(),
   );
 
-  current.value = core;
+  current.value = memory;
 
-  useDebugValue(core.memory.state);
+  useDebugValue(memory.state);
 
   useEffect(() => () => {
-    core.destroy();
-  });
+    destroyGraphDomainMemory(memory);
+  }, [memory]);
 }
 
-function GraphCoreProcess(): null {
-  useGraphCoreProcess();
+const GraphDomainCore = memo(() => {
+  useGraphDomainCore();
   return null;
-}
+}, () => true);
 
-const GraphCoreComponent = memo(GraphCoreProcess, () => true);
-
-export default GraphCoreComponent;
+export default GraphDomainCore;

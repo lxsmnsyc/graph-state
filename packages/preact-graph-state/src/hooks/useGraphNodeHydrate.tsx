@@ -25,24 +25,24 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphNode } from 'graph-state';
+import { GraphNode, hasGraphNodeState, runGraphNodeCompute, setGraphNodeState } from 'graph-state';
 import { useEffect } from 'preact/hooks';
-import { useGraphCore } from '../GraphCoreContext';
+import { useGraphDomainMemory } from '../GraphDomainContext';
 
 export default function useGraphNodeHydrate<S, A>(
   node: GraphNode<S, A>,
   value: S,
 ): void {
-  const core = useGraphCore();
+  const memory = useGraphDomainMemory();
 
-  const notHydrated = !core.hasNodeState(node);
+  const notHydrated = !hasGraphNodeState(memory, node);
   if (notHydrated) {
-    core.setNodeState(node, value, false);
+    setGraphNodeState(memory, node, value, false);
   }
 
   useEffect(() => {
     if (notHydrated) {
-      core.runCompute(node);
+      runGraphNodeCompute(memory, node);
     }
-  }, [core, node, notHydrated]);
+  }, [memory, node, notHydrated]);
 }

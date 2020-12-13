@@ -25,21 +25,26 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphCore, GraphNode } from 'graph-state';
+import {
+  getGraphNodeState,
+  GraphDomainMemory,
+  GraphNode,
+  subscribeGraphNode,
+} from 'graph-state';
 import useSubscription, { Subscription } from './useSubscription';
 import useMemoCondition from './useMemoCondition';
 import { compareArray } from '../utils/compareTuple';
 
 export default function useGraphNodeValueBase<S, A>(
-  core: GraphCore,
+  memory: GraphDomainMemory,
   node: GraphNode<S, A>,
 ): S {
   const sub = useMemoCondition(
     (): Subscription<S> => ({
-      read: () => core.getNodeState(node),
-      subscribe: (handler) => core.subscribe(node, handler),
+      read: () => getGraphNodeState(memory, node),
+      subscribe: (handler) => subscribeGraphNode(memory, node, handler),
     }),
-    [core, node],
+    [memory, node],
     compareArray,
   );
   return useSubscription(sub);

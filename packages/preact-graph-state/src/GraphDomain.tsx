@@ -28,8 +28,8 @@
 /** @jsx h */
 import { ComponentChildren, h, VNode } from 'preact';
 import { useRef } from 'preact/hooks';
-import GraphCoreComponent from './GraphCoreComponent';
-import { GraphCoreValue, GraphCoreContext } from './GraphCoreContext';
+import GraphCoreComponent from './GraphDomainCore';
+import { GraphCoreValue, GraphCoreContext } from './GraphDomainContext';
 
 export interface GraphDomainProps {
   children?: ComponentChildren;
