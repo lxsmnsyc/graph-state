@@ -261,7 +261,6 @@ function computeGraphNode<S, A = GraphNodeDraftState<S>>(
         }
       },
       setSelf: (action: A) => {
-        // If the getterVersion is still alive, schedule a state update.
         if (getterVersion.alive) {
           runGraphNodeDispatch(memory, node, action, actualNode);
         }
