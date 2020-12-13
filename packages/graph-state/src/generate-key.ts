@@ -25,10 +25,6 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-let ID = 0;
-
-export default function generateKey(): number {
-  const newID = ID;
-  ID += 1;
-  return newID;
+export default function generateKey(): string {
+  return `${Math.random().toString(36).substr(2, 9)}`;
 }
