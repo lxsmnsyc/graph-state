@@ -47,7 +47,7 @@ function useGraphDomainCore() {
 
   current.value = memory;
 
-  useDebugValue(memory.state);
+  useDebugValue(memory.nodes);
 
   useEffect(() => () => {
     destroyGraphDomainMemory(memory);
