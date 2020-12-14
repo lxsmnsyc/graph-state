@@ -170,6 +170,8 @@ function getGraphNodeInstance<S, A = GraphNodeDraftState<S>>(
   if (memory.nodes.has(node.key)) {
     return ensure(memory.nodes.get(node.key));
   }
+
+  const getterVersion = createGraphNodeGetterVersion();
   const baseNode: GraphNodeInstance<S> = {
     getterVersion: createGraphNodeGetterVersion(),
     setterVersion: createGraphNodeSetterVersion(),
@@ -177,7 +179,7 @@ function getGraphNodeInstance<S, A = GraphNodeDraftState<S>>(
     dependents: new Set(),
     state: {
       version: 0,
-      value: computeGraphNode(memory, node),
+      value: computeGraphNode(memory, node, getterVersion),
     },
   };
 
@@ -235,11 +237,8 @@ function deprecateGraphNodeSetterVersion<S, A = GraphNodeDraftState<S>>(
 function computeGraphNode<S, A = GraphNodeDraftState<S>>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
-  actualNode = getGraphNodeInstance(memory, node),
+  getterVersion = getGraphNodeInstance(memory, node).getterVersion,
 ): S {
-  // Get the current getterVersion handle
-  const { getterVersion } = actualNode;
-
   return createNodeValue<S, A>(
     node,
     {
@@ -248,7 +247,7 @@ function computeGraphNode<S, A = GraphNodeDraftState<S>>(
         const currentState = getGraphNodeState(memory, dependency);
         // If the getterVersion is still alive, register dependency
         if (getterVersion.alive) {
-          registerGraphNodeDependency(memory, node, dependency, actualNode);
+          registerGraphNodeDependency(memory, node, dependency);
         }
         return currentState;
       },
@@ -264,7 +263,7 @@ function computeGraphNode<S, A = GraphNodeDraftState<S>>(
       },
       setSelf: (action: A) => {
         if (getterVersion.alive) {
-          runGraphNodeDispatch(memory, node, action, actualNode);
+          runGraphNodeDispatch(memory, node, action);
         }
       },
       set: (target, action) => {
@@ -378,7 +377,7 @@ export function runGraphNodeCompute<S, A = GraphNodeDraftState<S>>(
   setGraphNodeState(
     memory,
     node,
-    computeGraphNode(memory, node, actualNode),
+    computeGraphNode(memory, node, actualNode.getterVersion),
   );
 }
 
