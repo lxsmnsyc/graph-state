@@ -25,56 +25,27 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-// import {
-//   getGraphNodeState,
-//   GraphDomainMemory,
-//   GraphNode,
-//   subscribeGraphNode,
-// } from 'graph-state';
-// import useSubscription, { Subscription } from './useSubscription';
-// import useMemoCondition from './useMemoCondition';
-// import { compareArray } from '../utils/compareTuple';
-
 import {
   getGraphNodeState,
   GraphDomainMemory,
   GraphNode,
   subscribeGraphNode,
 } from 'graph-state';
-import { useEffect, useMemo, useState } from 'react';
-
-// export default function useGraphNodeValueBase<S, A>(
-//   memory: GraphDomainMemory,
-//   node: GraphNode<S, A>,
-// ): S {
-//   const sub = useMemoCondition(
-//     (): Subscription<S> => ({
-//       read: () => getGraphNodeState(memory, node),
-//       subscribe: (handler) => subscribeGraphNode(memory, node, handler),
-//     }),
-//     [memory, node],
-//     compareArray,
-//   );
-//   return useSubscription(sub);
-// }
+import useSubscription, { Subscription } from './useSubscription';
+import useMemoCondition from './useMemoCondition';
+import { compareArray } from '../utils/compareTuple';
 
 export default function useGraphNodeValueBase<S, A>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
 ): S {
-  const [state, setState] = useState(() => getGraphNodeState(memory, node));
-
-  useMemo(() => {
-    setState(getGraphNodeState(memory, node));
-  }, [memory, node]);
-
-  useEffect(() => {
-    setState(getGraphNodeState(memory, node));
-
-    const unsubscribe = subscribeGraphNode(memory, node, setState);
-
-    return unsubscribe;
-  }, [memory, node]);
-
-  return state;
+  const sub = useMemoCondition(
+    (): Subscription<S> => ({
+      read: () => getGraphNodeState(memory, node),
+      subscribe: (handler) => subscribeGraphNode(memory, node, handler),
+    }),
+    [memory, node],
+    compareArray,
+  );
+  return useSubscription(sub);
 }

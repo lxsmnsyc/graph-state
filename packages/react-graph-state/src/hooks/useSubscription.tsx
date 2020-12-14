@@ -89,9 +89,9 @@ export default function useSubscription<T>({
       });
     };
 
-    readCurrent();
-
     const unsubscribe = subscribe(readCurrent);
+
+    readCurrent();
 
     return () => {
       mounted = false;
