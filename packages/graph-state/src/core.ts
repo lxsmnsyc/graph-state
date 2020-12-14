@@ -65,13 +65,23 @@ export interface GraphNodeInstance<T> {
 
 export type GraphNodeInstanceMap = Map<GraphNodeKey, GraphNodeInstance<any>>;
 
+export type Batcher = (callback: () => void) => void;
+
 export interface GraphDomainMemory {
   nodes: GraphNodeInstanceMap;
+  batcher: Batcher;
 }
 
-export function createGraphDomainMemory(): GraphDomainMemory {
+function defaultBatcher(callback: () => void): void {
+  callback();
+}
+
+export function createGraphDomainMemory(
+  batcher: Batcher = defaultBatcher,
+): GraphDomainMemory {
   return {
     nodes: new Map(),
+    batcher,
   };
 }
 
@@ -410,10 +420,12 @@ export function runGraphNodeUpdate<S, A = GraphNodeDraftState<S>>(
   effectStack = parent;
 
   if (parent === 0) {
-    traverseEffects();
-    if (process.env.NODE_ENV !== 'production') {
-      exposeToWindow(memory);
-    }
+    memory.batcher(() => {
+      traverseEffects();
+      if (process.env.NODE_ENV !== 'production') {
+        exposeToWindow(memory);
+      }
+    });
   }
 }
 

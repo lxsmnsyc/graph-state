@@ -28,24 +28,40 @@
 import {
   memo,
   useDebugValue,
+  useEffect,
+  useState,
 } from 'react';
 import {
   createGraphDomainMemory,
   destroyGraphDomainMemory,
   GraphDomainMemory,
+  Batcher,
 } from 'graph-state';
 import { useDisposableMemo } from 'use-dispose';
 import { useGraphDomainContext } from './GraphDomainContext';
+import useConstantCallback from './hooks/useConstantCallback';
 
 function useGraphDomainCore() {
   const { current } = useGraphDomainContext();
 
+  const [batcher, setBatcher] = useState<() => void>();
+
+  const batchUpdate = useConstantCallback<Batcher>((callback) => {
+    setBatcher(() => callback);
+  });
+
   const memory = useDisposableMemo<GraphDomainMemory>(
-    () => createGraphDomainMemory(),
+    () => createGraphDomainMemory(batchUpdate),
     // Component renders twice before side-effects and commits run.
     // Dispose the current memory to prevent leaks to external sources.
     (instance) => destroyGraphDomainMemory(instance),
   );
+
+  useEffect(() => {
+    if (batcher) {
+      batcher();
+    }
+  }, [batcher]);
 
   current.value = memory;
 
