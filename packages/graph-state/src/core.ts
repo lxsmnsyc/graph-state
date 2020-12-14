@@ -51,29 +51,27 @@ export interface GraphNodeVersion extends GraphNodeBaseVersion {
 export type GraphNodeListener<T> = (value: T) => void;
 export type GraphNodeListeners<T> = Set<GraphNodeListener<T>>;
 
-export interface GraphNodeInstance<T> {
-  getterVersion: GraphNodeVersion;
-  setterVersion: GraphNodeBaseVersion;
-  listeners: GraphNodeListeners<T>;
-  dependents: GraphNodeDependencies;
-}
-
 export interface GraphNodeState<T> {
   version: number;
   value: T;
 }
+export interface GraphNodeInstance<T> {
+  getterVersion: GraphNodeVersion;
+  setterVersion: GraphNodeBaseVersion;
+  listeners: GraphNodeListeners<T>;
+  state: GraphNodeState<T>;
+  dependents: GraphNodeDependencies;
+}
+
 export type GraphNodeInstanceMap = Map<GraphNodeKey, GraphNodeInstance<any>>;
-export type GraphNodeStateMap = Map<GraphNodeKey, GraphNodeState<any>>;
 
 export interface GraphDomainMemory {
   nodes: GraphNodeInstanceMap;
-  state: GraphNodeStateMap;
 }
 
 export function createGraphDomainMemory(): GraphDomainMemory {
   return {
     nodes: new Map(),
-    state: new Map(),
   };
 }
 
@@ -151,7 +149,7 @@ function parseGraphDomainMemory(
 ): GraphNodeDebugData[] {
   return Array.from(memory.nodes).map(([key, value]) => ({
     id: key,
-    state: ensure(memory.state.get(key)).value,
+    state: value.state.value,
     dependents: parseDependencies(value.dependents),
     dependencies: parseDependencies(value.getterVersion.dependencies),
   }));
@@ -177,6 +175,10 @@ function getGraphNodeInstance<S, A = GraphNodeDraftState<S>>(
     setterVersion: createGraphNodeSetterVersion(),
     listeners: new Set(),
     dependents: new Set(),
+    state: {
+      version: 0,
+      value: computeGraphNode(memory, node),
+    },
   };
 
   memory.nodes.set(node.key, baseNode);
@@ -291,19 +293,9 @@ function computeGraphNode<S, A = GraphNodeDraftState<S>>(
 function getGraphNodeStateRef<S, A = GraphNodeDraftState<S>>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
+  actualNode = getGraphNodeInstance(memory, node),
 ): GraphNodeState<S> {
-  if (memory.state.has(node.key)) {
-    return ensure(memory.state.get(node.key));
-  }
-
-  const newState = {
-    version: 0,
-    value: computeGraphNode(memory, node),
-  };
-
-  memory.state.set(node.key, newState);
-
-  return newState;
+  return actualNode.state;
 }
 
 export function getGraphNodeState<S, A = GraphNodeDraftState<S>>(
@@ -439,17 +431,10 @@ export function setGraphNodeState<S, A = GraphNodeDraftState<S>>(
   node: GraphNode<S, A>,
   value: S,
   notify = true,
+  actualNode = getGraphNodeInstance(memory, node),
 ): void {
-  if (memory.state.has(node.key)) {
-    const state = ensure(memory.state.get(node.key));
-    state.value = value;
-    state.version += 1;
-  } else {
-    memory.state.set(node.key, {
-      version: 0,
-      value,
-    });
-  }
+  actualNode.state.value = value;
+  actualNode.state.version += 1;
 
   runGraphNodeUpdate(memory, node, notify);
 }
@@ -490,7 +475,7 @@ export function hasGraphNodeState<S, A = GraphNodeDraftState<S>>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
 ): boolean {
-  return memory.state.has(node.key);
+  return hasGraphNode(memory, node);
 }
 
 export function getGraphNodeVersion<S, A = GraphNodeDraftState<S>>(
