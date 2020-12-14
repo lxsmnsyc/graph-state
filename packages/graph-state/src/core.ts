@@ -420,8 +420,12 @@ export function runGraphNodeUpdate<S, A = GraphNodeDraftState<S>>(
   effectStack = parent;
 
   if (parent === 0) {
+    const currentEffectQueue = effectQueue;
     memory.batcher(() => {
+      const prevQueue = effectQueue;
+      effectQueue = currentEffectQueue;
       traverseEffects();
+      effectQueue = prevQueue;
       if (process.env.NODE_ENV !== 'production') {
         exposeToWindow(memory);
       }
