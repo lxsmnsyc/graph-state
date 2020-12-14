@@ -44,10 +44,13 @@ import useConstantCallback from './hooks/useConstantCallback';
 function useGraphDomainCore() {
   const { current } = useGraphDomainContext();
 
-  const [batcher, setBatcher] = useState<(() => void) | undefined>(undefined);
+  const [batcher, setBatcher] = useState<(() => void)[]>([]);
 
   const batchUpdate = useConstantCallback<Batcher>((callback) => {
-    setBatcher(() => callback);
+    setBatcher((prev) => [
+      ...prev,
+      callback,
+    ]);
   });
 
   const memory = useConstant<GraphDomainMemory>(
@@ -57,9 +60,10 @@ function useGraphDomainCore() {
   current.value = memory;
 
   useEffect(() => {
-    if (batcher) {
-      batcher();
-    }
+    setBatcher([]);
+    batcher.forEach((update) => {
+      update();
+    });
   }, [batcher]);
 
   useDebugValue(memory.nodes);
