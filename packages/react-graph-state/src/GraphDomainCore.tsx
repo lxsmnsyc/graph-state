@@ -61,10 +61,12 @@ function useGraphDomainCore() {
   );
 
   useEffect(() => {
-    setBatcher([]);
-    batcher.forEach((update) => {
-      update();
-    });
+    if (batcher.length > 0) {
+      setBatcher([]);
+      batcher.forEach((update) => {
+        update();
+      });
+    }
   }, [batcher]);
 
   current.value = memory;
