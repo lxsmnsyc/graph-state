@@ -173,7 +173,7 @@ function getGraphNodeInstance<S, A = GraphNodeDraftState<S>>(
 
   const getterVersion = createGraphNodeGetterVersion();
   const baseNode: GraphNodeInstance<S> = {
-    getterVersion: createGraphNodeGetterVersion(),
+    getterVersion,
     setterVersion: createGraphNodeSetterVersion(),
     listeners: new Set(),
     dependents: new Set(),
