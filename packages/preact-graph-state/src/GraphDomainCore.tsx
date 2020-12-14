@@ -29,23 +29,38 @@ import {
   memo,
   useDebugValue,
   useEffect,
+  useState,
 } from 'preact/compat';
 import {
+  Batcher,
   createGraphDomainMemory,
   destroyGraphDomainMemory,
   GraphDomainMemory,
 } from 'graph-state';
 import { useGraphDomainContext } from './GraphDomainContext';
 import useConstant from './hooks/useConstant';
+import useConstantCallback from './hooks/useConstantCallback';
 
 function useGraphDomainCore() {
   const { current } = useGraphDomainContext();
 
+  const [batcher, setBatcher] = useState<(() => void) | undefined>(undefined);
+
+  const batchUpdate = useConstantCallback<Batcher>((callback) => {
+    setBatcher(() => callback);
+  });
+
   const memory = useConstant<GraphDomainMemory>(
-    () => createGraphDomainMemory(),
+    () => createGraphDomainMemory(batchUpdate),
   );
 
   current.value = memory;
+
+  useEffect(() => {
+    if (batcher) {
+      batcher();
+    }
+  }, [batcher]);
 
   useDebugValue(memory.nodes);
 
