@@ -230,10 +230,6 @@ function deprecateGraphNodeSetterVersion<S, A = GraphNodeDraftState<S>>(
   actualNode.setterVersion = createGraphNodeSetterVersion();
 }
 
-let batched: [GraphNodeListener<any>, any][] = [];
-
-let isBatching = 0;
-
 function computeGraphNode<S, A = GraphNodeDraftState<S>>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
@@ -394,6 +390,16 @@ export function runGraphNodeCompute<S, A = GraphNodeDraftState<S>>(
   );
 }
 
+let effectQueue: (() => void)[] = [];
+let effectStack = 0;
+
+function traverseEffects() {
+  effectQueue.forEach((item) => {
+    item();
+  });
+  effectQueue = [];
+}
+
 export function runGraphNodeUpdate<S, A = GraphNodeDraftState<S>>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
@@ -402,27 +408,26 @@ export function runGraphNodeUpdate<S, A = GraphNodeDraftState<S>>(
 ): void {
   const nodeValue = getGraphNodeState(memory, node);
 
-  const parent = isBatching;
-  isBatching = parent + 1;
+  const parent = effectStack;
+
+  effectStack += 1;
 
   actualNode.dependents.forEach((dependent) => {
     runGraphNodeCompute(memory, dependent);
   });
 
-  actualNode.listeners.forEach((subscriber) => {
-    batched.push([subscriber, nodeValue]);
-  });
-
-  isBatching = parent;
-
-  if (isBatching === 0) {
-    if (notify) {
-      batched.forEach(([subscriber, value]) => {
-        subscriber(value);
+  if (notify) {
+    effectQueue.push(() => {
+      actualNode.listeners.forEach((subscriber) => {
+        subscriber(nodeValue);
       });
-    }
-    batched = [];
+    });
+  }
 
+  effectStack = parent;
+
+  if (parent === 0) {
+    traverseEffects();
     if (process.env.NODE_ENV !== 'production') {
       exposeToWindow(memory);
     }
