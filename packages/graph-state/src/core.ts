@@ -188,24 +188,13 @@ function getGraphNodeInstance<S, A = GraphNodeDraftState<S>>(
   return baseNode;
 }
 
-function registerGraphNodeDependency<S, A, R, T>(
-  memory: GraphDomainMemory,
-  node: GraphNode<S, A>,
-  dependency: GraphNode<R, T>,
-  actualNode = getGraphNodeInstance(memory, node),
-): void {
-  actualNode.getterVersion.dependencies.add(dependency);
-
-  getGraphNodeInstance(memory, dependency).dependents.add(node);
-}
-
 function unregisterGraphNodeDependency<S, A, R, T>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
   dependency: GraphNode<R, T>,
-  actualNode = getGraphNodeInstance(memory, node),
+  getterVersion = getGraphNodeInstance(memory, node).getterVersion,
 ): void {
-  actualNode.getterVersion.dependencies.delete(dependency);
+  getterVersion.dependencies.delete(dependency);
 
   getGraphNodeInstance(memory, dependency).dependents.delete(node);
 }
@@ -247,7 +236,9 @@ function computeGraphNode<S, A = GraphNodeDraftState<S>>(
         const currentState = getGraphNodeState(memory, dependency);
         // If the getterVersion is still alive, register dependency
         if (getterVersion.alive) {
-          registerGraphNodeDependency(memory, node, dependency);
+          getterVersion.dependencies.add(dependency);
+
+          getGraphNodeInstance(memory, dependency).dependents.add(node);
         }
         return currentState;
       },
