@@ -419,7 +419,7 @@ export function runGraphNodeUpdate<S, A = GraphNodeDraftState<S>>(
 
   effectStack = parent;
 
-  if (parent === 0) {
+  if (parent === 0 && effectQueue.length > 0) {
     const currentEffectQueue = effectQueue;
     memory.batcher(() => {
       const prevQueue = effectQueue;
