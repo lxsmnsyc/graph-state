@@ -377,7 +377,7 @@ let effectStack = 0;
 
 function traverseEffects() {
   effectQueue.forEach((item) => {
-    const currentState = item.state;
+    const currentState = item.state.value;
     item.listeners.forEach((subscriber) => {
       subscriber(currentState);
     });
