@@ -25,66 +25,27 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-// import { GraphCore, GraphNode } from 'graph-state';
-// import useSubscription, { Subscription } from './useSubscription';
-// import useMemoCondition from './useMemoCondition';
-// import { compareArray } from '../utils/compareTuple';
 import {
   getGraphNodeState,
-  getGraphNodeVersion,
   GraphDomainMemory,
   GraphNode,
   subscribeGraphNode,
 } from 'graph-state';
-import { useEffect } from 'react';
+import useSubscription, { Subscription } from './useSubscription';
+import useMemoCondition from './useMemoCondition';
 import { compareArray } from '../utils/compareTuple';
-import useCallbackCondition from './useCallbackCondition';
-import useFreshLazyRef from './useFreshLazyRef';
-import useSubscription from './useSubscription';
 
-// export default function useGraphNodeValueBase<S, A>(
-//   core: GraphCore,
-//   node: GraphNode<S, A>,
-// ): S {
-//   const sub = useMemoCondition(
-//     (): Subscription<S> => ({
-//       read: () => core.getNodeState(node),
-//       subscribe: (handler) => core.subscribe(node, handler),
-//     }),
-//     [core, node],
-//     compareArray,
-//   );
-//   return useSubscription(sub);
-// }
 export default function useGraphNodeValueBase<S, A>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
 ): S {
-  const lastVersion = useFreshLazyRef(
-    () => 0,
-    [memory, node],
-    compareArray,
-  );
-
-  const versionDiff = getGraphNodeVersion(memory, node) - lastVersion.current;
-
-  const read = useCallbackCondition(
-    () => getGraphNodeState(memory, node),
-    [memory, node, versionDiff],
-    compareArray,
-  );
-  const subscribe = useCallbackCondition(
-    (handler: () => void) => subscribeGraphNode(memory, node, () => {
-      lastVersion.current = getGraphNodeVersion(memory, node);
-      handler();
+  const sub = useMemoCondition(
+    (): Subscription<S> => ({
+      read: () => getGraphNodeState(memory, node),
+      subscribe: (handler) => subscribeGraphNode(memory, node, handler),
     }),
     [memory, node],
     compareArray,
   );
-
-  useEffect(() => {
-    lastVersion.current = getGraphNodeVersion(memory, node);
-  });
-
-  return useSubscription({ read, subscribe });
+  return useSubscription(sub);
 }
