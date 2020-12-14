@@ -67,12 +67,7 @@ export default function useSubscription<T>({
   useDebugValue(currentValue);
 
   useEffect(() => {
-    let mounted = true;
-
     const readCurrent = () => {
-      if (!mounted) {
-        return;
-      }
       const nextValue = read();
       setState((prev) => {
         if (
@@ -93,12 +88,7 @@ export default function useSubscription<T>({
 
     readCurrent();
 
-    return () => {
-      mounted = false;
-      if (unsubscribe) {
-        unsubscribe();
-      }
-    };
+    return unsubscribe;
   }, [read, subscribe, shouldUpdate]);
 
   return currentValue;
