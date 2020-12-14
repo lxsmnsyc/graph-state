@@ -67,28 +67,37 @@ export default function useSubscription<T>({
   useDebugValue(currentValue);
 
   useEffect(() => {
-    const readCurrent = () => {
-      const nextValue = read();
-      setState((prev) => {
-        if (
-          prev.read !== read
-          || prev.subscribe !== subscribe
-          || prev.shouldUpdate !== shouldUpdate
-        ) {
-          return prev;
-        }
-        if (!shouldUpdate(prev.value, nextValue)) {
-          return prev;
-        }
-        return { ...prev, value: nextValue };
-      });
-    };
+    let mounted = true;
 
-    const unsubscribe = subscribe(readCurrent);
+    const readCurrent = () => {
+      if (mounted) {
+        setState((prev) => {
+          if (
+            prev.read !== read
+            || prev.subscribe !== subscribe
+            || prev.shouldUpdate !== shouldUpdate
+          ) {
+            return prev;
+          }
+          const nextValue = read();
+          if (!shouldUpdate(prev.value, nextValue)) {
+            return prev;
+          }
+          return { ...prev, value: nextValue };
+        });
+      }
+    };
 
     readCurrent();
 
-    return unsubscribe;
+    const unsubscribe = subscribe(readCurrent);
+
+    return () => {
+      mounted = false;
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [read, subscribe, shouldUpdate]);
 
   return currentValue;
