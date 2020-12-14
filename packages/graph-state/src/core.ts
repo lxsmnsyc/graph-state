@@ -372,12 +372,15 @@ export function runGraphNodeCompute<S, A = GraphNodeDraftState<S>>(
   );
 }
 
-let effectQueue: (() => void)[] = [];
+let effectQueue:GraphNodeInstance<any>[] = [];
 let effectStack = 0;
 
 function traverseEffects() {
   effectQueue.forEach((item) => {
-    item();
+    const currentState = item.state;
+    item.listeners.forEach((subscriber) => {
+      subscriber(currentState);
+    });
   });
   effectQueue = [];
 }
@@ -388,8 +391,6 @@ export function runGraphNodeUpdate<S, A = GraphNodeDraftState<S>>(
   notify = true,
   actualNode = getGraphNodeInstance(memory, node),
 ): void {
-  const nodeValue = getGraphNodeState(memory, node);
-
   const parent = effectStack;
 
   effectStack += 1;
@@ -399,11 +400,11 @@ export function runGraphNodeUpdate<S, A = GraphNodeDraftState<S>>(
   });
 
   if (notify) {
-    effectQueue.push(() => {
-      actualNode.listeners.forEach((subscriber) => {
-        subscriber(nodeValue);
-      });
-    });
+    // Push node to the back of the queue if there's a pending update
+    effectQueue = [
+      ...effectQueue.filter((item) => item !== actualNode),
+      actualNode,
+    ];
   }
 
   effectStack = parent;
