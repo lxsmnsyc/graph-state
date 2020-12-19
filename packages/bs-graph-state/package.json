@@ -1,0 +1,31 @@
+{
+  "name": "bs-graph-state",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "bsb -make-world",
+    "start": "bsb -make-world -w",
+    "clean": "bsb -clean-world"
+  },
+  "keywords": [
+    "BuckleScript"
+  ],
+  "author": "Alexis Munsayac",
+  "license": "MIT",
+  "devDependencies": {
+    "bs-platform": "^8.4.2"
+  },
+  "dependencies": {
+    "graph-state": "^1.4.1"
+  },
+  "description": "ReScript bindings for 'graph-state'",
+  "repository": {
+    "url": "https://github.com/lxsmnsyc/graph-state.git",
+    "type": "git"
+  },
+  "homepage": "https://github.com/lxsmnsyc/graph-state",
+  "bugs": {
+    "url": "https://github.com/lxsmnsyc/graph-state/issues"
+  },
+  "main": "index.js",
+  "private": false
+}
