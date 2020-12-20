@@ -31,8 +31,11 @@ import {
   GraphNode,
   subscribeGraphNode,
 } from 'graph-state';
-import useSubscription, { Subscription } from './useSubscription';
-import useMemoCondition from './useMemoCondition';
+import {
+  useMemoCondition,
+  useSubscription,
+  Subscription,
+} from '@lyonph/react-hooks';
 import { compareArray } from '../utils/compareTuple';
 
 export default function useGraphNodeValueBase<S, A>(

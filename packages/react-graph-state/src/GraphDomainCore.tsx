@@ -38,16 +38,19 @@ import {
   Batcher,
 } from 'graph-state';
 import { useDisposableMemo } from 'use-dispose';
+import { useConstantCallback } from '@lyonph/react-hooks';
 import { useGraphDomainContext } from './GraphDomainContext';
-import useConstantCallback from './hooks/useConstantCallback';
 
 function useGraphDomainCore() {
   const { current } = useGraphDomainContext();
 
-  const [batcher, setBatcher] = useState<() => void>();
+  const [batcher, setBatcher] = useState<(() => void)[]>([]);
 
   const batchUpdate = useConstantCallback<Batcher>((callback) => {
-    setBatcher(() => callback);
+    setBatcher((cbs) => [
+      ...cbs,
+      callback,
+    ]);
   });
 
   const memory = useDisposableMemo<GraphDomainMemory>(
@@ -58,8 +61,12 @@ function useGraphDomainCore() {
   );
 
   useEffect(() => {
-    if (batcher) {
-      batcher();
+    if (batcher.length > 0) {
+      setBatcher([]);
+
+      batcher.forEach((batchedUpdate) => {
+        batchedUpdate();
+      });
     }
   }, [batcher]);
 
