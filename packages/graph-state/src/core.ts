@@ -110,7 +110,7 @@ function parseGraphDomainMemory(
 function exposeToWindow(
   memory: GraphDomainMemory,
 ): void {
-  if (typeof window !== 'undefined') {
+  if (process.env.NODE_ENV !== 'production' && typeof window !== 'undefined') {
     window.withGraphStateDomainMemory = parseGraphDomainMemory(memory);
   }
 }
@@ -407,9 +407,7 @@ export function runGraphNodeUpdate<S, A = GraphNodeDraftState<S>>(
       });
     }
 
-    if (process.env.NODE_ENV !== 'production') {
-      exposeToWindow(memory);
-    }
+    exposeToWindow(memory);
   });
 }
 
