@@ -382,55 +382,29 @@ export function runGraphNodeCompute<S, A = GraphNodeDraftState<S>>(
   );
 }
 
-let effectQueue:GraphNodeInstance<any>[] = [];
-let effectStack = 0;
-
-function traverseEffects() {
-  effectQueue.forEach((item) => {
-    const currentState = item.state.value;
-    item.listeners.forEach((subscriber) => {
-      subscriber(currentState);
-    });
-  });
-  effectQueue = [];
-}
-
 export function runGraphNodeUpdate<S, A = GraphNodeDraftState<S>>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
   notify = true,
   actualNode = getGraphNodeInstance(memory, node),
 ): void {
-  const parent = effectStack;
-
-  effectStack += 1;
-
-  actualNode.dependents.forEach((dependent) => {
-    runGraphNodeCompute(memory, dependent);
-  });
-
-  if (notify) {
-    // Push node to the back of the queue if there's a pending update
-    effectQueue = [
-      ...effectQueue.filter((item) => item !== actualNode),
-      actualNode,
-    ];
-  }
-
-  effectStack = parent;
-
-  if (parent === 0 && effectQueue.length > 0) {
-    const currentEffectQueue = effectQueue;
-    memory.batcher(() => {
-      const prevQueue = effectQueue;
-      effectQueue = currentEffectQueue;
-      traverseEffects();
-      effectQueue = prevQueue;
-      if (process.env.NODE_ENV !== 'production') {
-        exposeToWindow(memory);
-      }
+  memory.batcher(() => {
+    actualNode.dependents.forEach((dependent) => {
+      runGraphNodeCompute(memory, dependent);
     });
-  }
+
+    const state = actualNode.state.value;
+
+    if (notify) {
+      actualNode.listeners.forEach((listener) => {
+        listener(state);
+      });
+    }
+
+    if (process.env.NODE_ENV !== 'production') {
+      exposeToWindow(memory);
+    }
+  });
 }
 
 export function setGraphNodeState<S, A = GraphNodeDraftState<S>>(
