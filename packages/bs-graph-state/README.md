@@ -1,24 +1,38 @@
-# Basic Reason Template
+# bs-graph-state
 
-Hello! This project allows you to quickly get started with ReScript using Reason syntax. If you wanted a more sophisticated version, try the `react` template (`bsb -theme react -init .`).
+> Rescript bindings for `graph-state`
 
-# Build
+[![NPM](https://img.shields.io/npm/v/bs-graph-state.svg)](https://www.npmjs.com/package/bs-graph-state) [![JavaScript Style Guide](https://badgen.net/badge/code%20style/airbnb/ff5a5f?icon=airbnb)](https://github.com/airbnb/javascript)
 
-```bash
-# for yarn
-yarn build
-
-# for npm
-npm run build
-```
-
-# Build + Watch
+## Install
 
 ```bash
-# for yarn
-yarn start
-
-# for npm
-npm run start
+yarn add bs-graph-state
 ```
 
+## Usage
+
+```reasonml
+open BsGraphState;
+
+let greetingNode = GraphState.Node.makeBasic({
+  get: _ => "Hello",
+  key: None,
+});
+let personNode = GraphState.Node.makeBasic({
+  get: _ => "John Doe",
+  key: None,
+});
+let messageNode = GraphState.Node.makeBasic({
+  get: ({ get }) => get(greetingNode) ++ ", " ++ get(personNode),
+  key: None,
+});
+```
+
+## Features
+
+### 🚧 UNDER CONSTRUCTION 🚧
+
+## License
+
+MIT © [lxsmnsyc](https://github.com/lxsmnsyc)
