@@ -75,14 +75,57 @@ export interface GraphDomainMemory {
 function defaultBatcher(callback: () => void): void {
   callback();
 }
+export interface GraphNodeDebugData {
+  id: GraphNodeKey;
+  state?: any;
+  dependents: GraphNodeKey[];
+  dependencies: GraphNodeKey[];
+}
+
+interface WithGraphStateDomainMemory {
+  withGraphStateDomainMemory: GraphNodeDebugData[];
+}
+
+declare const window: typeof globalThis & WithGraphStateDomainMemory;
+
+function parseDependencies(
+  dependencies: GraphNodeDependencies,
+): GraphNodeKey[] {
+  return Array.from(dependencies).map(
+    (node) => node.key,
+  );
+}
+
+function parseGraphDomainMemory(
+  memory: GraphDomainMemory,
+): GraphNodeDebugData[] {
+  return Array.from(memory.nodes).map(([key, value]) => ({
+    id: key,
+    state: value.state.value,
+    dependents: parseDependencies(value.dependents),
+    dependencies: parseDependencies(value.getterVersion.dependencies),
+  }));
+}
+
+function exposeToWindow(
+  memory: GraphDomainMemory,
+): void {
+  if (typeof window !== 'undefined') {
+    window.withGraphStateDomainMemory = parseGraphDomainMemory(memory);
+  }
+}
 
 export function createGraphDomainMemory(
   batcher: Batcher = defaultBatcher,
 ): GraphDomainMemory {
-  return {
+  const memory = {
     nodes: new Map(),
     batcher,
   };
+
+  exposeToWindow(memory);
+
+  return memory;
 }
 
 function ensure<T>(value: T | undefined): T {
@@ -132,45 +175,6 @@ function getDraftState<T>(action: GraphNodeDraftState<T>, oldState: T): T {
     return action(oldState);
   }
   return action;
-}
-export interface GraphNodeDebugData {
-  id: GraphNodeKey;
-  state?: any;
-  dependents: GraphNodeKey[];
-  dependencies: GraphNodeKey[];
-}
-
-interface WithGraphStateDomainMemory {
-  withGraphStateDomainMemory: GraphNodeDebugData[];
-}
-
-declare const window: typeof globalThis & WithGraphStateDomainMemory;
-
-function parseDependencies(
-  dependencies: GraphNodeDependencies,
-): GraphNodeKey[] {
-  return Array.from(dependencies).map(
-    (node) => node.key,
-  );
-}
-
-function parseGraphDomainMemory(
-  memory: GraphDomainMemory,
-): GraphNodeDebugData[] {
-  return Array.from(memory.nodes).map(([key, value]) => ({
-    id: key,
-    state: value.state.value,
-    dependents: parseDependencies(value.dependents),
-    dependencies: parseDependencies(value.getterVersion.dependencies),
-  }));
-}
-
-function exposeToWindow(
-  memory: GraphDomainMemory,
-): void {
-  if (typeof window !== 'undefined') {
-    window.withGraphStateDomainMemory = parseGraphDomainMemory(memory);
-  }
 }
 
 function getGraphNodeInstance<S, A = GraphNodeDraftState<S>>(
