@@ -128,6 +128,8 @@ export function createGraphDomainMemory(
   return memory;
 }
 
+// This function ensures Map.prototype.get's compile-time
+// type inference isn't nullish.
 function ensure<T>(value: T | undefined): T {
   if (value == null) {
     throw new Error('Unable to return a nullish value.');
