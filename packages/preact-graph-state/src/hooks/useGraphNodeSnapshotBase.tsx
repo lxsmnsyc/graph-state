@@ -26,7 +26,12 @@
  * @copyright Alexis Munsayac 2020
  */
 import { useEffect } from 'preact/hooks';
-import { GraphDomainMemory, GraphNode, GraphNodeListener, subscribeGraphNode } from 'graph-state';
+import {
+  GraphDomainMemory,
+  GraphNode,
+  GraphNodeListener,
+  subscribeGraphNode,
+} from 'graph-state';
 
 export default function useGraphNodeSnapshotBase<S, A>(
   memory: GraphDomainMemory,

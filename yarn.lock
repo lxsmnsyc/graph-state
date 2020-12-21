@@ -1893,6 +1893,11 @@
     npmlog "^4.1.2"
     write-file-atomic "^2.3.0"
 
+"@lyonph/preact-hooks@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@lyonph/preact-hooks/-/preact-hooks-0.1.0.tgz#f90ad262539ffc99e5eec62d17d1108039a6b49b"
+  integrity sha512-eI6TyB5GHn4UBz12WpMmvk/t1BLRtF7eW6oXBcHgOVQBFK/zqMlr3hfz3rZWor0tbkoSFp26Vm0fOmSVSqe+kQ==
+
 "@lyonph/react-hooks@^0.2.2":
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/@lyonph/react-hooks/-/react-hooks-0.2.2.tgz#e1daa749681c3e97621dc836ac8e52381edcf733"

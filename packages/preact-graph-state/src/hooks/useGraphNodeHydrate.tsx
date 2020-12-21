@@ -25,7 +25,12 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphNode, hasGraphNodeState, runGraphNodeCompute, setGraphNodeState } from 'graph-state';
+import {
+  GraphNode,
+  hasGraphNodeState,
+  runGraphNodeCompute,
+  setGraphNodeState,
+} from 'graph-state';
 import { useEffect } from 'preact/hooks';
 import { useGraphDomainMemory } from '../GraphDomainContext';
 

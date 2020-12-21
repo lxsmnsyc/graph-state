@@ -26,8 +26,10 @@
  * @copyright Alexis Munsayac 2020
  */
 import { GraphDomainMemory, GraphNode, runGraphNodeCompute } from 'graph-state';
+import {
+  useCallbackCondition,
+} from '@lyonph/preact-hooks';
 import { compareArray } from '../utils/compareTuple';
-import useCallbackCondition from './useCallbackCondition';
 
 export type GraphNodeReset = () => void;
 

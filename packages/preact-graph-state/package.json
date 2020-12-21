@@ -67,5 +67,8 @@
     "recoil",
     "atomic",
     "preact"
-  ]
+  ],
+  "dependencies": {
+    "@lyonph/preact-hooks": "^0.1.0"
+  }
 }

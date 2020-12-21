@@ -37,9 +37,11 @@ import {
   destroyGraphDomainMemory,
   GraphDomainMemory,
 } from 'graph-state';
+import {
+  useConstant,
+  useConstantCallback,
+} from '@lyonph/preact-hooks';
 import { useGraphDomainContext } from './GraphDomainContext';
-import useConstant from './hooks/useConstant';
-import useConstantCallback from './hooks/useConstantCallback';
 
 function useGraphDomainCore() {
   const { current } = useGraphDomainContext();
