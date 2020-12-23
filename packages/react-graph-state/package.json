@@ -37,7 +37,7 @@
     "eslint": "^7.14.0",
     "eslint-config-lxsmnsyc": "^0.1.20",
     "graph-state": "1.4.1",
-    "pridepack": "^0.5.0",
+    "pridepack": "^0.6.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-test-renderer": "^17.0.1",
