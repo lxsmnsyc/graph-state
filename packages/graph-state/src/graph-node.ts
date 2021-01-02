@@ -35,9 +35,11 @@ export type GraphNodeDraftStateAction<S> = (old: S) => S;
 // An action which sets the new state
 export type GraphNodeDraftState<S> = S | GraphNodeDraftStateAction<S>;
 
-// Function received by the `get` function for yielding state
+export type GraphNodeResolve = <T>(promise: Promise<T>) => Promise<T>;
+
 export type GraphNodeMutateSelf<S> = (value: S) => void;
 export type GraphNodeSetSelf<A> = (value: A) => void;
+export type GraphNodeGetSelf<S> = () => S;
 
 export type GraphNodeSubscriptionCleanup = () => void;
 export type GraphNodeSubscriptionCallback = () => void | undefined | GraphNodeSubscriptionCleanup;
@@ -48,8 +50,10 @@ export interface GraphNodeCallbackInterface<S, A = GraphNodeDraftState<S>> {
   set: GraphNodeSetValue;
   reset: GraphNodeResetValue;
   mutate: GraphNodeMutateValue;
+  getSelf: GraphNodeGetSelf<S>;
   setSelf: GraphNodeSetSelf<A>;
   mutateSelf: GraphNodeMutateSelf<S>;
+  resolve: GraphNodeResolve;
 }
 
 export interface GraphNodeGetInterface<S, A = GraphNodeDraftState<S>>

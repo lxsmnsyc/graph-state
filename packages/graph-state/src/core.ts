@@ -258,6 +258,7 @@ function computeGraphNode<S, A = GraphNodeDraftState<S>>(
         }
         return currentState;
       },
+      getSelf: () => getGraphNodeState(memory, node),
       mutate: (target, value) => {
         if (getterVersion.alive) {
           setGraphNodeState(memory, target, value);
@@ -292,6 +293,20 @@ function computeGraphNode<S, A = GraphNodeDraftState<S>>(
           }
         }
       },
+      resolve: (promise) => new Promise((resolve, reject) => {
+        promise.then(
+          (result) => {
+            if (getterVersion.alive) {
+              resolve(result);
+            }
+          },
+          (result) => {
+            if (getterVersion.alive) {
+              reject(result);
+            }
+          },
+        );
+      }),
     },
   );
 }
@@ -328,6 +343,7 @@ export function runGraphNodeDispatch<S, A = GraphNodeDraftState<S>>(
     // Run the node setter for further effects
     node.set({
       get: (target) => getGraphNodeState(memory, target),
+      getSelf: () => getGraphNodeState(memory, node),
       set: (target, targetAction) => {
         if (setterVersion.alive) {
           runGraphNodeDispatch(memory, target, targetAction);
@@ -353,6 +369,20 @@ export function runGraphNodeDispatch<S, A = GraphNodeDraftState<S>>(
           runGraphNodeCompute(memory, target);
         }
       },
+      resolve: (promise) => new Promise((resolve, reject) => {
+        promise.then(
+          (result) => {
+            if (setterVersion.alive) {
+              resolve(result);
+            }
+          },
+          (result) => {
+            if (setterVersion.alive) {
+              reject(result);
+            }
+          },
+        );
+      }),
     }, action);
   } else {
     // Notify for new node value
