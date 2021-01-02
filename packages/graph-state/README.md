@@ -16,252 +16,296 @@ npm install graph-state
 
 ## Usage
 
-### What is a Graph State?
+## Features
 
-A `Graph State` is a kind of a state management structure that aims to build a container states that behaves like a dependency graph. The structure are made up of `graph nodes`, which represent an atomic state. Each `graph node` may depend from another `graph node` instance. When a `graph node` state updates, all of its dependents react immediately from their dependency's new state, and in turn, updates their own state, which can go on until there are no dependents left.
+### Think atomically
 
-### Creating a Graph Node
-
-To create a graph node, you must invoke the `createGraphNode` function. This function an object with 1 required field and 2 optional fields.
-* `get`: acts as a default value. If a function is supplied, the function is lazily evaluated as it enters the `GraphDomain` to provide the default value. This function may also be invoked again if the dependencies update. The function an object with ff. fields:
-  * `{ get, set, mutate, setSelf, mutateSelf, reset, subscription }`: An interface for controlling graph nodes.
-    * `get(dependencyNode)`: Registers the `dependencyNode` as a dependency and returns the dependency's current state. If the `dependencyNode` updates its state at some point, the created graph node reacts to the state and
-    invokes the `get` function to recompute and produce the new state.
-    * `set(node, action)`: Dispatches a node.
-    * `mutate(node, newValue)`: Sets the new state for the graph node.
-    * `setSelf(action)`: Dispatches the self node.
-    * `mutateSelf(newValue)`: Sets the new state for the self node.
-    * `reset(node)`: Resets a given node.
-    * `subscription(callback)`: Manages subscriptions to external sources. Callback may return another callback which is called before the node recomputes, allowing for potential cleanup logic.
-* `set`: Optional. Registers a dispatch side-effect. When defined, prevents state mutation for the graph node and must rely on dependency recomputation. This function is invoked when the graph node is scheduled for state update. The function receives two parameters:
-  * `{ get, set, reset, setSelf, mutateSelf, mutate }`: An interface for controlling graph nodes.
-    * `get(node)`: Reads the node's value. Unlike `get`, the node is not treated as a dependency and therefore `set` won't be invoked when dependencies update.
-    * `set(node, action)`: Dispatches a node.
-    * `reset(node)`: Resets a given node.
-    * `mutate(newValue)`: Sets the new state for the graph node.
-    * `setSelf(action)`: Dispatches the self node.
-    * `mutateSelf(newValue)`: Sets the new state for the self node.
-  * `newValue`: The new state for the graph node.
-* `key`: Optional. Uses the provided key instead of a generated key. Provided key may be shared, although `get` and `set` functions may be different depending on the node instance passed. Use with caution.
+`graph-state` motivates the use of granular stores, or we call them "nodes", that is, nodes that only store a single state.
 
 ```tsx
 import { createGraphNode } from 'graph-state';
 
-// A basic node
-const basicNode = createGraphNode({
+// A simple graph node usage
+const counter = createGraphNode({
+  get: 0,
+});
+```
+
+Nodes can have either a constant value as a default state, or provide a function that lazily computes the default state.
+
+```tsx
+const randomState = createGraphNode({
+  get: () => Math.random(),
+});
+```
+
+### Dependency graph states
+
+`graph-state` leverages the cumbersome process of connecting stores to communicate one another by seamlessly connecting them. A node's `get` propery receives an interface which can be used to read other node's state. Once a node reads another node's value, the read node becomes a "dependency": whenever the dependency node updates value, the dependent node recomputes it's state.
+
+```tsx
+const greeting = createGraphNode({
   get: 'Hello',
 });
 
-// A dependent node
-const dependentNode = createGraphNode({
-  get: ({ get }) => {
-    const basic = get(basicNode);
-
-    return `${basic}, World!`;
-  },
+const person = createGraphNode({
+  get: 'John Doe',
 });
 
-// A self-updating node
+const message = createGraphNode({
+  get: ({ get }) => {
+    // Read the greeting and person nodes
+    const greetingValue = get(greeting);
+    const personValue = get(person);
+
+    // When greeting or person updates their state
+    // message re-runs its get function to create a new state.
+
+    // Return the derived state
+    return `${greetingValue}, ${personValue}.`;
+  },
+});
+```
+
+It doesn't matter when `get` is called or how it is used:
+
+```tsx
+const example = createGraphNode({
+  get: ({ get } => {
+    const cond = get(A);
+
+    if (cond) {
+      return get(B); // If A is truthy, B becomes a dependency.
+    }
+    return get(C); // Otherwise, C becomes the dependency instead of B.
+  }),
+});
+```
+
+Whenever `get` is called, the dependency list is rebuilt, so the timing doesn't matter for a node to become a dependency.
+
+### Lazy Evaluation
+
+Nodes, even though can be created on any level of context, does not evaluate until needed/used.
+
+```tsx
+const example = createGraphNode({
+  // This function does not run until
+  // example is read.
+  get: () => runExpensiveComputation(),
+});
+```
+
+### Keys
+
+Nodes may accept a `key` field:
+
+```tsx
+const example = createGraphNode({
+  key: 'example',
+  get: 'Hello',
+});
+```
+
+If another node of the same key is attempted to be created, the first instance is always reused.
+
+### Subscriptions
+
+`graph-state` allows managing subscriptions for side-effects. This is useful for subscribing to events (e.g. `addEventListener`), timers (`setTimeout`), etc.
+
+```tsx
 const timer = createGraphNode({
-  get: ({ mutateSelf, subscription }) => {
-    let count = 0;
+  get: ({ subscription }) => {
     subscription(() => {
-      const interval = setInterval(() => {
-        count += 1;
-        mutateSelf(count);
+      const timeout = setTimeout(() => {
+        intervalLogic();
       }, 1000);
       return () => {
-        clearInterval(interval);
+        clearTimeout(timeout);
       };
     });
-    return count;
   },
 });
-
-const temperatureF = createGraphNode({
-  get: 32,
-});
-
-const temperatureC = createGraphNode({
-  get: ({ get }) => {
-    const fahrenheit = get(temperatureF);
-
-    return (fahrenheit - 32) * 5 / 9;
-  },
-  set: ({ set }, newValue) => {
-    set(temperatureF, (newValue * 9) / 5 + 32);
-  },
-});
-
 ```
 
-#### Graph node rules
+Similar to `get`, it doesn't matter when `subscription` is called. Every recomputation runs the cleanup function returned by `subscription`, and re-runs the callback.
 
-##### Graph nodes are immutable.
+### Mutations
 
-Once they are created, they can never be destroyed. Be mindful of your graph node logic.
+There are two kinds of state update in `graph-state`: `mutate` and `set`. `mutate` directly changes a node's state. `set`'s default behavior is similar to `mutate`, but if the node has a custom `set` function, the custom function is called instead of `mutate`. This is useful for building actions.
 
-##### Graph nodes of the same key share the same instance.
-
-When creating graph nodes of the same key, the first one is returned. This is to prevent polluting the graph domain for unnecessary creation of node instances.
-
-##### `set` and `reset` are asynchronous.
-
-`set` and `reset`, although synchronous functions, have asynchronous effects and thus, if `get` is called, `get` will most likely return an old version of the value.
-
-### Graph Node Resources
-
-Graph nodes can have synchronous or asynchronous states, but having raw asynchronous states like in in React (aka Promises) can be a bit tedious to handle specially for race conditions. `createGraphNodeResource` attempts to leverage this problem by turning asynchronous states into reactive Promise results.
+Both `get` and `set` received interfaces has functions that allow mutation.
 
 ```tsx
-/**
- * This is an asynchronous graph node. Trying to
- * access this node using `useGraphNodeValue` just
- * returns a Promise instance. Writing hooks for
- * handling Promise state and side-effects is a
- * tedious task.
- */
-const asyncUserNode = createGraphNode(
+// A node that mutates itself.
+const secondClock = createGraphNode({
+  get: ({ mutateSelf, subscription }) => {
+    subscription(() => {
+      // an internal variable that tracks a state.
+      let count = 0;
+
+      // Subscribe to an interval timer
+      const timeout = setInterval(() => {
+        // Update our counter
+        count += 1;
+
+        // Perform self-mutation
+        mutateSelf(count);
+      }, 1000);
+
+      return () => {
+        clearInterval(timeout);
+      };
+    });
+
+    return 0;
+  },
+});
+```
+
+### Actions
+
+Inspired by Redux and Flux architecture, nodes can have an action-receiving function called `set`, which overrides the state mutation of the node. The `set` function accepts the same interface as `get` (excluding `subscription`) and the action being received. In contrast with `get`, `set` does not react nor connect to read nodes.
+
+An example of a graph node emulating a Redux store.
+
+```tsx
+const counter = createGraphNode({
+  get: 0,
+});
+
+const reduce = (state, action) => {
+  switch (action.type) {
+    case 'INCREMENT':
+      return state + 1;
+    case 'DECREMENT':
+      return state - 1;
+    default:
+      return state;
+  }
+};
+
+const reducer = createGraphNode({
+  get: ({ get }) => get(counter),
+
+  set: ({ get, set }, action) => {
+    set(counter, reduce(get(counter), action));
+  },
+});
+```
+
+### Concurrency
+
+Nodes with asynchronous `get` or `set` may produce unwanted side-effects whenever both methods run immediately after one another. To fix this, nodes, internally, have built-in race conditions which allows further side-effects from occuring by preventing `set`, `mutate`, `setSelf`, `mutateSelf` and `subscription` from further evaluation.
+
+```tsx
+const itemsList = createGraphNode({
+  get: async () => {
+    const data = await db.query();
+    return data;
+  },
+});
+
+const filteredItemsList = createGraphNode({
   get: async ({ get }) => {
-    // Get current user id
-    const id = get(userIdNode);
+    // Read itemsList
+    const currentList = await get(itemsList);
+  
+    subscription(() => {
+      // This will not run if itemsList emits a new result immediately
+      // before the previous result resolves.
+      runListSideEffect(currentList);
+    });
 
-    // Fetch user data
-    const response = await fetch(`/users/${id}`);
-
-    return response.json();
+    return applyFilter(currentList);
   },
-);
-
-/**
- * Let's transform asyncUserNode into
- * a valid React resource node!
- * 
- * This allows us to receive Promise results,
- * react-graph-state already handles race condition
- * and state updates for us!
- */
-const userResourceNode = createGraphNodeResource(asyncUserNode);
+}); 
 ```
 
-Accessing `userResourceNode` using `useGraphNodeValue` returns an object which represents the Promise result.
-
-### Resource-related constructors
-
-#### `fromResource`
-
-Converts a graph node resource into a promise-based graph node.
+Nodes also accept a `resolve` method from interface which wraps a given Promise such that it will only resolve if the node has not yet recomputed.
 
 ```tsx
-const rawUserDataNode = createGraphNode({
-  get: async ({ get }) => fromResource(userResourceNode),
-})
+const filteredItemsList = createGraphNode({
+  get: async ({ get, resolve }) => {
+    // Read itemsList
+    const currentList = await get(itemsList);
+  
+    subscription(() => {
+      // This will not run if itemsList emits a new result immediately
+      // before the previous result resolves.
+      runListSideEffect(currentList);
+    });
+
+    // Prevent from resolving if recomputed
+    return resolve(applyFilter(currentList));
+  },
+}); 
 ```
 
-#### `waitForAll`
+Nodes that return a Promise may also be converted into an ADT node which emits the stateful representation of the Promise result by using `createGraphNodeResource`. The resource node emits an object with the following fields:
 
-Waits for an array of graph node resources to resolve. This is similar in behavior with `Promise.all`. If one of the resources updates, `waitForAll` returns to pending state untill all Promise has resolved again.
+- `status`: The status of the Promise result. Begins with `"pending"`, and changes to either `"success"` or `"failure"`.
+- `data`: Value being represented by `status`.
+  - if `status === "success"`, `data` is the resolved value.
+  - if `status === "failure"`, `data` is the rejected value.
+  - if `status === "pending"`, `data` is the resolving Promise instance.
 
 ```tsx
-const resourceA = createGraphNodeResource(
-  createGraphNode({
-    get: async () => {
-      await sleep(1000);
-      return 'Message A';
-    },
-  }),
-);
-const resourceB = createGraphNodeResource(
-  createGraphNode({
-    get: async () => {
-      await sleep(2000);
-      return 'Message B';
-    },
-  }),
-);
-const resourceC = createGraphNodeResource(
-  createGraphNode({
-    get: async () => {
-      await sleep(3000);
-      return 'Message C';
-    },
-  }),
-);
+const listResource = createGraphNodeResource(itemsList);
 
-const values = waitForAll([
-  resourceA,
-  resourceB,
-  resourceC,
-]); // ['Message A', 'Message B', 'Message C'] after 3 seconds.
+const example = createGraphNode({
+  get: ({ get }) => {
+    const { status, data } = get(listResource);
+
+    // ...
+  },
+});
 ```
 
-#### `waitForAny`
+A valid resource node can be reverted back to a promise using `fromPromise`.
 
-Waits for an array of graph node resources to resolve. This is similar in behavior with `Promise.race`. If one of the resources updates, `waitForAny` returns to pending state untill any Promise has resolved again.
+Multiple resources can be concurrently handled using `waitForAll` or `waitForAny`, which correspondingly behaves similarly to `Promise.all` and `Promise.race`.
 
 ```tsx
-const resourceA = createGraphNodeResource(
-  createGraphNode({
-    get: async () => {
-      await sleep(1000);
-      return 'Message A';
-    },
-  }),
-);
-const resourceB = createGraphNodeResource(
-  createGraphNode({
-    get: async () => {
-      await sleep(2000);
-      return 'Message B';
-    },
-  }),
-);
-const resourceC = createGraphNodeResource(
-  createGraphNode({
-    get: async () => {
-      await sleep(3000);
-      return 'Message C';
-    },
-  }),
-);
-
-const values = waitForAny([
-  resourceA,
-  resourceB,
-  resourceC,
-]); // 'Message A'
+const [name, age, email] = get(waitForAll([
+  nameResource,
+  ageResource,
+  emailResource,
+]));
 ```
 
-#### `joinResources`
+### Factory
 
-Joins an array of graph node resources into a single graph node that emits an array of resource results.
-
-### Factories
-
-Graph node factories allows you to dynamically generate graph nodes of similar logic based on parameters.
-
-Factories has similar option fields for basic graph node creation, but the difference is that these options are higher-order functions instead.
-- `key`: Optional. Function for generating graph node keys. If not provided, keys are generated from encoding the parameter array into valid JSON string.
-- `get`: Function for generating graph node values.
-- `set`: Optional. Function for generating graph node side-effects.
+For producing multiple nodes with the same core logic but varying values, we can use `createGraphNodeFactory`:
 
 ```tsx
-import { createGraphNodeFactory } from 'graph-state';
+const nameFactory = createGraphNodeFactory({
+  // Similar to individual nodes except dynamic
+  key: (id) => `/profile/name/${id}`,
+  
+  get: (id) => () => readProfileName(id),
+});
 
-// Parameters for each factory field are shared.
-const userDataFactory = createGraphNodeFactory({
-  // Generate key based on parameter
-  key: (id) => id,
-  // Get user by id
-  get: (id) => () => getUserById(id),
-})
+// ...
+const name = get(nameFactory(id));
 ```
 
-Factories with Promise-returning graph nodes can be wrapped with `createGraphNodeResourceFactory`, which automatically converts the generated Promises into Resources.
+`createGraphNodeFactory` produces a function that passes the arguments provided to `key`, `get` and `set`.
 
 ```tsx
-const userDataResourceFactory = createGraphNodeResourceFactory(userDataFactory);
+const updateName = createGraphNodeFactory({
+  key: (id) => `/profile/name/${id}/update`,
+
+  set: (id, defaultName) => ({ set }, name) => {
+    set(nameFactory(id), name ?? defaultName);
+  },
+});
+
+//...
+set(updateName(id, 'John Doe'), newName);
 ```
+
+If a factory returns a Promise, this factory can be wrapped with `createGraphNodeResourceFactory` to produce resource nodes.
 
 ## License
 
