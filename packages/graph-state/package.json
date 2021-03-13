@@ -14,7 +14,7 @@
     "node": ">=10"
   },
   "scripts": {
-    "prepublish": "pridepack build",
+    "prepublish": "pridepack clean && pridepack build",
     "build": "pridepack build",
     "type-check": "pridepack check",
     "lint": "pridepack lint",

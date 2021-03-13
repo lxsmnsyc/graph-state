@@ -16,7 +16,7 @@
     "node": ">=10"
   },
   "scripts": {
-    "prepublish": "pridepack build",
+    "prepublish": "pridepack clean && pridepack build",
     "build": "pridepack build",
     "type-check": "pridepack check",
     "lint": "pridepack lint",
@@ -73,6 +73,6 @@
   ],
   "dependencies": {
     "@lyonph/react-hooks": "^0.2.2",
-    "use-dispose": "^0.4.0"
+    "use-dispose": "^0.4.6"
   }
 }
