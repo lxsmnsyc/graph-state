@@ -1,9 +1,4 @@
-/** @jsx h */
-import { h, render } from 'preact';
-import App from './App';
+import { render } from 'preact'
+import App from './app'
 
-const element = document.getElementById('root');
-
-if (element) {
-  render(<App />, element);
-}
+render(<App />, document.getElementById('app')!)

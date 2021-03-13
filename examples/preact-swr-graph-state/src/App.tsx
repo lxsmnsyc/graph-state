@@ -1,5 +1,4 @@
-/** @jsx h */
-import { h, VNode } from 'preact';
+import { VNode } from 'preact';
 import { Suspense } from 'preact/compat';
 import {
   GraphDomain,

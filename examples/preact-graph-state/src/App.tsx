@@ -1,6 +1,5 @@
-/** @jsx h */
 import 'preact/debug';
-import { Fragment, h, VNode } from 'preact';
+import { VNode } from 'preact';
 import { Suspense } from 'preact/compat';
 import { useCallback } from 'preact/hooks';
 import {
@@ -61,7 +60,7 @@ function ResetTemperature(): VNode {
 function Celsius(): VNode {
   const [celsius, setCelsius] = useGraphNodeState(temperatureC);
 
-  const onChange = useCallback((e: h.JSX.TargetedEvent<HTMLInputElement>) => {
+  const onChange = useCallback((e: JSX.TargetedEvent<HTMLInputElement>) => {
     setCelsius(Number.parseFloat(e.currentTarget.value));
   }, [setCelsius]);
 
@@ -95,10 +94,10 @@ function Temperature(): VNode {
   const fahrenheit = useGraphNodeValue(temperatureF);
 
   return (
-    <Fragment>
+    <>
       <h1>{`Fahrenheit: ${fahrenheit}`}</h1>
       <h1>{`Celsius: ${celsius}`}</h1>
-    </Fragment>
+    </>
   );
 }
 
@@ -147,7 +146,7 @@ function InnerApp(): VNode {
   useGraphNodeMutate(temperatureF, 100);
 
   return (
-    <Fragment>
+    <>
       <Fahrenheit />
       <Celsius />
       <ResetTemperature />
@@ -157,7 +156,7 @@ function InnerApp(): VNode {
       </Suspense>
       <AsyncTemperature />
       <Timer />
-    </Fragment>
+    </>
   );
 }
 
