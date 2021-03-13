@@ -84,6 +84,7 @@ export default function createSWRGraphNodeFactory<T, P extends any[] = []>(
         return !!getRevalidation(key);
       };
     },
+    shouldUpdate: () => () => true,
   });
 
   const { initialData, freshAge, staleAge } = fullOptions;
@@ -99,8 +100,8 @@ export default function createSWRGraphNodeFactory<T, P extends any[] = []>(
       const rNode = revalidateNode(...args);
       const fetcher = fullOptions.fetch(...args);
 
-      return (methods) => {
-        const shouldRevalidate = methods.get(rNode);
+      return (context) => {
+        const shouldRevalidate = context.get(rNode);
 
         // Capture timestamp
         const timestamp = Date.now();
@@ -152,7 +153,7 @@ export default function createSWRGraphNodeFactory<T, P extends any[] = []>(
         setRevalidation(key, false, false);
 
         // Perform fetch
-        const pendingData = fetcher(methods);
+        const pendingData = fetcher(context);
 
         let result: MutationResult<T>;
 

@@ -82,14 +82,15 @@ export default function createSWRGraphNode<T>(
 
       return !!getRevalidation(key);
     },
+    shouldUpdate: () => true,
   });
 
   const { freshAge, staleAge } = fullOptions;
 
   const resource = createGraphNode<GraphNodeAsyncResult<T>>({
     key: `SWR[${key}]`,
-    get: (methods) => {
-      const shouldRevalidate = methods.get(revalidateNode);
+    get: (context) => {
+      const shouldRevalidate = context.get(revalidateNode);
 
       // Capture timestamp
       const timestamp = Date.now();
@@ -141,7 +142,7 @@ export default function createSWRGraphNode<T>(
       setRevalidation(key, false, false);
 
       // Perform fetch
-      const pendingData = fullOptions.fetch(methods);
+      const pendingData = fullOptions.fetch(context);
 
       let result: MutationResult<T>;
 
