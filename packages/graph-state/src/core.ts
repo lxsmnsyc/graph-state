@@ -269,19 +269,24 @@ function computeGraphNode<S, A = GraphNodeDraftState<S>>(
           setGraphNodeState(memory, node, value);
         }
       },
-      setSelf: (action: A) => {
-        if (getterVersion.alive) {
-          runGraphNodeDispatch(memory, node, action);
-        }
-      },
       set: (target, action) => {
         if (getterVersion.alive) {
           runGraphNodeDispatch(memory, target, action);
         }
       },
+      setSelf: (action: A) => {
+        if (getterVersion.alive) {
+          runGraphNodeDispatch(memory, node, action);
+        }
+      },
       reset: (target) => {
         if (getterVersion.alive) {
           runGraphNodeCompute(memory, target);
+        }
+      },
+      resetSelf: () => {
+        if (getterVersion.alive) {
+          runGraphNodeCompute(memory, node);
         }
       },
       subscription: (callback) => {
@@ -367,6 +372,11 @@ export function runGraphNodeDispatch<S, A = GraphNodeDraftState<S>>(
       reset: (target) => {
         if (setterVersion.alive) {
           runGraphNodeCompute(memory, target);
+        }
+      },
+      resetSelf: () => {
+        if (setterVersion.alive) {
+          runGraphNodeCompute(memory, node);
         }
       },
       resolve: (promise) => new Promise((resolve, reject) => {

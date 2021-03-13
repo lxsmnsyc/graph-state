@@ -40,6 +40,7 @@ export type GraphNodeResolve = <T>(promise: Promise<T>) => Promise<T>;
 export type GraphNodeMutateSelf<S> = (value: S) => void;
 export type GraphNodeSetSelf<A> = (value: A) => void;
 export type GraphNodeGetSelf<S> = () => S;
+export type GraphNodeResetSelf = () => void;
 
 export type GraphNodeSubscriptionCleanup = () => void;
 export type GraphNodeSubscriptionCallback = () => void | undefined | GraphNodeSubscriptionCleanup;
@@ -47,11 +48,12 @@ export type GraphNodeSubscription = (callback: GraphNodeSubscriptionCallback) =>
 
 export interface GraphNodeCallbackInterface<S, A = GraphNodeDraftState<S>> {
   get: GraphNodeGetValue;
-  set: GraphNodeSetValue;
-  reset: GraphNodeResetValue;
-  mutate: GraphNodeMutateValue;
   getSelf: GraphNodeGetSelf<S>;
+  set: GraphNodeSetValue;
   setSelf: GraphNodeSetSelf<A>;
+  reset: GraphNodeResetValue;
+  resetSelf: GraphNodeResetSelf;
+  mutate: GraphNodeMutateValue;
   mutateSelf: GraphNodeMutateSelf<S>;
   resolve: GraphNodeResolve;
 }
@@ -105,13 +107,15 @@ export type GraphNodeResetValue =
 const NODES = new Map<GraphNodeKey, GraphNode<any, any>>();
 
 function createRawGraphNode<S, A = GraphNodeDraftState<S>>(
-  { key, get, set }: GraphNodeOptions<S, A>,
+  {
+    key, get, set, shouldUpdate,
+  }: GraphNodeOptions<S, A>,
 ): GraphNode<S, A> {
   return {
     get,
     set,
     key: key ?? generateKey(),
-    shouldUpdate: DEFAULT_MEMO,
+    shouldUpdate: shouldUpdate ?? DEFAULT_MEMO,
   };
 }
 
