@@ -194,6 +194,10 @@ const reducer = createGraphNode({
 });
 ```
 
+### Memoization
+
+Nodes have their values memoized. Once a node attempts to update its state with an equivalent value, dependencies don't get notified with the new state, thus bailing out of recomputation. `createGraphNode` accepts another optional field named `shouldUpdate` which is a function that receives the current state and the next state. By default, the states are compared with `Object.is`.
+
 ### Concurrency
 
 Nodes with asynchronous `get` or `set` may produce unwanted side-effects whenever both methods run immediately after one another. To fix this, nodes, internally, have built-in race conditions which allows further side-effects from occuring by preventing `set`, `mutate`, `setSelf`, `mutateSelf` and `subscription` from further evaluation.

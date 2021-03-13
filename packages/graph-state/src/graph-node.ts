@@ -72,16 +72,25 @@ export type GraphNodeSetInterface<S, A = GraphNodeDraftState<S>> =
 export type GraphNodeSet<S, A = GraphNodeDraftState<S>> =
   (facing: GraphNodeSetInterface<S, A>, action: A) => void;
 
+export type GraphNodeShouldUpdate<S> =
+  (prev: S, next: S) => boolean;
+
+function DEFAULT_MEMO<S>(a: S, b: S): boolean {
+  return !Object.is(a, b);
+}
+
 export interface GraphNode<S, A = GraphNodeDraftState<S>> {
   get: GraphNodeGet<S, A>;
   key: GraphNodeKey;
   set?: GraphNodeSet<S, A>;
+  shouldUpdate: GraphNodeShouldUpdate<S>;
 }
 
 export interface GraphNodeOptions<S, A = GraphNodeDraftState<S>> {
   get: GraphNodeGet<S, A>;
   key?: GraphNodeKey;
   set?: GraphNodeSet<S, A>;
+  shouldUpdate?: GraphNodeShouldUpdate<S>;
 }
 
 export type GraphNodeGetValue =
@@ -102,6 +111,7 @@ function createRawGraphNode<S, A = GraphNodeDraftState<S>>(
     get,
     set,
     key: key ?? generateKey(),
+    shouldUpdate: DEFAULT_MEMO,
   };
 }
 
@@ -265,12 +275,15 @@ export type GraphNodeFactoryGet<S, A = GraphNodeDraftState<S>, P extends any[] =
   (...params: P) => GraphNodeGet<S, A>;
 export type GraphNodeFactorySet<S, A = GraphNodeDraftState<S>, P extends any[] = []> =
   (...params: P) => GraphNodeSet<S, A>;
+export type GraphNodeFactoryShouldUpdate<S, P extends any[] = []> =
+  (...params: P) => GraphNodeShouldUpdate<S>;
 
 export interface GraphNodeFactoryOptions<S, A = GraphNodeDraftState<S>, P extends any[] = []> {
   baseKey?: GraphNodeKey;
   key?: GraphNodeFactoryKey<P>;
   get: GraphNodeFactoryGet<S, A, P>;
   set?: GraphNodeFactorySet<S, A, P>;
+  shouldUpdate?: GraphNodeFactoryShouldUpdate<S, P>;
 }
 
 export type GraphNodeFactory<S, A = GraphNodeDraftState<S>, P extends any[] = []> =
@@ -283,6 +296,7 @@ function defaultKeygen<P extends any[] = []>(...params: P): string {
 export function createGraphNodeFactory<S, A = GraphNodeDraftState<S>, P extends any[] = []>(
   {
     key, get, set, baseKey,
+    shouldUpdate,
   }: GraphNodeFactoryOptions<S, A, P>,
 ): GraphNodeFactory<S, A, P> {
   const factoryKey = `Factory[${baseKey ?? generateKey()}]`;
@@ -290,6 +304,7 @@ export function createGraphNodeFactory<S, A = GraphNodeDraftState<S>, P extends 
     key: `${factoryKey}(${key ? key(...params) : defaultKeygen(params)}`,
     get: get(...params),
     set: set ? set(...params) : undefined,
+    shouldUpdate: shouldUpdate ? shouldUpdate(...params) : undefined,
   });
 }
 

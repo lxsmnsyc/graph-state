@@ -448,10 +448,12 @@ export function setGraphNodeState<S, A = GraphNodeDraftState<S>>(
   notify = true,
   actualNode = getGraphNodeInstance(memory, node),
 ): void {
-  actualNode.state.value = value;
-  actualNode.state.version += 1;
+  if (node.shouldUpdate(actualNode.state.value, value)) {
+    actualNode.state.value = value;
+    actualNode.state.version += 1;
 
-  runGraphNodeUpdate(memory, node, notify);
+    runGraphNodeUpdate(memory, node, notify);
+  }
 }
 
 export function subscribeGraphNode<S, A = GraphNodeDraftState<S>>(
