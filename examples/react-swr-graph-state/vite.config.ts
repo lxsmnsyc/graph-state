@@ -11,4 +11,4 @@ export default defineConfig({
       'swr-graph-state',
     ],
   }
-})
+});

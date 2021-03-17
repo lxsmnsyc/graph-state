@@ -15,4 +15,4 @@ export default defineConfig({
       'preact-graph-state'
     ],
   },
-})
+});
