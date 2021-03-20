@@ -25,6 +25,16 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-export default function generateKey(): string {
+
+// This function ensures Map.prototype.get's compile-time
+// type inference isn't nullish.
+export function ensure<T>(value: T | undefined): T {
+  if (value == null) {
+    throw new Error('Unable to return a nullish value.');
+  }
+  return value;
+}
+
+export function generateKey(): string {
   return Math.random().toString(36).substr(2, 9);
 }
