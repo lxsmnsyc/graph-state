@@ -31,7 +31,9 @@ import {
 } from '@lyonph/preact-hooks';
 import { compareArray } from '../utils/compareTuple';
 
-export type GraphNodeDispatch<A> = (action: A) => (void | Promise<void>);
+export type GraphNodeDispatch<A> =
+  | ((action: A) => void)
+  | ((action: A) => Promise<void>);
 
 export default function useGraphNodeDispatchBase<S, A>(
   memory: GraphDomainMemory,
