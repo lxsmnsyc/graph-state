@@ -40,6 +40,7 @@ import {
 import {
   useConstant,
   useConstantCallback,
+  useMountedState,
 } from '@lyonph/preact-hooks';
 import { useGraphDomainContext } from './GraphDomainContext';
 
@@ -48,11 +49,15 @@ function useGraphDomainCore() {
 
   const [batcher, setBatcher] = useState<(() => void)[]>([]);
 
+  const isMounted = useMountedState();
+
   const batchUpdate = useConstantCallback<Batcher>((callback) => {
-    setBatcher((cbs) => [
-      ...cbs,
-      callback,
-    ]);
+    if (isMounted()) {
+      setBatcher((cbs) => [
+        ...cbs,
+        callback,
+      ]);
+    }
   });
 
   const memory = useConstant<GraphDomainMemory>(
