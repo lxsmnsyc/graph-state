@@ -65,10 +65,19 @@ function useGraphDomainCore() {
     if (batcher.length > 0) {
       setBatcher([]);
 
+      let mounted = true;
       batcher.forEach((batchedUpdate) => {
-        batchedUpdate();
+        if (mounted) {
+          batchedUpdate();
+        }
       });
+
+      return () => {
+        mounted = false;
+      };
     }
+
+    return undefined;
   }, [batcher]);
 
   useDebugValue(memory.nodes);

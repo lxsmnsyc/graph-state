@@ -38,7 +38,9 @@ import {
   Batcher,
 } from 'graph-state';
 import { useDisposableMemo } from 'use-dispose';
-import { useConstantCallback } from '@lyonph/react-hooks';
+import {
+  useConstantCallback,
+} from '@lyonph/react-hooks';
 import { useGraphDomainContext } from './GraphDomainContext';
 
 function useGraphDomainCore() {
@@ -64,10 +66,19 @@ function useGraphDomainCore() {
     if (batcher.length > 0) {
       setBatcher([]);
 
+      let mounted = true;
       batcher.forEach((batchedUpdate) => {
-        batchedUpdate();
+        if (mounted) {
+          batchedUpdate();
+        }
       });
+
+      return () => {
+        mounted = false;
+      };
     }
+
+    return undefined;
   }, [batcher]);
 
   current.value = memory;
