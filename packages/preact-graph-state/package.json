@@ -2,12 +2,13 @@
   "version": "1.4.1",
   "description": "Preact bindings for `graph-state`",
   "author": "Alexis Munsayac",
-  "main": "dist/index.js",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
   "exports": {
-    "import": "./dist/preact-graph-state.esm.js",
-    "require": "./dist/index.js"
+    "import": "./dist/esm/index.js",
+    "require": "./dist/cjs/index.js"
   },
-  "types": "dist/index.d.ts",
+  "types": "dist/types/index.d.ts",
   "files": [
     "dist",
     "src"
@@ -26,7 +27,6 @@
   },
   "license": "MIT",
   "name": "preact-graph-state",
-  "module": "dist/preact-graph-state.esm.js",
   "devDependencies": {
     "@testing-library/jest-dom": "^5.11.6",
     "@testing-library/preact": "^2.0.0",
@@ -37,7 +37,7 @@
     "eslint-config-lxsmnsyc": "^0.1.20",
     "graph-state": "1.4.1",
     "preact": "^10.5.7",
-    "pridepack": "^0.6.0",
+    "pridepack": "^0.8.0",
     "ts-jest": "^26.4.4",
     "tslib": "^2.0.3",
     "typescript": "^4.1.2"
@@ -69,6 +69,6 @@
     "preact"
   ],
   "dependencies": {
-    "@lyonph/preact-hooks": "^0.1.2"
+    "@lyonph/preact-hooks": "^0.1.3"
   }
 }
