@@ -13,18 +13,18 @@ import {
 } from 'react-graph-state';
 
 const temperatureF = createGraphNode({
+  key: 'Fahrenheit',
   get: 32,
 });
 
 const temperatureC = createGraphNode<number, number>({
+  key: 'Celsius',
   get: ({ get }) => {
     const fahrenheit = get(temperatureF);
 
     return ((fahrenheit - 32) * 5) / 9;
   },
-  set: ({ set }, newValue) => {
-    set(temperatureF, (newValue * 9) / 5 + 32);
-  },
+  set: ({ set }, newValue) => set(temperatureF, (newValue * 9) / 5 + 32),
 });
 
 const sleep = (time: number) => new Promise((resolve) => {
@@ -32,6 +32,7 @@ const sleep = (time: number) => new Promise((resolve) => {
 });
 
 const temperature = createGraphNode<Promise<string>>({
+  key: 'Temperature',
   get: async ({ get }) => {
     const fahrenheit = get(temperatureF);
     const celsius = get(temperatureC);
@@ -117,6 +118,7 @@ function AsyncTemperature(): JSX.Element {
 }
 
 const timer = createGraphNode<number>({
+  key: 'Timer',
   get: ({ mutateSelf, subscription }) => {
     let count = 0;
     subscription(() => {
