@@ -109,6 +109,8 @@ const example = createGraphNode({
 
 If another node of the same key is attempted to be created, the first instance is always reused.
 
+Keys you define are dev-only. Production environment will produce a unique id in place of the keys you provided.
+
 ### Subscriptions
 
 `graph-state` allows managing subscriptions for side-effects. This is useful for subscribing to events (e.g. `addEventListener`), timers (`setTimeout`), etc.
