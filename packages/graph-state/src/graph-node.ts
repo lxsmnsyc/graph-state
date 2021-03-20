@@ -25,7 +25,7 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import generateKey from './generate-key';
+import { ensure, generateKey } from './utils';
 // Keys for accessing graph node instances
 export type GraphNodeKey = string | number;
 
@@ -38,7 +38,7 @@ export type GraphNodeDraftState<S> = S | GraphNodeDraftStateAction<S>;
 export type GraphNodeResolve = <T>(promise: Promise<T>) => Promise<T>;
 
 export type GraphNodeMutateSelf<S> = (value: S) => void;
-export type GraphNodeSetSelf<A> = (value: A) => void;
+export type GraphNodeSetSelf<A> = (value: A) => (void | Promise<void>);
 export type GraphNodeGetSelf<S> = () => S;
 export type GraphNodeResetSelf = () => void;
 
@@ -72,7 +72,7 @@ export type GraphNodeSetInterface<S, A = GraphNodeDraftState<S>> =
   GraphNodeCallbackInterface<S, A>;
 
 export type GraphNodeSet<S, A = GraphNodeDraftState<S>> =
-  (facing: GraphNodeSetInterface<S, A>, action: A) => void;
+  (facing: GraphNodeSetInterface<S, A>, action: A) => void | Promise<void>;
 
 export type GraphNodeShouldUpdate<S> =
   (prev: S, next: S) => boolean;
@@ -98,13 +98,33 @@ export interface GraphNodeOptions<S, A = GraphNodeDraftState<S>> {
 export type GraphNodeGetValue =
   <S, A = GraphNodeDraftState<S>>(node: GraphNode<S, A>) => S;
 export type GraphNodeSetValue =
-  <S, A = GraphNodeDraftState<S>>(node: GraphNode<S, A>, action: A) => void;
+  <S, A = GraphNodeDraftState<S>>(node: GraphNode<S, A>, action: A) => (void | Promise<void>);
 export type GraphNodeMutateValue =
   <S, A = GraphNodeDraftState<S>>(node: GraphNode<S, A>, value: S) => void;
 export type GraphNodeResetValue =
   <S, A = GraphNodeDraftState<S>>(node: GraphNode<S, A>) => void;
 
 const NODES = new Map<GraphNodeKey, GraphNode<any, any>>();
+const KEYS = new Map<GraphNodeKey, GraphNodeKey>();
+
+function createKey(key?: GraphNodeKey): GraphNodeKey {
+  // Check if there's a key
+  if (key) {
+    if (process.env.NODE_ENV === 'production') {
+      // If the key already exists, return the
+      // memoized key
+      if (KEYS.has(key)) {
+        return ensure(KEYS.get(key));
+      }
+      const newKey = generateKey();
+      KEYS.set(key, newKey);
+      return newKey;
+    }
+    return key;
+  }
+
+  return generateKey();
+}
 
 function createRawGraphNode<S, A = GraphNodeDraftState<S>>(
   {
@@ -114,7 +134,7 @@ function createRawGraphNode<S, A = GraphNodeDraftState<S>>(
   return {
     get,
     set,
-    key: key ?? generateKey(),
+    key: createKey(key),
     shouldUpdate: shouldUpdate ?? DEFAULT_MEMO,
   };
 }
