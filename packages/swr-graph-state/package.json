@@ -1,11 +1,12 @@
 {
   "version": "1.4.1",
-  "main": "dist/index.js",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
   "exports": {
-    "import": "./dist/swr-graph-state.esm.js",
-    "require": "./dist/index.js"
+    "import": "./dist/esm/index.js",
+    "require": "./dist/cjs/index.js"
   },
-  "types": "dist/index.d.ts",
+  "types": "dist/types/index.d.ts",
   "files": [
     "dist",
     "src"
@@ -24,14 +25,13 @@
   },
   "license": "MIT",
   "name": "swr-graph-state",
-  "module": "dist/swr-graph-state.esm.js",
   "devDependencies": {
     "@types/jest": "^26.0.20",
     "@types/node": "^14.14.34",
     "eslint": "^7.22.0",
     "eslint-config-lxsmnsyc": "^0.1.20",
     "graph-state": "1.4.1",
-    "pridepack": "^0.7.2",
+    "pridepack": "^0.8.0",
     "ts-jest": "^26.5.3",
     "tslib": "^2.1.0",
     "typescript": "^4.2.3"
