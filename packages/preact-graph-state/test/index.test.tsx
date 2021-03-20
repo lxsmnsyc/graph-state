@@ -16,7 +16,12 @@ import { supressWarnings, restoreWarnings } from './suppress-warnings';
 import '@testing-library/jest-dom/extend-expect';
 import '@testing-library/jest-dom';
 
-jest.useFakeTimers();
+beforeEach(() => {
+  jest.useFakeTimers();
+});
+afterEach(() => {
+  jest.useRealTimers();
+});
 
 const step = async () => {
   await act(() => {
@@ -259,9 +264,7 @@ describe('useGraphNodeDispatch', () => {
 
     const exampleNode2 = createGraphNode<string, string>({
       get: ({ get }) => get(exampleNode),
-      set: ({ set }, newValue) => {
-        set(exampleNode, newValue);
-      },
+      set: ({ set }, newValue) => set(exampleNode, newValue),
     });
 
     function Consumer(): JSX.Element {

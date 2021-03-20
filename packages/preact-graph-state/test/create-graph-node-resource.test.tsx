@@ -13,13 +13,19 @@ import {
   useGraphNodeResource,
   useGraphNodeValue,
 } from '../src';
+
 import { restoreWarnings, supressWarnings } from './suppress-warnings';
 import ErrorBound from './error-boundary';
 
 import '@testing-library/jest-dom/extend-expect';
 import '@testing-library/jest-dom';
 
-jest.useFakeTimers();
+beforeEach(() => {
+  jest.useFakeTimers();
+});
+afterEach(() => {
+  jest.useRealTimers();
+});
 
 const step = async () => {
   await act(() => {

@@ -12,17 +12,22 @@ import {
   useGraphNodeResource,
   useGraphNodeValue,
 } from '../src';
-
-import '@testing-library/jest-dom/extend-expect';
-import '@testing-library/jest-dom';
 import ErrorBound from './error-boundary';
 import { restoreWarnings, supressWarnings } from './suppress-warnings';
 
-jest.useFakeTimers();
+import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 
-const step = () => {
+beforeEach(() => {
+  jest.useFakeTimers();
+});
+afterEach(() => {
+  jest.useRealTimers();
+});
+
+const step = (value = 1) => {
   act(() => {
-    jest.advanceTimersByTime(1000);
+    jest.advanceTimersByTime(value * 1000);
   });
 };
 
@@ -59,7 +64,10 @@ describe('waitForAny', () => {
   );
   const resourceF = createGraphNodeResource<string>(
     createGraphNode<Promise<string>>({
-      get: async () => Promise.reject(new Error('Message F')),
+      get: async () => {
+        throw new Error();
+        await sleep(1);
+      },
     }),
   );
 
@@ -126,7 +134,6 @@ describe('waitForAny', () => {
     });
     it('should receive a failure state upon rejection.', async () => {
       const values = waitForAny([
-        resourceA,
         resourceF,
         resourceC,
       ]);
@@ -148,6 +155,8 @@ describe('waitForAny', () => {
           <Consumer />
         </GraphDomain>,
       );
+
+      step(3);
 
       expect(await waitFor(() => screen.getByTitle('failure'))).toContainHTML('Error');
     });
@@ -216,7 +225,6 @@ describe('waitForAny', () => {
     });
     it('should receive a failure state upon rejection.', async () => {
       const values = waitForAny([
-        resourceA,
         resourceF,
         resourceC,
       ]);
@@ -245,6 +253,8 @@ describe('waitForAny', () => {
           </ErrorBound>
         </GraphDomain>,
       );
+
+      step(3);
 
       expect(await waitFor(() => screen.getByTitle('failure'))).toContainHTML('Error');
       restoreWarnings();

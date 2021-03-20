@@ -2,7 +2,11 @@
 import { h } from 'preact';
 import { Suspense } from 'preact/compat';
 import {
-  act, cleanup, render, screen, waitFor,
+  act,
+  cleanup,
+  render,
+  screen,
+  waitFor,
 } from '@testing-library/preact';
 import {
   createGraphNode,
@@ -15,12 +19,18 @@ import {
   useGraphNodeValue,
 } from '../src';
 
-import '@testing-library/jest-dom/extend-expect';
-import '@testing-library/jest-dom';
 import ErrorBound from './error-boundary';
 import { restoreWarnings, supressWarnings } from './suppress-warnings';
 
-jest.useFakeTimers();
+import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
+
+beforeEach(() => {
+  jest.useFakeTimers('legacy');
+});
+afterEach(() => {
+  jest.useRealTimers();
+});
 
 const step = async () => {
   await act(() => {
@@ -61,7 +71,10 @@ describe('waitForAny', () => {
   );
   const resourceF = createGraphNodeResource<string>(
     createGraphNode<Promise<string>>({
-      get: async () => Promise.reject(new Error('Message F')),
+      get: async () => {
+        throw new Error();
+        await sleep(1);
+      },
     }),
   );
 
@@ -128,7 +141,7 @@ describe('waitForAny', () => {
     });
     it('should receive a failure state upon rejection.', async () => {
       const values = waitForAny([
-        resourceA,
+        resourceB,
         resourceF,
         resourceC,
       ]);
@@ -150,6 +163,9 @@ describe('waitForAny', () => {
           <Consumer />
         </GraphDomain>,
       );
+
+      await step();
+      await step();
 
       expect(await waitFor(() => screen.getByTitle('failure'))).toContainHTML('Error');
     });
@@ -218,7 +234,7 @@ describe('waitForAny', () => {
     });
     it('should receive a failure state upon rejection.', async () => {
       const values = waitForAny([
-        resourceA,
+        resourceB,
         resourceF,
         resourceC,
       ]);
@@ -247,6 +263,9 @@ describe('waitForAny', () => {
           </ErrorBound>
         </GraphDomain>,
       );
+
+      await step();
+      await step();
 
       expect(await waitFor(() => screen.getByTitle('failure'))).toContainHTML('Error');
       restoreWarnings();

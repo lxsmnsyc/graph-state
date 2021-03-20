@@ -15,12 +15,18 @@ import {
   useGraphNodeValue,
 } from '../src';
 
-import '@testing-library/jest-dom/extend-expect';
-import '@testing-library/jest-dom';
 import { restoreWarnings, supressWarnings } from './suppress-warnings';
 import ErrorBound from './error-boundary';
 
-jest.useFakeTimers();
+import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
+
+beforeEach(() => {
+  jest.useFakeTimers();
+});
+afterEach(() => {
+  jest.useRealTimers();
+});
 
 const step = async () => {
   await act(() => {
@@ -61,7 +67,7 @@ describe('waitForAll', () => {
   );
   const resourceF = createGraphNodeResource<string>(
     createGraphNode<Promise<string>>({
-      get: async () => Promise.reject(new Error('Message F')),
+      get: (): Promise<string> => Promise.reject(new Error('Message F')),
     }),
   );
 
@@ -186,6 +192,8 @@ describe('waitForAll', () => {
           <Consumer />
         </GraphDomain>,
       );
+
+      await step();
 
       expect(await waitFor(() => screen.getByTitle('failure'))).toContainHTML('Error');
     });
@@ -319,6 +327,8 @@ describe('waitForAll', () => {
           </ErrorBound>
         </GraphDomain>,
       );
+
+      await step();
 
       expect(await waitFor(() => screen.getByTitle('failure'))).toContainHTML('Error');
       restoreWarnings();

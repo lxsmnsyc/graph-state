@@ -13,16 +13,22 @@ import {
   useGraphNodeValue,
 } from '../src';
 
+import { restoreWarnings, supressWarnings } from './suppress-warnings';
+import ErrorBound from './error-boundary';
+
 import '@testing-library/jest-dom/extend-expect';
 import '@testing-library/jest-dom';
-import ErrorBound from './error-boundary';
-import { restoreWarnings, supressWarnings } from './suppress-warnings';
 
-jest.useFakeTimers();
+beforeEach(() => {
+  jest.useFakeTimers();
+});
+afterEach(() => {
+  jest.useRealTimers();
+});
 
-const step = () => {
+const step = (value = 1) => {
   act(() => {
-    jest.advanceTimersByTime(1000);
+    jest.advanceTimersByTime(value * 1000);
   });
 };
 
@@ -161,9 +167,7 @@ describe('waitForAll', () => {
         </GraphDomain>,
       );
 
-      step();
-      step();
-      step();
+      step(3);
       expect(await waitFor(() => screen.getByTitle('success'))).toContainHTML(expected);
     });
     it('should receive a failure state upon rejection.', async () => {
@@ -190,6 +194,8 @@ describe('waitForAll', () => {
           <Consumer />
         </GraphDomain>,
       );
+
+      step();
 
       expect(await waitFor(() => screen.getByTitle('failure'))).toContainHTML('Error');
     });
@@ -287,9 +293,7 @@ describe('waitForAll', () => {
         </GraphDomain>,
       );
 
-      step();
-      step();
-      step();
+      step(3);
       expect(await waitFor(() => screen.getByTitle('success'))).toContainHTML(expected);
     });
     it('should receive a failure state upon rejection.', async () => {
@@ -323,6 +327,8 @@ describe('waitForAll', () => {
           </ErrorBound>
         </GraphDomain>,
       );
+
+      step();
 
       expect(await waitFor(() => screen.getByTitle('failure'))).toContainHTML('Error');
       restoreWarnings();

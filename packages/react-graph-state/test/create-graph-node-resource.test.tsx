@@ -12,10 +12,11 @@ import {
   useGraphNodeValue,
 } from '../src';
 
-import '@testing-library/jest-dom/extend-expect';
-import '@testing-library/jest-dom';
 import ErrorBound from './error-boundary';
 import { restoreWarnings, supressWarnings } from './suppress-warnings';
+
+import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 
 jest.useFakeTimers();
 
