@@ -31,16 +31,14 @@ import {
 } from '@lyonph/react-hooks';
 import { compareArray } from '../utils/compareTuple';
 
-export type GraphNodeDispatch<A> = (action: A) => void;
+export type GraphNodeDispatch<A> = (action: A) => void | Promise<void>;
 
 export default function useGraphNodeDispatchBase<S, A>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
 ): GraphNodeDispatch<A> {
   return useCallbackCondition(
-    (action: A) => {
-      runGraphNodeDispatch(memory, node, action);
-    },
+    (action: A) => runGraphNodeDispatch(memory, node, action),
     [memory, node],
     compareArray,
   );
