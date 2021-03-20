@@ -76,7 +76,7 @@ function Celsius(): VNode {
 function Fahrenheit(): VNode {
   const [fahrenheit, setFahrenheit] = useGraphNodeState(temperatureF);
 
-  const onChange = useCallback((e: h.JSX.TargetedEvent<HTMLInputElement>) => {
+  const onChange = useCallback((e: JSX.TargetedEvent<HTMLInputElement>) => {
     setFahrenheit(Number.parseFloat(e.currentTarget.value));
   }, [setFahrenheit]);
 
