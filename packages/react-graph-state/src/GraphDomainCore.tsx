@@ -52,12 +52,10 @@ function useGraphDomainCore() {
   const isMounted = useMountedState();
 
   const batchUpdate = useConstantCallback<Batcher>((callback) => {
-    if (isMounted()) {
-      setBatcher((cbs) => [
-        ...cbs,
-        callback,
-      ]);
-    }
+    setBatcher((cbs) => [
+      ...cbs,
+      callback,
+    ]);
   });
 
   const memory = useConstant<GraphDomainMemory>(
@@ -71,9 +69,7 @@ function useGraphDomainCore() {
       setBatcher([]);
 
       batcher.forEach((batchedUpdate) => {
-        if (isMounted()) {
-          batchedUpdate();
-        }
+        batchedUpdate();
       });
     }
   }, [batcher, isMounted]);
