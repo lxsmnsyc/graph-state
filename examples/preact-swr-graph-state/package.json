@@ -1,6 +1,6 @@
 {
   "name": "preact-swr-graph-state-vite",
-  "version": "1.5.0",
+  "version": "1.5.2",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -9,7 +9,7 @@
   "dependencies": {
     "graph-state": "1.5.0",
     "preact": "^10.5.7",
-    "preact-graph-state": "1.5.0",
+    "preact-graph-state": "1.5.2",
     "swr-graph-state": "1.5.0"
   },
   "devDependencies": {
