@@ -424,22 +424,13 @@ export function runGraphNodeCompute<S, A = GraphNodeDraftState<S>>(
   );
 }
 
-let call = 0;
-const scheduled = new Set();
-
 export function runGraphNodeUpdate<S, A = GraphNodeDraftState<S>>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
   notify = true,
   actualNode = getGraphNodeInstance(memory, node),
 ): void {
-  const newCall = call;
-  scheduled.add(newCall);
-  console.log('Scheduling...', scheduled);
-  call += 1;
   memory.batcher(() => {
-    scheduled.delete(newCall);
-    console.log('Scheduled ', scheduled);
     actualNode.dependents.forEach((dependent) => {
       runGraphNodeCompute(memory, dependent);
     });
