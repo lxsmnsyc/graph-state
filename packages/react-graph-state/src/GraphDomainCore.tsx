@@ -78,7 +78,7 @@ function useGraphDomainCore() {
         }
       });
     }
-  }, [version, isMounted]);
+  }, [version]);
 
   useDebugValue(memory.nodes);
 
