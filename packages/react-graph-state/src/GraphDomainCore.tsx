@@ -71,16 +71,9 @@ function useGraphDomainCore() {
     if (batcher.length > 0) {
       setBatcher([]);
 
-      let mounted = true;
       batcher.forEach((batchedUpdate) => {
-        if (mounted) {
-          batchedUpdate();
-        }
+        batchedUpdate();
       });
-
-      return () => {
-        mounted = false;
-      };
     }
 
     return undefined;
