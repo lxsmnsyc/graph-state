@@ -1910,10 +1910,10 @@
   resolved "https://registry.yarnpkg.com/@lyonph/react-hooks/-/react-hooks-0.2.3.tgz#f8ca46f170e0b65d3b15169c177e19bb68af56c6"
   integrity sha512-RnmYuHeNjGaGBafzxcw0htD8VrzbZh5z/xzQEVicQHE7o1E2bg4h7UbdVNQG0PL/HnMcVxpc1vmtQXnajPmkbA==
 
-"@lyonph/react-hooks@^0.3.2":
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/@lyonph/react-hooks/-/react-hooks-0.3.2.tgz#4b997a3ae051d622246fcbe9a43e59d6c3da3bf9"
-  integrity sha512-NkYFWvzbljE1OA+TwnigOpRnRESqDEGE4Kr++0S9QDVMWBj2zH5H95okj8ohrrpgwcAGhrsMBBCeI6hmVh6+Tw==
+"@lyonph/react-hooks@^0.3.3":
+  version "0.3.3"
+  resolved "https://registry.yarnpkg.com/@lyonph/react-hooks/-/react-hooks-0.3.3.tgz#8769356360f21c1d677b494316f8644970a8446f"
+  integrity sha512-z+v7d61LDU0NaoDmGnmKLuN0UPg5p8Kw84tDTMeUrmFasZ2EWx2Oiz6TehG6Ebs1+XzMhAnWqBSnnybFDKasmg==
 
 "@mdn/browser-compat-data@^2.0.7":
   version "2.0.7"
