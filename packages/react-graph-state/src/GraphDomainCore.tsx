@@ -30,6 +30,7 @@ import {
   useDebugValue,
   useEffect,
   useState,
+  useRef,
 } from 'react';
 import {
   createGraphDomainMemory,
@@ -40,22 +41,23 @@ import {
 import {
   useConstant,
   useConstantCallback,
-  useMountedState,
 } from '@lyonph/react-hooks';
 import { useGraphDomainContext } from './GraphDomainContext';
 
 function useGraphDomainCore() {
   const { current } = useGraphDomainContext();
 
-  const [batcher, setBatcher] = useState<(() => void)[]>([]);
+  const batchedUpdates = useRef([]);
+  const [version, setVersion] = useState(0);
 
-  const isMounted = useMountedState();
+  const isMounted = useRef(true);
 
   const batchUpdate = useConstantCallback<Batcher>((callback) => {
-    setBatcher((cbs) => [
-      ...cbs,
-      callback,
-    ]);
+    if (isMounted.current) {
+      batchedUpdates.current.push(callback);
+
+      setVersion((current) => current + 1);
+    }
   });
 
   const memory = useConstant<GraphDomainMemory>(
@@ -65,18 +67,23 @@ function useGraphDomainCore() {
   current.value = memory;
 
   useEffect(() => {
-    if (batcher.length > 0) {
-      setBatcher([]);
+    const updates = batchedUpdates.current;
 
-      batcher.forEach((batchedUpdate) => {
-        batchedUpdate();
+    batchedUpdates.current = [];
+
+    if (updates.length > 0) {
+      updates.forEach((batchedUpdate) => {
+        if (isMounted.current) {
+          batchedUpdate();
+        }
       });
     }
-  }, [batcher, isMounted]);
+  }, [version, isMounted]);
 
   useDebugValue(memory.nodes);
 
   useEffect(() => () => {
+    isMounted.current = false;
     destroyGraphDomainMemory(memory);
   }, [memory]);
 }

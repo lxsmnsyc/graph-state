@@ -30,6 +30,7 @@ import {
   useDebugValue,
   useEffect,
   useState,
+  useRef,
 } from 'preact/compat';
 import {
   Batcher,
@@ -40,23 +41,22 @@ import {
 import {
   useConstant,
   useConstantCallback,
-  useMountedState,
 } from '@lyonph/preact-hooks';
 import { useGraphDomainContext } from './GraphDomainContext';
 
 function useGraphDomainCore() {
   const { current } = useGraphDomainContext();
 
-  const [batcher, setBatcher] = useState<(() => void)[]>([]);
+  const batchedUpdates = useRef([]);
+  const [version, setVersion] = useState(0);
 
-  const isMounted = useMountedState();
+  const isMounted = useRef(true);
 
   const batchUpdate = useConstantCallback<Batcher>((callback) => {
-    if (isMounted()) {
-      setBatcher((cbs) => [
-        ...cbs,
-        callback,
-      ]);
+    if (isMounted.current) {
+      batchedUpdates.current.push(callback);
+
+      setVersion((current) => current + 1);
     }
   });
 
@@ -67,18 +67,23 @@ function useGraphDomainCore() {
   current.value = memory;
 
   useEffect(() => {
-    if (batcher.length > 0) {
-      setBatcher([]);
+    const updates = batchedUpdates.current;
 
-      batcher.forEach((batchedUpdate) => {
-        batchedUpdate();
+    batchedUpdates.current = [];
+
+    if (updates.length > 0) {
+      updates.forEach((batchedUpdate) => {
+        if (isMounted.current) {
+          batchedUpdate();
+        }
       });
     }
-  }, [batcher]);
+  }, [version]);
 
   useDebugValue(memory.nodes);
 
   useEffect(() => () => {
+    isMounted.current = false;
     destroyGraphDomainMemory(memory);
   }, [memory]);
 }
