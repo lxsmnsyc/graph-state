@@ -37,8 +37,8 @@ import {
   GraphDomainMemory,
   Batcher,
 } from 'graph-state';
-import { useDisposableMemo } from 'use-dispose';
 import {
+  useConstant,
   useConstantCallback,
   useMountedState,
 } from '@lyonph/react-hooks';
@@ -60,28 +60,29 @@ function useGraphDomainCore() {
     }
   });
 
-  const memory = useDisposableMemo<GraphDomainMemory>(
+  const memory = useConstant<GraphDomainMemory>(
     () => createGraphDomainMemory(batchUpdate),
-    // Component renders twice before side-effects and commits run.
-    // Dispose the current memory to prevent leaks to external sources.
-    (instance) => destroyGraphDomainMemory(instance),
   );
+
+  current.value = memory;
 
   useEffect(() => {
     if (batcher.length > 0) {
       setBatcher([]);
 
       batcher.forEach((batchedUpdate) => {
-        batchedUpdate();
+        if (isMounted()) {
+          batchedUpdate();
+        }
       });
     }
-
-    return undefined;
-  }, [batcher]);
-
-  current.value = memory;
+  }, [batcher, isMounted]);
 
   useDebugValue(memory.nodes);
+
+  useEffect(() => () => {
+    destroyGraphDomainMemory(memory);
+  }, [memory]);
 }
 
 const GraphDomainCore = memo(() => {

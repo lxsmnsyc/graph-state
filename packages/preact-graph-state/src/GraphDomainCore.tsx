@@ -74,8 +74,6 @@ function useGraphDomainCore() {
         batchedUpdate();
       });
     }
-
-    return undefined;
   }, [batcher]);
 
   useDebugValue(memory.nodes);
