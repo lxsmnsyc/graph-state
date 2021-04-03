@@ -1,16 +1,16 @@
 {
   "name": "react-graph-state-vite",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "serve": "vite preview"
   },
   "dependencies": {
-    "graph-state": "1.6.0",
+    "graph-state": "1.6.1",
     "react": "^17.0.0",
     "react-dom": "^17.0.0",
-    "react-graph-state": "1.6.0"
+    "react-graph-state": "1.6.1"
   },
   "devDependencies": {
     "@types/react": "^17.0.3",
