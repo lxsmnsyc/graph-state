@@ -428,19 +428,21 @@ function runGraphNodeUpdate<S, A = GraphNodeDraftState<S>>(
   notify = true,
   actualNode = getGraphNodeInstance(memory, node),
 ): void {
-  actualNode.dependents.forEach((dependent) => {
-    runGraphNodeCompute(memory, dependent);
-  });
-
-  if (notify) {
-    const state = actualNode.state.value;
-
-    actualNode.listeners.forEach((listener) => {
-      listener(state);
+  memory.batcher(() => {
+    actualNode.dependents.forEach((dependent) => {
+      runGraphNodeCompute(memory, dependent);
     });
-  }
 
-  exposeToWindow(memory);
+    if (notify) {
+      const state = actualNode.state.value;
+
+      actualNode.listeners.forEach((listener) => {
+        listener(state);
+      });
+    }
+
+    exposeToWindow(memory);
+  });
 }
 
 export function setGraphNodeState<S, A = GraphNodeDraftState<S>>(
@@ -451,11 +453,9 @@ export function setGraphNodeState<S, A = GraphNodeDraftState<S>>(
   actualNode = getGraphNodeInstance(memory, node),
 ): void {
   if (node.shouldUpdate(actualNode.state.value, value)) {
-    memory.batcher(() => {
-      actualNode.state.value = value;
-      actualNode.state.version += 1;
-      runGraphNodeUpdate(memory, node, notify);
-    });
+    actualNode.state.value = value;
+    actualNode.state.version += 1;
+    runGraphNodeUpdate(memory, node, notify);
   }
 }
 
