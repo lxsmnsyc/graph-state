@@ -47,17 +47,19 @@ import { useGraphDomainContext } from './GraphDomainContext';
 function useGraphDomainCore() {
   const { current } = useGraphDomainContext();
 
-  const batchedUpdates = useRef([]);
+  const batchedUpdates = useRef<(() => void)[]>([]);
   const [version, setVersion] = useState(0);
 
   const isMounted = useRef(true);
 
   const batchUpdate = useConstantCallback<Batcher>((callback) => {
-    if (isMounted.current) {
-      batchedUpdates.current.push(callback);
+    setTimeout(() => {
+      if (isMounted.current) {
+        batchedUpdates.current.push(callback);
 
-      setVersion((current) => current + 1);
-    }
+        setVersion((v) => v + 1);
+      }
+    });
   });
 
   const memory = useConstant<GraphDomainMemory>(

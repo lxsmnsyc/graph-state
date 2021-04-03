@@ -143,7 +143,7 @@ export function createGraphNode<S, A = GraphNodeDraftState<S>>(
   options: GraphNodeOptions<S, A>,
 ): GraphNode<S, A> {
   if (options.key != null) {
-    const currentNode = NODES.get(options.key);
+    const currentNode = NODES.get(createKey(options.key));
     if (currentNode) {
       return currentNode;
     }
