@@ -75,9 +75,7 @@ function useGraphDomainCore() {
 
     if (updates.length > 0) {
       updates.forEach((batchedUpdate) => {
-        if (isMounted.current) {
-          batchedUpdate();
-        }
+        batchedUpdate();
       });
     }
   }, [version]);
