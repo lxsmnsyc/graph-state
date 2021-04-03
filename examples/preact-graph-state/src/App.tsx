@@ -25,9 +25,7 @@ const temperatureC = createGraphNode<number, number>({
 
     return ((fahrenheit - 32) * 5) / 9;
   },
-  set: ({ set }, newValue) => {
-    set(temperatureF, (newValue * 9) / 5 + 32);
-  },
+  set: ({ set }, newValue) => set(temperatureF, (newValue * 9) / 5 + 32),
 });
 
 const sleep = (time: number) => new Promise((resolve) => {
