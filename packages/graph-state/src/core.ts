@@ -261,18 +261,16 @@ function computeGraphNode<S, A = GraphNodeDraftState<S>>(
           setGraphNodeState(memory, node, value);
         }
       },
-      set: (target, action) => {
+      set: (target, action) => new Promise((resolve) => {
         if (getterVersion.alive) {
-          return runGraphNodeDispatch(memory, target, action);
+          resolve(runGraphNodeDispatch(memory, target, action));
         }
-        return undefined;
-      },
-      setSelf: (action: A) => {
+      }),
+      setSelf: (action: A) => new Promise((resolve) => {
         if (getterVersion.alive) {
-          return runGraphNodeDispatch(memory, node, action);
+          resolve(runGraphNodeDispatch(memory, node, action));
         }
-        return undefined;
-      },
+      }),
       reset: (target) => {
         if (getterVersion.alive) {
           runGraphNodeCompute(memory, target);
@@ -330,7 +328,7 @@ export function runGraphNodeDispatch<S, A = GraphNodeDraftState<S>>(
   node: GraphNode<S, A>,
   action: A,
   actualNode = getGraphNodeInstance(memory, node),
-): void | Promise<void> {
+): Promise<void> {
   // Get instance node
   const currentState = getGraphNodeState(memory, node);
 
@@ -343,18 +341,16 @@ export function runGraphNodeDispatch<S, A = GraphNodeDraftState<S>>(
     return node.set({
       get: (target) => getGraphNodeState(memory, target),
       getSelf: () => getGraphNodeState(memory, node),
-      set: (target, targetAction) => {
+      set: (target, targetAction) => new Promise((resolve) => {
         if (setterVersion.alive) {
-          return runGraphNodeDispatch(memory, target, targetAction);
+          resolve(runGraphNodeDispatch(memory, target, targetAction));
         }
-        return undefined;
-      },
-      setSelf: (targetAction) => {
+      }),
+      setSelf: (targetAction: A) => new Promise((resolve) => {
         if (setterVersion.alive) {
-          return runGraphNodeDispatch(memory, node, targetAction, actualNode);
+          resolve(runGraphNodeDispatch(memory, node, targetAction));
         }
-        return undefined;
-      },
+      }),
       mutate: (target, targetValue) => {
         if (setterVersion.alive) {
           setGraphNodeState(memory, target, targetValue);
@@ -393,14 +389,16 @@ export function runGraphNodeDispatch<S, A = GraphNodeDraftState<S>>(
   }
 
   // Notify for new node value
-  return setGraphNodeState(
-    memory,
-    node,
-    getDraftState(
-      action as unknown as GraphNodeDraftState<S>,
-      currentState,
-    ),
-  );
+  return new Promise((resolve) => {
+    resolve(setGraphNodeState(
+      memory,
+      node,
+      getDraftState(
+        action as unknown as GraphNodeDraftState<S>,
+        currentState,
+      ),
+    ));
+  });
 }
 
 export function runGraphNodeCompute<S, A = GraphNodeDraftState<S>>(

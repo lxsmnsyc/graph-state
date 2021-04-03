@@ -38,7 +38,7 @@ export type GraphNodeDraftState<S> = S | GraphNodeDraftStateAction<S>;
 export type GraphNodeResolve = <T>(promise: Promise<T>) => Promise<T>;
 
 export type GraphNodeMutateSelf<S> = (value: S) => void;
-export type GraphNodeSetSelf<A> = ((value: A) => void) | ((value: A) => Promise<void>);
+export type GraphNodeSetSelf<A> = (value: A) => Promise<void>;
 export type GraphNodeGetSelf<S> = () => S;
 export type GraphNodeResetSelf = () => void;
 
@@ -72,8 +72,7 @@ export type GraphNodeSetInterface<S, A = GraphNodeDraftState<S>> =
   GraphNodeCallbackInterface<S, A>;
 
 export type GraphNodeSet<S, A = GraphNodeDraftState<S>> =
-  | ((facing: GraphNodeSetInterface<S, A>, action: A) => void)
-  | ((facing: GraphNodeSetInterface<S, A>, action: A) => Promise<void>);
+  (facing: GraphNodeSetInterface<S, A>, action: A) => Promise<void>;
 
 export type GraphNodeShouldUpdate<S> =
   (prev: S, next: S) => boolean;
@@ -99,8 +98,7 @@ export interface GraphNodeOptions<S, A = GraphNodeDraftState<S>> {
 export type GraphNodeGetValue =
   <S, A = GraphNodeDraftState<S>>(node: GraphNode<S, A>) => S;
 export type GraphNodeSetValue =
-  | (<S, A = GraphNodeDraftState<S>>(node: GraphNode<S, A>, action: A) => void)
-  | (<S, A = GraphNodeDraftState<S>>(node: GraphNode<S, A>, action: A) => Promise<void>);
+  <S, A = GraphNodeDraftState<S>>(node: GraphNode<S, A>, action: A) => Promise<void>;
 export type GraphNodeMutateValue =
   <S, A = GraphNodeDraftState<S>>(node: GraphNode<S, A>, value: S) => void;
 export type GraphNodeResetValue =
