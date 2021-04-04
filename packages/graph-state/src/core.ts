@@ -425,7 +425,7 @@ export function setGraphNodeState<S, A = GraphNodeDraftState<S>>(
       actualNode.state.version += 1;
 
       const parent = shouldBatch;
-      shouldBatch = true;
+      shouldBatch = false;
       new Set(actualNode.dependents).forEach((dependent) => {
         runGraphNodeCompute(memory, dependent);
       });
