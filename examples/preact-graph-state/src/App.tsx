@@ -1,7 +1,6 @@
 import 'preact/debug';
 import { VNode } from 'preact';
 import { Suspense } from 'preact/compat';
-import { useCallback } from 'preact/hooks';
 import {
   createGraphNodeResource,
   createGraphNode,
@@ -12,7 +11,7 @@ import {
   useGraphNodeValue,
   useGraphNodeState,
   useGraphNodeReset,
-  useGraphNodeMutate,
+  useGraphNodeHydrate,
 } from 'preact-graph-state';
 
 const temperatureF = createGraphNode({
@@ -58,14 +57,12 @@ function ResetTemperature(): VNode {
 function Celsius(): VNode {
   const [celsius, setCelsius] = useGraphNodeState(temperatureC);
 
-  const onChange = useCallback((e: JSX.TargetedEvent<HTMLInputElement>) => {
-    setCelsius(Number.parseFloat(e.currentTarget.value));
-  }, [setCelsius]);
-
   return (
     <input
       type="number"
-      onChange={onChange}
+      onChange={(e: JSX.TargetedEvent<HTMLInputElement>) => (
+        setCelsius(Number.parseFloat(e.currentTarget.value))
+      )}
       value={celsius}
     />
   );
@@ -74,14 +71,12 @@ function Celsius(): VNode {
 function Fahrenheit(): VNode {
   const [fahrenheit, setFahrenheit] = useGraphNodeState(temperatureF);
 
-  const onChange = useCallback((e: JSX.TargetedEvent<HTMLInputElement>) => {
-    setFahrenheit(Number.parseFloat(e.currentTarget.value));
-  }, [setFahrenheit]);
-
   return (
     <input
       type="number"
-      onChange={onChange}
+      onChange={(e: JSX.TargetedEvent<HTMLInputElement>) => (
+        setFahrenheit(Number.parseFloat(e.currentTarget.value))
+      )}
       value={fahrenheit}
     />
   );
@@ -141,7 +136,7 @@ function Timer(): VNode {
 }
 
 function InnerApp(): VNode {
-  useGraphNodeMutate(temperatureF, 100);
+  useGraphNodeHydrate(temperatureF, 100);
 
   return (
     <>

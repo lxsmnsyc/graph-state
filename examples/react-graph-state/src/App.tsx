@@ -1,4 +1,4 @@
-import React, { Suspense, useCallback } from 'react';
+import React, { Suspense } from 'react';
 import {
   createGraphNodeResource,
   createGraphNode,
@@ -9,7 +9,7 @@ import {
   useGraphNodeValue,
   useGraphNodeState,
   useGraphNodeReset,
-  useGraphNodeMutate,
+  useGraphNodeHydrate,
 } from 'react-graph-state';
 
 const temperatureF = createGraphNode({
@@ -58,14 +58,12 @@ function ResetTemperature(): JSX.Element {
 function Celsius(): JSX.Element {
   const [celsius, setCelsius] = useGraphNodeState(temperatureC);
 
-  const onChange = useCallback((e: React.FormEvent<HTMLInputElement>) => {
-    setCelsius(Number.parseFloat(e.currentTarget.value));
-  }, [setCelsius]);
-
   return (
     <input
       type="number"
-      onChange={onChange}
+      onChange={(e: React.FormEvent<HTMLInputElement>) => (
+        setCelsius(Number.parseFloat(e.currentTarget.value))
+      )}
       value={celsius}
     />
   );
@@ -74,14 +72,12 @@ function Celsius(): JSX.Element {
 function Fahrenheit(): JSX.Element {
   const [fahrenheit, setFahrenheit] = useGraphNodeState(temperatureF);
 
-  const onChange = useCallback((e: React.FormEvent<HTMLInputElement>) => {
-    setFahrenheit(Number.parseFloat(e.currentTarget.value));
-  }, [setFahrenheit]);
-
   return (
     <input
       type="number"
-      onChange={onChange}
+      onChange={(e: React.FormEvent<HTMLInputElement>) => (
+        setFahrenheit(Number.parseFloat(e.currentTarget.value))
+      )}
       value={fahrenheit}
     />
   );
@@ -142,7 +138,7 @@ function Timer(): JSX.Element {
 }
 
 function InnerApp(): JSX.Element {
-  useGraphNodeMutate(temperatureF, 100);
+  useGraphNodeHydrate(temperatureF, 100);
 
   return (
     <>
