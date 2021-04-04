@@ -410,6 +410,8 @@ export function hydrateGraphNodeState<S, A = GraphNodeDraftState<S>>(
   actualNode.state.version += 1;
 }
 
+let shouldBatch = true;
+
 export function setGraphNodeState<S, A = GraphNodeDraftState<S>>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
@@ -418,13 +420,16 @@ export function setGraphNodeState<S, A = GraphNodeDraftState<S>>(
 ): void {
   const actualNode = getGraphNodeInstance(memory, node);
   if (node.shouldUpdate(actualNode.state.value, value)) {
-    actualNode.state.value = value;
-    actualNode.state.version += 1;
+    const update = () => {
+      actualNode.state.value = value;
+      actualNode.state.version += 1;
 
-    memory.batcher(() => {
+      const parent = shouldBatch;
+      shouldBatch = true;
       new Set(actualNode.dependents).forEach((dependent) => {
         runGraphNodeCompute(memory, dependent);
       });
+      shouldBatch = parent;
 
       if (notify) {
         actualNode.listeners.forEach((listener) => {
@@ -433,7 +438,13 @@ export function setGraphNodeState<S, A = GraphNodeDraftState<S>>(
       }
 
       exposeToWindow(memory);
-    });
+    };
+
+    if (shouldBatch) {
+      memory.batcher(update);
+    } else {
+      update();
+    }
   }
 }
 
