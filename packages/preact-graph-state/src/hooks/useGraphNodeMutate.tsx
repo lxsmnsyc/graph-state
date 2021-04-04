@@ -25,12 +25,15 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphNode, setGraphNodeState } from 'graph-state';
+import { GraphNode } from 'graph-state';
+import { useDebugValue } from 'preact/hooks';
 import { useGraphDomainMemory } from '../GraphDomainContext';
+import useGraphNodeMutateBase, { GraphNodeMutate } from './useGraphNodeMutateBase';
 
 export default function useGraphNodeMutate<S, A>(
   node: GraphNode<S, A>,
-  value: S,
-): void {
-  setGraphNodeState(useGraphDomainMemory(), node, value, false);
+): GraphNodeMutate<S> {
+  const dispatch = useGraphNodeMutateBase(useGraphDomainMemory(), node);
+  useDebugValue(dispatch);
+  return dispatch;
 }

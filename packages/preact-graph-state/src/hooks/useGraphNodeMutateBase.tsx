@@ -25,29 +25,21 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
+import { GraphDomainMemory, GraphNode, setGraphNodeState } from 'graph-state';
 import {
-  GraphNode,
-  hasGraphNodeState,
-  runGraphNodeCompute,
-  hydrateGraphNodeState,
-} from 'graph-state';
-import { useEffect } from 'react';
-import { useGraphDomainMemory } from '../GraphDomainContext';
+  useCallbackCondition,
+} from '@lyonph/preact-hooks';
+import { compareArray } from '../utils/compareTuple';
 
-export default function useGraphNodeHydrate<S, A>(
+export type GraphNodeMutate<S> = (action: S) => void;
+
+export default function useGraphNodeMutateBase<S, A>(
+  memory: GraphDomainMemory,
   node: GraphNode<S, A>,
-  value: S,
-): void {
-  const memory = useGraphDomainMemory();
-
-  const notHydrated = !hasGraphNodeState(memory, node);
-  if (notHydrated) {
-    hydrateGraphNodeState(memory, node, value);
-  }
-
-  useEffect(() => {
-    if (notHydrated) {
-      runGraphNodeCompute(memory, node);
-    }
-  }, [memory, node, notHydrated]);
+): GraphNodeMutate<S> {
+  return useCallbackCondition(
+    (action: S) => setGraphNodeState(memory, node, action),
+    [memory, node],
+    compareArray,
+  );
 }
