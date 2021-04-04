@@ -54,7 +54,8 @@ export interface GraphNodeInstance<T> {
   getterVersion: GraphNodeVersion;
   setterVersion: GraphNodeVersion;
   listeners: GraphNodeListeners<T>;
-  state: GraphNodeState<T>;
+  safeState: GraphNodeState<T>;
+  unsafeState: GraphNodeState<T>;
   dependents: GraphNodeDependencies;
   dependencies: GraphNodeDependencies;
 }
@@ -97,7 +98,7 @@ function parseGraphDomainMemory(
 ): GraphNodeDebugData[] {
   return Array.from(memory.nodes).map(([key, value]) => ({
     id: key,
-    state: value.state.value,
+    state: value.safeState.value,
     dependents: parseDependencies(value.dependents),
     dependencies: parseDependencies(value.dependencies),
   }));
@@ -167,15 +168,20 @@ function getGraphNodeInstance<S, A = GraphNodeDraftState<S>>(
 
   const dependencies: GraphNodeDependencies = new Set();
   const getterVersion = createGraphNodeGetterVersion();
+  const state = computeGraphNode(memory, node, getterVersion, dependencies);
   const baseNode: GraphNodeInstance<S> = {
     getterVersion,
     setterVersion: createGraphNodeSetterVersion(),
     listeners: new Set(),
     dependents: new Set(),
     dependencies,
-    state: {
+    safeState: {
+      value: state,
       version: 0,
-      value: computeGraphNode(memory, node, getterVersion, dependencies),
+    },
+    unsafeState: {
+      value: state,
+      version: 0,
     },
   };
 
@@ -200,7 +206,7 @@ function computeGraphNode<S, A = GraphNodeDraftState<S>>(
           dependencies.add(dependency);
           instance.dependents.add(node);
         }
-        return instance.state.value;
+        return instance.safeState.value;
       },
       getSelf: () => getGraphNodeState(memory, node),
       mutate: (target, value) => {
@@ -266,7 +272,7 @@ function getGraphNodeStateRef<S, A = GraphNodeDraftState<S>>(
   node: GraphNode<S, A>,
 ): GraphNodeState<S> {
   const actualNode = getGraphNodeInstance(memory, node);
-  return actualNode.state;
+  return actualNode.safeState;
 }
 
 export function getGraphNodeState<S, A = GraphNodeDraftState<S>>(
@@ -358,7 +364,7 @@ export function runGraphNodeDispatch<S, A = GraphNodeDraftState<S>>(
       node,
       getDraftState(
         action as unknown as GraphNodeDraftState<S>,
-        getGraphNodeState(memory, node),
+        getGraphNodeInstance(memory, node).unsafeState.value,
       ),
     ));
   });
@@ -406,8 +412,8 @@ export function hydrateGraphNodeState<S, A = GraphNodeDraftState<S>>(
   value: S,
 ): void {
   const actualNode = getGraphNodeInstance(memory, node);
-  actualNode.state.value = value;
-  actualNode.state.version += 1;
+  actualNode.safeState.value = value;
+  actualNode.safeState.version += 1;
 }
 
 export function setGraphNodeState<S, A = GraphNodeDraftState<S>>(
@@ -417,11 +423,14 @@ export function setGraphNodeState<S, A = GraphNodeDraftState<S>>(
   notify = true,
 ): void {
   const actualNode = getGraphNodeInstance(memory, node);
-  if (node.shouldUpdate(actualNode.state.value, value)) {
-    actualNode.state.value = value;
-    actualNode.state.version += 1;
+  if (node.shouldUpdate(actualNode.unsafeState.value, value)) {
+    actualNode.unsafeState.value = value;
+    actualNode.unsafeState.version += 1;
 
     memory.batcher(() => {
+      actualNode.safeState.value = value;
+      actualNode.safeState.version += 1;
+
       new Set(actualNode.dependents).forEach((dependent) => {
         runGraphNodeCompute(memory, dependent);
       });
