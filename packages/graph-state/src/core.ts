@@ -30,7 +30,6 @@ import {
   GraphNodeDraftState,
   GraphNodeDraftStateAction,
   GraphNodeGet,
-  GraphNodeGetInterface,
   GraphNodeGetSupplier,
   GraphNodeKey,
   GraphNodeSubscriptionCleanup,
@@ -39,13 +38,8 @@ import { ensure } from './utils';
 
 export type GraphNodeDependencies = Set<GraphNode<any, any>>;
 
-export interface GraphNodeBaseVersion {
+export interface GraphNodeVersion {
   alive: boolean;
-}
-
-export interface GraphNodeVersion extends GraphNodeBaseVersion {
-  // Dependencies
-  dependencies: GraphNodeDependencies;
   cleanups: GraphNodeSubscriptionCleanup[];
 }
 
@@ -58,10 +52,11 @@ export interface GraphNodeState<T> {
 }
 export interface GraphNodeInstance<T> {
   getterVersion: GraphNodeVersion;
-  setterVersion: GraphNodeBaseVersion;
+  setterVersion: GraphNodeVersion;
   listeners: GraphNodeListeners<T>;
   state: GraphNodeState<T>;
   dependents: GraphNodeDependencies;
+  dependencies: GraphNodeDependencies;
 }
 
 export type GraphNodeInstanceMap = Map<GraphNodeKey, GraphNodeInstance<any>>;
@@ -104,7 +99,7 @@ function parseGraphDomainMemory(
     id: key,
     state: value.state.value,
     dependents: parseDependencies(value.dependents),
-    dependencies: parseDependencies(value.getterVersion.dependencies),
+    dependencies: parseDependencies(value.dependencies),
   }));
 }
 
@@ -135,26 +130,17 @@ function isNodeValueFunc<S, A = GraphNodeDraftState<S>>(
   return typeof nodeValue === 'function';
 }
 
-function createNodeValue<S, A = GraphNodeDraftState<S>>(
-  node: GraphNode<S, A>,
-  methods: GraphNodeGetInterface<S, A>,
-): S {
-  return isNodeValueFunc(node.get)
-    ? node.get(methods)
-    : node.get;
-}
-
 function createGraphNodeGetterVersion(): GraphNodeVersion {
   return {
     alive: true,
-    dependencies: new Set(),
     cleanups: [],
   };
 }
 
-function createGraphNodeSetterVersion(): GraphNodeBaseVersion {
+function createGraphNodeSetterVersion(): GraphNodeVersion {
   return {
     alive: true,
+    cleanups: [],
   };
 }
 
@@ -179,15 +165,17 @@ function getGraphNodeInstance<S, A = GraphNodeDraftState<S>>(
     return ensure(memory.nodes.get(node.key));
   }
 
+  const dependencies: GraphNodeDependencies = new Set();
   const getterVersion = createGraphNodeGetterVersion();
   const baseNode: GraphNodeInstance<S> = {
     getterVersion,
     setterVersion: createGraphNodeSetterVersion(),
     listeners: new Set(),
     dependents: new Set(),
+    dependencies,
     state: {
       version: 0,
-      value: computeGraphNode(memory, node, getterVersion),
+      value: computeGraphNode(memory, node, getterVersion, dependencies),
     },
   };
 
@@ -196,59 +184,23 @@ function getGraphNodeInstance<S, A = GraphNodeDraftState<S>>(
   return baseNode;
 }
 
-function unregisterGraphNodeDependency<S, A, R, T>(
-  memory: GraphDomainMemory,
-  node: GraphNode<S, A>,
-  dependency: GraphNode<R, T>,
-  getterVersion = getGraphNodeInstance(memory, node).getterVersion,
-): void {
-  getterVersion.dependencies.delete(dependency);
-
-  getGraphNodeInstance(memory, dependency).dependents.delete(node);
-}
-
-function deprecateNodeGetterVersion<S, A = GraphNodeDraftState<S>>(
-  memory: GraphDomainMemory,
-  node: GraphNode<S, A>,
-  actualNode = getGraphNodeInstance(memory, node),
-): void {
-  actualNode.getterVersion.dependencies.forEach((dependency) => {
-    unregisterGraphNodeDependency(memory, dependency, node);
-  });
-  actualNode.getterVersion.cleanups.forEach((cleanup) => {
-    cleanup();
-  });
-  actualNode.getterVersion.alive = false;
-  actualNode.getterVersion = createGraphNodeGetterVersion();
-}
-
-function deprecateGraphNodeSetterVersion<S, A = GraphNodeDraftState<S>>(
-  memory: GraphDomainMemory,
-  node: GraphNode<S, A>,
-  actualNode = getGraphNodeInstance(memory, node),
-): void {
-  actualNode.setterVersion.alive = false;
-  actualNode.setterVersion = createGraphNodeSetterVersion();
-}
-
 function computeGraphNode<S, A = GraphNodeDraftState<S>>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
-  getterVersion = getGraphNodeInstance(memory, node).getterVersion,
+  getterVersion: GraphNodeVersion,
+  dependencies: GraphNodeDependencies,
 ): S {
-  return createNodeValue<S, A>(
-    node,
-    {
+  if (isNodeValueFunc(node.get)) {
+    return node.get({
       get: (dependency) => {
         // Read dependency state
-        const currentState = getGraphNodeState(memory, dependency);
+        const instance = getGraphNodeInstance(memory, dependency);
         // If the getterVersion is still alive, register dependency
         if (getterVersion.alive) {
-          getterVersion.dependencies.add(dependency);
-
-          getGraphNodeInstance(memory, dependency).dependents.add(node);
+          dependencies.add(dependency);
+          instance.dependents.add(node);
         }
-        return currentState;
+        return instance.state.value;
       },
       getSelf: () => getGraphNodeState(memory, node),
       mutate: (target, value) => {
@@ -304,15 +256,16 @@ function computeGraphNode<S, A = GraphNodeDraftState<S>>(
           },
         );
       }),
-    },
-  );
+    });
+  }
+  return node.get;
 }
 
 function getGraphNodeStateRef<S, A = GraphNodeDraftState<S>>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
-  actualNode = getGraphNodeInstance(memory, node),
 ): GraphNodeState<S> {
+  const actualNode = getGraphNodeInstance(memory, node);
   return actualNode.state;
 }
 
@@ -327,16 +280,17 @@ export function runGraphNodeDispatch<S, A = GraphNodeDraftState<S>>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
   action: A,
-  actualNode = getGraphNodeInstance(memory, node),
 ): Promise<void> {
-  // Get instance node
-  const currentState = getGraphNodeState(memory, node);
-
   if (node.set) {
+    const actualNode = getGraphNodeInstance(memory, node);
     // Deprecate setter version
-    deprecateGraphNodeSetterVersion(memory, node, actualNode);
+    actualNode.setterVersion.cleanups.forEach((cleanup) => {
+      cleanup();
+    });
+    const setterVersion = createGraphNodeSetterVersion();
+    actualNode.setterVersion.alive = false;
+    actualNode.setterVersion = setterVersion;
 
-    const { setterVersion } = actualNode;
     // Run the node setter for further effects
     return node.set({
       get: (target) => getGraphNodeState(memory, target),
@@ -385,6 +339,15 @@ export function runGraphNodeDispatch<S, A = GraphNodeDraftState<S>>(
           },
         );
       }),
+      subscription: (callback) => {
+        if (setterVersion.alive) {
+          const cleanup = callback();
+
+          if (cleanup) {
+            setterVersion.cleanups.push(cleanup);
+          }
+        }
+      },
     }, action);
   }
 
@@ -395,7 +358,7 @@ export function runGraphNodeDispatch<S, A = GraphNodeDraftState<S>>(
       node,
       getDraftState(
         action as unknown as GraphNodeDraftState<S>,
-        currentState,
+        getGraphNodeState(memory, node),
       ),
     ));
   });
@@ -404,45 +367,47 @@ export function runGraphNodeDispatch<S, A = GraphNodeDraftState<S>>(
 export function runGraphNodeCompute<S, A = GraphNodeDraftState<S>>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
-  actualNode = getGraphNodeInstance(memory, node),
 ): void {
+  const actualNode = getGraphNodeInstance(memory, node);
   /**
    * Clean the previous version to prevent
    * asynchronous dependency registration.
    */
-  deprecateNodeGetterVersion(memory, node, actualNode);
+  actualNode.dependencies.forEach((dependency) => {
+    getGraphNodeInstance(memory, dependency).dependents.delete(node);
+  });
+  actualNode.getterVersion.cleanups.forEach((cleanup) => {
+    cleanup();
+  });
+  actualNode.dependencies.clear();
+  actualNode.getterVersion.alive = false;
+  actualNode.getterVersion = createGraphNodeGetterVersion();
   /**
    * Set the new node value by recomputing the node.
    * This may recursively compute.
    */
+  const newState = computeGraphNode(
+    memory,
+    node,
+    actualNode.getterVersion,
+    actualNode.dependencies,
+  );
+
   setGraphNodeState(
     memory,
     node,
-    computeGraphNode(memory, node, actualNode.getterVersion),
+    newState,
   );
 }
 
-function runGraphNodeUpdate<S, A = GraphNodeDraftState<S>>(
+export function hydrateGraphNodeState<S, A = GraphNodeDraftState<S>>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A>,
-  notify = true,
-  actualNode = getGraphNodeInstance(memory, node),
+  value: S,
 ): void {
-  memory.batcher(() => {
-    actualNode.dependents.forEach((dependent) => {
-      runGraphNodeCompute(memory, dependent);
-    });
-
-    if (notify) {
-      const state = actualNode.state.value;
-
-      actualNode.listeners.forEach((listener) => {
-        listener(state);
-      });
-    }
-
-    exposeToWindow(memory);
-  });
+  const actualNode = getGraphNodeInstance(memory, node);
+  actualNode.state.value = value;
+  actualNode.state.version += 1;
 }
 
 export function setGraphNodeState<S, A = GraphNodeDraftState<S>>(
@@ -450,12 +415,25 @@ export function setGraphNodeState<S, A = GraphNodeDraftState<S>>(
   node: GraphNode<S, A>,
   value: S,
   notify = true,
-  actualNode = getGraphNodeInstance(memory, node),
 ): void {
+  const actualNode = getGraphNodeInstance(memory, node);
   if (node.shouldUpdate(actualNode.state.value, value)) {
-    actualNode.state.value = value;
-    actualNode.state.version += 1;
-    runGraphNodeUpdate(memory, node, notify);
+    memory.batcher(() => {
+      actualNode.state.value = value;
+      actualNode.state.version += 1;
+
+      new Set(actualNode.dependents).forEach((dependent) => {
+        runGraphNodeCompute(memory, dependent);
+      });
+
+      if (notify) {
+        actualNode.listeners.forEach((listener) => {
+          listener(value);
+        });
+      }
+
+      exposeToWindow(memory);
+    });
   }
 }
 
