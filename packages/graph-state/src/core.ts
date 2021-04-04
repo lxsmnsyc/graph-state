@@ -57,8 +57,6 @@ export interface GraphNodeInstance<T> {
   state: GraphNodeState<T>;
   dependents: GraphNodeDependencies;
   dependencies: GraphNodeDependencies;
-
-  microtask: never[];
 }
 
 export type GraphNodeInstanceMap = Map<GraphNodeKey, GraphNodeInstance<any>>;
@@ -179,7 +177,6 @@ function getGraphNodeInstance<S, A = GraphNodeDraftState<S>>(
       version: 0,
       value: computeGraphNode(memory, node, getterVersion, dependencies),
     },
-    microtask: [],
   };
 
   memory.nodes.set(node.key, baseNode);
@@ -421,25 +418,21 @@ export function setGraphNodeState<S, A = GraphNodeDraftState<S>>(
 ): void {
   const actualNode = getGraphNodeInstance(memory, node);
   if (node.shouldUpdate(actualNode.state.value, value)) {
-    const newTask: never[] = [];
-    actualNode.microtask = newTask;
     memory.batcher(() => {
-      if (actualNode.microtask === newTask) {
-        actualNode.state.value = value;
-        actualNode.state.version += 1;
+      actualNode.state.value = value;
+      actualNode.state.version += 1;
 
-        new Set(actualNode.dependents).forEach((dependent) => {
-          runGraphNodeCompute(memory, dependent);
+      new Set(actualNode.dependents).forEach((dependent) => {
+        runGraphNodeCompute(memory, dependent);
+      });
+
+      if (notify) {
+        actualNode.listeners.forEach((listener) => {
+          listener(value);
         });
-
-        if (notify) {
-          actualNode.listeners.forEach((listener) => {
-            listener(value);
-          });
-        }
-
-        exposeToWindow(memory);
       }
+
+      exposeToWindow(memory);
     });
   }
 }
