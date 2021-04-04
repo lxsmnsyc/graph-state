@@ -46,7 +46,7 @@ export type GraphNodeSubscriptionCleanup = () => void;
 export type GraphNodeSubscriptionCallback = () => void | undefined | GraphNodeSubscriptionCleanup;
 export type GraphNodeSubscription = (callback: GraphNodeSubscriptionCallback) => void;
 
-export interface GraphNodeCallbackInterface<S, A = GraphNodeDraftState<S>> {
+export interface GraphNodeContext<S, A = GraphNodeDraftState<S>> {
   get: GraphNodeGetValue;
   getSelf: GraphNodeGetSelf<S>;
   set: GraphNodeSetValue;
@@ -56,23 +56,16 @@ export interface GraphNodeCallbackInterface<S, A = GraphNodeDraftState<S>> {
   mutate: GraphNodeMutateValue;
   mutateSelf: GraphNodeMutateSelf<S>;
   resolve: GraphNodeResolve;
-}
-
-export interface GraphNodeGetInterface<S, A = GraphNodeDraftState<S>>
-  extends GraphNodeCallbackInterface<S, A> {
   subscription: GraphNodeSubscription;
 }
 
 export type GraphNodeGetSupplier<S, A = GraphNodeDraftState<S>> =
-  (facing: GraphNodeGetInterface<S, A>) => S;
+  (facing: GraphNodeContext<S, A>) => S;
 export type GraphNodeGet<S, A = GraphNodeDraftState<S>> =
   S | GraphNodeGetSupplier<S, A>;
 
-export type GraphNodeSetInterface<S, A = GraphNodeDraftState<S>> =
-  GraphNodeCallbackInterface<S, A>;
-
 export type GraphNodeSet<S, A = GraphNodeDraftState<S>> =
-  (facing: GraphNodeSetInterface<S, A>, action: A) => Promise<void>;
+  (facing: GraphNodeContext<S, A>, action: A) => Promise<void>;
 
 export type GraphNodeShouldUpdate<S> =
   (prev: S, next: S) => boolean;
