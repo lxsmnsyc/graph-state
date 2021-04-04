@@ -51,21 +51,15 @@ function useGraphDomainCore() {
   const [version, setVersion] = useState(0);
 
   const isMounted = useRef(true);
-  const isEffect = useRef(false);
 
   const batchUpdate = useConstantCallback<Batcher>((callback) => {
-    const update = () => {
+    setTimeout(() => {
       if (isMounted.current) {
         batchedUpdates.current.push(callback);
 
         setVersion((v) => v + 1);
       }
-    };
-    if (isEffect.current) {
-      update();
-    } else {
-      setTimeout(update);
-    }
+    });
   });
 
   const memory = useConstant<GraphDomainMemory>(
@@ -80,11 +74,9 @@ function useGraphDomainCore() {
     batchedUpdates.current = [];
 
     if (updates.length > 0) {
-      isEffect.current = true;
       updates.forEach((batchedUpdate) => {
         batchedUpdate();
       });
-      isEffect.current = false;
     }
   }, [version]);
 
