@@ -418,10 +418,10 @@ export function setGraphNodeState<S, A = GraphNodeDraftState<S>>(
 ): void {
   const actualNode = getGraphNodeInstance(memory, node);
   if (node.shouldUpdate(actualNode.state.value, value)) {
-    memory.batcher(() => {
-      actualNode.state.value = value;
-      actualNode.state.version += 1;
+    actualNode.state.value = value;
+    actualNode.state.version += 1;
 
+    memory.batcher(() => {
       new Set(actualNode.dependents).forEach((dependent) => {
         runGraphNodeCompute(memory, dependent);
       });

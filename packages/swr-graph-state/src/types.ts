@@ -1,5 +1,5 @@
 import {
-  GraphNodeGetInterface,
+  GraphNodeContext,
   GraphNodeResource,
   GraphNodeResourceFactory,
 } from 'graph-state';
@@ -29,7 +29,7 @@ export interface SWRGraphNodeBaseOptions<T> {
 export type SWRGraphNodePartialOptions<T> = Partial<SWRGraphNodeBaseOptions<T>>;
 
 export type SWRGraphNodeFetcher<T> =
-  (methods: GraphNodeGetInterface<MutationResult<T>>) => SWRGraphNodeRawValue<T>;
+  (methods: GraphNodeContext<MutationResult<T>>) => SWRGraphNodeRawValue<T>;
 
 export type SWRGraphNodeMutate<T> =
   (value: MutationResult<T>, shouldRevalidate?: boolean) => void;
