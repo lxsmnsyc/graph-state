@@ -27,7 +27,7 @@
  */
 import { GraphNode } from 'graph-state';
 import { useDebugValue } from 'preact/hooks';
-import { useGraphDomainMemory } from '../GraphDomainContext';
+import { useGraphDomainCore, useGraphDomainRestriction } from '../GraphDomainCore';
 import useGraphNodeDispatchBase, { GraphNodeDispatch } from './useGraphNodeDispatchBase';
 import useGraphNodeResetBase, { GraphNodeReset } from './useGraphNodeResetBase';
 import useGraphNodeValueBase from './useGraphNodeValueBase';
@@ -35,10 +35,11 @@ import useGraphNodeValueBase from './useGraphNodeValueBase';
 export default function useGraphNodeState<S, A>(
   node: GraphNode<S, A>,
 ): [S, GraphNodeDispatch<A>, GraphNodeReset] {
-  const memory = useGraphDomainMemory();
-  const state = useGraphNodeValueBase(memory, node);
-  const dispatch = useGraphNodeDispatchBase(memory, node);
-  const reset = useGraphNodeResetBase(memory, node);
+  useGraphDomainRestriction();
+  const context = useGraphDomainCore();
+  const state = useGraphNodeValueBase(context, node);
+  const dispatch = useGraphNodeDispatchBase(context, node);
+  const reset = useGraphNodeResetBase(context, node);
 
   useDebugValue([state, dispatch, reset]);
 

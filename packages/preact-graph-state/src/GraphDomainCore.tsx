@@ -26,59 +26,44 @@
  * @copyright Alexis Munsayac 2020
  */
 import {
-  memo,
   useDebugValue,
   useEffect,
-  useState,
   useRef,
-} from 'preact/compat';
+} from 'preact/hooks';
 import {
-  Batcher,
   createGraphDomainMemory,
   destroyGraphDomainMemory,
   GraphDomainMemory,
+  GraphNode,
+  getGraphNodeState,
+  subscribeGraphNode,
 } from 'graph-state';
 import {
   useConstant,
-  useConstantCallback,
 } from '@lyonph/preact-hooks';
-import { useGraphDomainContext } from './GraphDomainContext';
+import {
+  createNullaryModel,
+  createValue,
+  useScopedModelExists,
+} from 'preact-scoped-model';
+import { createStoreAdapter, StoreAdapter } from 'preact-store-adapter';
+import OutOfGraphDomainError from './utils/OutOfGraphDomainError';
 
-function useGraphDomainCore() {
-  const { current } = useGraphDomainContext();
+export interface GraphDomainCoreContext {
+  memory: GraphDomainMemory;
+  get: <S, A>(node: GraphNode<S, A>) => StoreAdapter<S>;
+}
 
-  const batchedUpdates = useRef<(() => void)[]>([]);
-  const [version, setVersion] = useState(0);
-
+const GraphDomainCore = createNullaryModel(() => {
   const isMounted = useRef(true);
 
-  const batchUpdate = useConstantCallback<Batcher>((callback) => {
-    setTimeout(() => {
-      if (isMounted.current) {
-        batchedUpdates.current.push(callback);
-
-        setVersion((v) => v + 1);
-      }
-    });
-  });
-
   const memory = useConstant<GraphDomainMemory>(
-    () => createGraphDomainMemory(batchUpdate),
+    () => createGraphDomainMemory(),
   );
 
-  current.value = memory;
-
-  useEffect(() => {
-    const updates = batchedUpdates.current;
-
-    batchedUpdates.current = [];
-
-    if (updates.length > 0) {
-      updates.forEach((batchedUpdate) => {
-        batchedUpdate();
-      });
-    }
-  }, [version]);
+  const stores = useConstant(() => (
+    new Map<string | number, StoreAdapter<any>>()
+  ));
 
   useDebugValue(memory.nodes);
 
@@ -86,11 +71,37 @@ function useGraphDomainCore() {
     isMounted.current = false;
     destroyGraphDomainMemory(memory);
   }, [memory]);
-}
 
-const GraphDomainCore = memo(() => {
-  useGraphDomainCore();
-  return null;
-}, () => true);
+  return useConstant<GraphDomainCoreContext>(() => ({
+    memory,
+    get: <S, A>(node: GraphNode<S, A>): StoreAdapter<S> => {
+      const store = stores.get(node.key);
+
+      if (store) {
+        return store;
+      }
+
+      const newStore = createStoreAdapter({
+        read: () => getGraphNodeState(memory, node),
+        subscribe: (callback) => subscribeGraphNode(memory, node, callback),
+        keepAlive: true,
+      });
+      stores.set(node.key, newStore);
+      return newStore;
+    },
+  }));
+}, {
+  displayName: 'GraphDomainCore',
+});
+
+export const useGraphDomainCore = createValue(GraphDomainCore);
+
+export function useGraphDomainRestriction(): void {
+  const context = useScopedModelExists(GraphDomainCore);
+
+  if (!context) {
+    throw new OutOfGraphDomainError();
+  }
+}
 
 export default GraphDomainCore;

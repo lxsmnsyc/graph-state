@@ -32,22 +32,22 @@ import {
   hydrateGraphNodeState,
 } from 'graph-state';
 import { useEffect } from 'preact/hooks';
-import { useGraphDomainMemory } from '../GraphDomainContext';
+import { useGraphDomainCore } from '../GraphDomainCore';
 
 export default function useGraphNodeHydrate<S, A>(
   node: GraphNode<S, A>,
   value: S,
 ): void {
-  const memory = useGraphDomainMemory();
+  const context = useGraphDomainCore();
 
-  const notHydrated = !hasGraphNodeState(memory, node);
+  const notHydrated = !hasGraphNodeState(context.memory, node);
   if (notHydrated) {
-    hydrateGraphNodeState(memory, node, value);
+    hydrateGraphNodeState(context.memory, node, value);
   }
 
   useEffect(() => {
     if (notHydrated) {
-      runGraphNodeCompute(memory, node);
+      runGraphNodeCompute(context.memory, node);
     }
-  }, [memory, node, notHydrated]);
+  }, [context, node, notHydrated]);
 }

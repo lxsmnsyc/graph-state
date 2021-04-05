@@ -26,22 +26,29 @@
  * @copyright Alexis Munsayac 2020
  */
 /** @jsx h */
-import { ComponentChildren, h, VNode } from 'preact';
-import { useRef } from 'preact/hooks';
-import GraphCoreComponent from './GraphDomainCore';
-import { GraphCoreValue, GraphCoreContext } from './GraphDomainContext';
+import { h, FunctionComponent, Fragment } from 'preact';
+import { useScopedModelExists } from 'preact-scoped-model';
+import { StoreAdapterRoot } from 'preact-store-adapter';
+import GraphDomainCore from './GraphDomainCore';
 
-export interface GraphDomainProps {
-  children?: ComponentChildren;
-}
+const GraphDomain: FunctionComponent = ({ children }) => {
+  const context = useScopedModelExists(GraphDomainCore);
 
-export default function GraphDomain({ children }: GraphDomainProps): VNode {
-  const ref = useRef<GraphCoreValue>({});
+  if (context) {
+    return <>{children}</>;
+  }
 
   return (
-    <GraphCoreContext.Provider value={ref}>
-      <GraphCoreComponent />
-      { children }
-    </GraphCoreContext.Provider>
+    <StoreAdapterRoot>
+      <GraphDomainCore.Provider>
+        {children}
+      </GraphDomainCore.Provider>
+    </StoreAdapterRoot>
   );
+};
+
+if (process.env.NODE_ENV !== 'production') {
+  GraphDomain.displayName = 'GraphDomain';
 }
+
+export default GraphDomain;

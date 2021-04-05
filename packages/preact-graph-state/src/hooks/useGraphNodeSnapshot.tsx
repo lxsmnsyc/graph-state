@@ -26,12 +26,13 @@
  * @copyright Alexis Munsayac 2020
  */
 import { GraphNode, GraphNodeListener } from 'graph-state';
-import { useGraphDomainMemory } from '../GraphDomainContext';
+import { useGraphDomainCore, useGraphDomainRestriction } from '../GraphDomainCore';
 import useGraphNodeSnapshotBase from './useGraphNodeSnapshotBase';
 
 export default function useGraphNodeSnapshot<S, A>(
   node: GraphNode<S, A>,
   listener: GraphNodeListener<S>,
 ): void {
-  useGraphNodeSnapshotBase(useGraphDomainMemory(), node, listener);
+  useGraphDomainRestriction();
+  useGraphNodeSnapshotBase(useGraphDomainCore(), node, listener);
 }

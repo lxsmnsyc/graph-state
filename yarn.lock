@@ -1900,10 +1900,10 @@
     npmlog "^4.1.2"
     write-file-atomic "^2.3.0"
 
-"@lyonph/preact-hooks@^0.2.0":
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/@lyonph/preact-hooks/-/preact-hooks-0.2.0.tgz#da3e7c0e229b355fcc12d44c58e17b17841646c5"
-  integrity sha512-pi/9HqpfngA7prrfbFmQKhx9Qz6edUcSOhphkNPWW1GFy4JjC6BUHgG2fxYJFgUj/BI3RYT6wNRi2OJONMIDbA==
+"@lyonph/preact-hooks@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@lyonph/preact-hooks/-/preact-hooks-0.3.0.tgz#6f2711dc238394fb874834c5fe71b29566c06d30"
+  integrity sha512-OAj/0spgKkNNTqIqoJC3M2/ftRpg0F6bHk2AcuTB4T7ppr28rjn184U6iKozsdOY36Ncp4XRx+IOFDCipoWeeA==
 
 "@lyonph/react-hooks@^0.2.3":
   version "0.2.3"
@@ -1914,6 +1914,11 @@
   version "0.3.3"
   resolved "https://registry.yarnpkg.com/@lyonph/react-hooks/-/react-hooks-0.3.3.tgz#8769356360f21c1d677b494316f8644970a8446f"
   integrity sha512-z+v7d61LDU0NaoDmGnmKLuN0UPg5p8Kw84tDTMeUrmFasZ2EWx2Oiz6TehG6Ebs1+XzMhAnWqBSnnybFDKasmg==
+
+"@lyonph/react-hooks@^0.3.4", "@lyonph/react-hooks@^0.3.5":
+  version "0.3.5"
+  resolved "https://registry.yarnpkg.com/@lyonph/react-hooks/-/react-hooks-0.3.5.tgz#625dded79e6ac6c1a051d0f8eb4a64d427b57610"
+  integrity sha512-/6Scp7fo9zSNlUJ8ASvLbrx1FnlyhD2K5RImkiBLx6BCkNDSziZsY+9iRuHNuIZVZFbiCnxH8StpbO73WCmmmQ==
 
 "@mdn/browser-compat-data@^2.0.7":
   version "2.0.7"
@@ -9296,6 +9301,21 @@ posthtml@^0.13.4:
     posthtml-parser "^0.5.0"
     posthtml-render "^1.2.3"
 
+preact-scoped-model@^2.0.2:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/preact-scoped-model/-/preact-scoped-model-2.0.2.tgz#3caf1b4f94c87e695b5b0f08b6d48d8f5bebb9cc"
+  integrity sha512-Yz5dsx4tx1cCRrzZPKZvcpz0BjiP47iL3THc59Zu4VYecOy0d9fl/WTp3Hwyygis/oLhtJ/LrAvF0ZDVze9jqQ==
+  dependencies:
+    "@lyonph/preact-hooks" "^0.3.0"
+
+preact-store-adapter@^0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/preact-store-adapter/-/preact-store-adapter-0.3.1.tgz#6f033a0b0a6271863c6604ea55af7f44eeddfbe9"
+  integrity sha512-BYyCoKzuKmroQEshGM1hFhnDlqtffeg5+JJVOSHv5oYLoO8Gx4xI+7mhm8odriJAJe9/ZKFoHeeNeLjHfVDMcQ==
+  dependencies:
+    "@lyonph/preact-hooks" "^0.3.0"
+    preact-scoped-model "^2.0.2"
+
 preact@^10.5.7, preact@^10.5.9:
   version "10.5.13"
   resolved "https://registry.yarnpkg.com/preact/-/preact-10.5.13.tgz#85f6c9197ecd736ce8e3bec044d08fd1330fa019"
@@ -9610,6 +9630,13 @@ react-refresh@^0.9.0:
   resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.9.0.tgz#71863337adc3e5c2f8a6bfddd12ae3bfe32aafbf"
   integrity sha512-Gvzk7OZpiqKSkxsQvO/mbTN1poglhmAV7gR/DdIrRrSMXraRQQlfikRJOr3Nb9GTMPC5kof948Zy6jJZIFtDvQ==
 
+react-scoped-model@^2.0.2:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/react-scoped-model/-/react-scoped-model-2.0.2.tgz#286d1283efbd99be57eba8f11827204145bf46af"
+  integrity sha512-UBZ7qNue3A7RZvfAd4lviilJj1mEA33HEElLfxDoIH5jyNyTx7jVB2APmYG4lgQyMJ7sE5Ih6QTc3jC8My928w==
+  dependencies:
+    "@lyonph/react-hooks" "^0.3.5"
+
 react-shallow-renderer@^16.13.1:
   version "16.14.1"
   resolved "https://registry.yarnpkg.com/react-shallow-renderer/-/react-shallow-renderer-16.14.1.tgz#bf0d02df8a519a558fd9b8215442efa5c840e124"
@@ -9617,6 +9644,14 @@ react-shallow-renderer@^16.13.1:
   dependencies:
     object-assign "^4.1.1"
     react-is "^16.12.0 || ^17.0.0"
+
+react-store-adapter@^0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/react-store-adapter/-/react-store-adapter-0.3.1.tgz#55850baf83ea4d6e89cd5cd1b79e12c0c82ab8c6"
+  integrity sha512-P9l1lpaXJc8uFbYG11xHkxaZa3LCWCVKLsGn/jTmCnt9E3a6JhyIU3irDCP3b6bGS3V8orwE3AtOktyLEDZ+fg==
+  dependencies:
+    "@lyonph/react-hooks" "^0.3.4"
+    react-scoped-model "^2.0.2"
 
 react-test-renderer@^17.0.1:
   version "17.0.1"

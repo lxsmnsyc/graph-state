@@ -26,29 +26,30 @@
  * @copyright Alexis Munsayac 2020
  */
 import {
-  getGraphNodeState,
-  GraphDomainMemory,
   GraphNode,
-  subscribeGraphNode,
 } from 'graph-state';
 import {
   useMemoCondition,
-  useSubscription,
-  Subscription,
 } from '@lyonph/preact-hooks';
-import { compareArray } from '../utils/compareTuple';
+import { useDebugValue } from 'preact/hooks';
+import { useStoreAdapter } from 'preact-store-adapter';
+import { GraphDomainCoreContext } from '../GraphDomainCore';
 
 export default function useGraphNodeValueBase<S, A>(
-  memory: GraphDomainMemory,
+  context: GraphDomainCoreContext,
   node: GraphNode<S, A>,
 ): S {
-  const sub = useMemoCondition(
-    (): Subscription<S> => ({
-      read: () => getGraphNodeState(memory, node),
-      subscribe: (handler) => subscribeGraphNode(memory, node, handler),
-    }),
-    [memory, node],
-    compareArray,
+  const store = useMemoCondition(
+    () => context.get(node),
+    { context, node },
+    (prev, next) => (
+      !(Object.is(prev.context, next.context) && Object.is(prev.node, next.node))
+    ),
   );
-  return useSubscription(sub);
+
+  const value = useStoreAdapter(store);
+
+  useDebugValue(value);
+
+  return value;
 }

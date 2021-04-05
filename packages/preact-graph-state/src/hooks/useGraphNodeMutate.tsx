@@ -27,13 +27,14 @@
  */
 import { GraphNode } from 'graph-state';
 import { useDebugValue } from 'preact/hooks';
-import { useGraphDomainMemory } from '../GraphDomainContext';
+import { useGraphDomainCore, useGraphDomainRestriction } from '../GraphDomainCore';
 import useGraphNodeMutateBase, { GraphNodeMutate } from './useGraphNodeMutateBase';
 
 export default function useGraphNodeMutate<S, A>(
   node: GraphNode<S, A>,
 ): GraphNodeMutate<S> {
-  const dispatch = useGraphNodeMutateBase(useGraphDomainMemory(), node);
+  useGraphDomainRestriction();
+  const dispatch = useGraphNodeMutateBase(useGraphDomainCore(), node);
   useDebugValue(dispatch);
   return dispatch;
 }

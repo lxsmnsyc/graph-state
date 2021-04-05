@@ -25,21 +25,26 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphDomainMemory, GraphNode, runGraphNodeDispatch } from 'graph-state';
+import {
+  GraphNode,
+  runGraphNodeDispatch,
+} from 'graph-state';
 import {
   useCallbackCondition,
 } from '@lyonph/preact-hooks';
-import { compareArray } from '../utils/compareTuple';
+import { GraphDomainCoreContext } from '../GraphDomainCore';
 
 export type GraphNodeDispatch<A> = (action: A) => Promise<void>;
 
 export default function useGraphNodeDispatchBase<S, A>(
-  memory: GraphDomainMemory,
+  context: GraphDomainCoreContext,
   node: GraphNode<S, A>,
 ): GraphNodeDispatch<A> {
   return useCallbackCondition(
-    (action: A) => runGraphNodeDispatch(memory, node, action),
-    [memory, node],
-    compareArray,
+    (action: A) => runGraphNodeDispatch(context.memory, node, action),
+    { context, node },
+    (prev, next) => (
+      !(Object.is(prev.context, next.context) && Object.is(prev.node, next.node))
+    ),
   );
 }

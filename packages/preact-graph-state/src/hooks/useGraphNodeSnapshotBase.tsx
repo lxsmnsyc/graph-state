@@ -27,14 +27,14 @@
  */
 import { useEffect } from 'preact/hooks';
 import {
-  GraphDomainMemory,
   GraphNode,
   GraphNodeListener,
   subscribeGraphNode,
 } from 'graph-state';
+import { GraphDomainCoreContext } from '../GraphDomainCore';
 
 export default function useGraphNodeSnapshotBase<S, A>(
-  memory: GraphDomainMemory,
+  context: GraphDomainCoreContext,
   node: GraphNode<S, A>,
   listener: GraphNodeListener<S>,
 ): void {
@@ -46,10 +46,10 @@ export default function useGraphNodeSnapshotBase<S, A>(
       }
     };
 
-    const unsubscribe = subscribeGraphNode(memory, node, internalListener);
+    const unsubscribe = subscribeGraphNode(context.memory, node, internalListener);
     return () => {
       mounted = false;
       unsubscribe();
     };
-  }, [memory, node, listener]);
+  }, [context, node, listener]);
 }
