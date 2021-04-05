@@ -89,7 +89,7 @@ const GraphDomainCore = createNullaryModel(() => {
     },
   }));
 }, {
-  displayName: 'GrahDomainCore',
+  displayName: 'GraphDomainCore',
 });
 
 export const useGraphDomainCore = createValue(GraphDomainCore);
