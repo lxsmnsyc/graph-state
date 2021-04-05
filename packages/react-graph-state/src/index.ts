@@ -37,4 +37,3 @@ export { default as GraphDomain } from './GraphDomain';
 
 export { GraphNodeDispatch } from './hooks/useGraphNodeDispatchBase';
 export { GraphNodeReset } from './hooks/useGraphNodeResetBase';
-export * from './GraphDomain';

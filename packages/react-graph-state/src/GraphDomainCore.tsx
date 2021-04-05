@@ -29,6 +29,7 @@ import {
   useDebugValue,
   useEffect,
   useRef,
+  // useState,
 } from 'react';
 import {
   createGraphDomainMemory,
@@ -37,9 +38,11 @@ import {
   GraphNode,
   getGraphNodeState,
   subscribeGraphNode,
+  // Batcher,
 } from 'graph-state';
 import {
   useConstant,
+  // useConstantCallback,
 } from '@lyonph/react-hooks';
 import {
   createNullaryModel,
@@ -60,6 +63,7 @@ const GraphDomainCore = createNullaryModel(() => {
   const memory = useConstant<GraphDomainMemory>(
     () => createGraphDomainMemory(),
   );
+
   const stores = useConstant(() => (
     new Map<string | number, StoreAdapter<any>>()
   ));
@@ -83,6 +87,7 @@ const GraphDomainCore = createNullaryModel(() => {
       const newStore = createStoreAdapter({
         read: () => getGraphNodeState(memory, node),
         subscribe: (callback) => subscribeGraphNode(memory, node, callback),
+        keepAlive: true,
       });
       stores.set(node.key, newStore);
       return newStore;

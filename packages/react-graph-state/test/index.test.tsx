@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import {
-  act, cleanup, fireEvent, render, screen, waitFor,
+  act, cleanup, fireEvent, render, waitFor,
 } from '@testing-library/react';
 import {
   createGraphNode,
@@ -15,15 +15,14 @@ import { supressWarnings, restoreWarnings } from './suppress-warnings';
 import '@testing-library/jest-dom/extend-expect';
 import '@testing-library/jest-dom';
 
-jest.useFakeTimers();
+beforeEach(() => {
+  jest.useFakeTimers();
+});
 
-const step = () => {
-  act(() => {
-    jest.advanceTimersByTime(1000);
-  });
-};
-
-afterEach(cleanup);
+afterEach(() => {
+  jest.useRealTimers();
+  cleanup();
+});
 
 describe('useGraphNodeValue', () => {
   it('should receive the value supplied by the node.', () => {
@@ -42,13 +41,13 @@ describe('useGraphNodeValue', () => {
       );
     }
 
-    render(
+    const result = render(
       <GraphDomain>
         <Consumer />
       </GraphDomain>,
     );
 
-    expect(screen.getByTitle(finder)).toContainHTML(expected);
+    expect(result.getByTitle(finder)).toContainHTML(expected);
   });
   it('should receive the value supplied by the dependency node.', () => {
     const expected = 'Hello World';
@@ -70,13 +69,13 @@ describe('useGraphNodeValue', () => {
       );
     }
 
-    render(
+    const result = render(
       <GraphDomain>
         <Consumer />
       </GraphDomain>,
     );
 
-    expect(screen.getByTitle(finder)).toContainHTML(expected);
+    expect(result.getByTitle(finder)).toContainHTML(expected);
   });
   it('should re-render if the graph node value changes', async () => {
     const finder = 'example';
@@ -104,14 +103,17 @@ describe('useGraphNodeValue', () => {
       );
     }
 
-    render(
+    const result = render(
       <GraphDomain>
         <Consumer />
       </GraphDomain>,
     );
 
-    step();
-    expect(await waitFor(() => screen.getByTitle(finder))).toContainHTML(expected);
+    act(() => {
+      jest.runAllTimers();
+    });
+
+    expect(await waitFor(() => result.getByTitle(finder))).toContainHTML(expected);
   });
   it('should re-render if the dependency graph node value changes', async () => {
     const finder = 'example';
@@ -143,14 +145,17 @@ describe('useGraphNodeValue', () => {
       );
     }
 
-    render(
+    const result = render(
       <GraphDomain>
         <Consumer />
       </GraphDomain>,
     );
 
-    step();
-    expect(await waitFor(() => screen.getByTitle(finder))).toContainHTML(expected);
+    act(() => {
+      jest.runAllTimers();
+    });
+
+    expect(await waitFor(() => result.getByTitle(finder))).toContainHTML(expected);
   });
   it('should throw an error if the graph domain is not mounted before accessing.', () => {
     const exampleNode = createGraphNode({
@@ -200,25 +205,27 @@ describe('useGraphNodeDispatch', () => {
       return (
         <button
           type="button"
-          onClick={() => {
-            update(expected);
-          }}
+          onClick={() => update(expected)}
         >
           Update
         </button>
       );
     }
 
-    render(
+    const result = render(
       <GraphDomain>
         <Consumer />
         <Updater />
       </GraphDomain>,
     );
 
-    fireEvent.click(screen.getByText('Update'));
+    fireEvent.click(result.getByText('Update'));
 
-    expect(await waitFor(() => screen.getByTitle(finder))).toContainHTML(expected);
+    act(() => {
+      jest.runAllTimers();
+    });
+
+    expect(await waitFor(() => result.getByTitle(finder))).toContainHTML(expected);
   });
   it('should re-render the consumer components of the dependent node', async () => {
     const expected = 'Changed';
@@ -252,25 +259,27 @@ describe('useGraphNodeDispatch', () => {
       return (
         <button
           type="button"
-          onClick={() => {
-            update(expected);
-          }}
+          onClick={() => update(expected)}
         >
           Update
         </button>
       );
     }
 
-    render(
+    const result = render(
       <GraphDomain>
         <Consumer />
         <Updater />
       </GraphDomain>,
     );
 
-    fireEvent.click(screen.getByText('Update'));
+    fireEvent.click(result.getByText('Update'));
 
-    expect(await waitFor(() => screen.getByTitle(finder))).toContainHTML(expected);
+    act(() => {
+      jest.runAllTimers();
+    });
+
+    expect(await waitFor(() => result.getByTitle(finder))).toContainHTML(expected);
   });
   it('should re-render the consumer components of the dependency node through side-effects', async () => {
     const expected = 'Changed';
@@ -282,9 +291,7 @@ describe('useGraphNodeDispatch', () => {
 
     const exampleNode2 = createGraphNode<string, string>({
       get: ({ get }) => get(exampleNode),
-      set: ({ set }, newValue) => {
-        set(exampleNode, newValue);
-      },
+      set: ({ set }, newValue) => set(exampleNode, newValue),
     });
 
     function Consumer(): JSX.Element {
@@ -307,25 +314,27 @@ describe('useGraphNodeDispatch', () => {
       return (
         <button
           type="button"
-          onClick={() => {
-            update(expected);
-          }}
+          onClick={() => update(expected)}
         >
           Update
         </button>
       );
     }
 
-    render(
+    const result = render(
       <GraphDomain>
         <Consumer />
         <Updater />
       </GraphDomain>,
     );
 
-    fireEvent.click(screen.getByText('Update'));
+    fireEvent.click(result.getByText('Update'));
 
-    expect(await waitFor(() => screen.getByTitle(finder))).toContainHTML(expected);
+    act(() => {
+      jest.runAllTimers();
+    });
+
+    expect(await waitFor(() => result.getByTitle(finder))).toContainHTML(expected);
   });
 
   it('should throw an error if the graph domain is not mounted before accessing.', () => {

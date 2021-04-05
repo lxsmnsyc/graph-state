@@ -35,7 +35,7 @@ export default function useGraphNodeResource<T>(node: GraphNodeResource<T>): T {
 
   const value = useGraphNodeValue(node);
 
-  useDebugValue(value);
+  useDebugValue(value.status === 'success' ? value.data : value);
 
   if (value.status === 'success') {
     return value.data;

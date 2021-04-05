@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import {
-  act, cleanup, render, screen, waitFor,
+  act, cleanup, render, waitFor,
 } from '@testing-library/react';
 import {
   createGraphNode,
@@ -23,15 +23,8 @@ beforeEach(() => {
 });
 afterEach(() => {
   jest.useRealTimers();
+  cleanup();
 });
-
-const step = (value = 1) => {
-  act(() => {
-    jest.advanceTimersByTime(value * 1000);
-  });
-};
-
-afterEach(cleanup);
 
 const sleep = (count: number) => new Promise((resolve) => {
   setTimeout(resolve, count * 1000, true);
@@ -94,13 +87,17 @@ describe('waitForAny', () => {
         );
       }
 
-      render(
+      const result = render(
         <GraphDomain>
           <Consumer />
         </GraphDomain>,
       );
 
-      expect(screen.getByTitle(finder)).toContainHTML(expected);
+      act(() => {
+        jest.runAllTimers();
+      });
+
+      expect(result.getByTitle(finder)).toContainHTML(expected);
     });
     it('should receive a success state when all resources has settled.', async () => {
       const expected = 'Message A';
@@ -123,14 +120,17 @@ describe('waitForAny', () => {
         );
       }
 
-      render(
+      const result = render(
         <GraphDomain>
           <Consumer />
         </GraphDomain>,
       );
 
-      step();
-      expect(await waitFor(() => screen.getByTitle('success'))).toContainHTML(expected);
+      act(() => {
+        jest.runAllTimers();
+      });
+
+      expect(await waitFor(() => result.getByTitle('success'))).toContainHTML(expected);
     });
     it('should receive a failure state upon rejection.', async () => {
       const values = waitForAny([
@@ -150,15 +150,17 @@ describe('waitForAny', () => {
         );
       }
 
-      render(
+      const result = render(
         <GraphDomain>
           <Consumer />
         </GraphDomain>,
       );
 
-      step(3);
+      act(() => {
+        jest.runAllTimers();
+      });
 
-      expect(await waitFor(() => screen.getByTitle('failure'))).toContainHTML('Error');
+      expect(await waitFor(() => result.getByTitle('failure'))).toContainHTML('Error');
     });
   });
 
@@ -183,7 +185,7 @@ describe('waitForAny', () => {
         return <p title={finder}>Pending</p>;
       }
 
-      render(
+      const result = render(
         <GraphDomain>
           <Suspense fallback={<Pending />}>
             <Consumer />
@@ -191,7 +193,7 @@ describe('waitForAny', () => {
         </GraphDomain>,
       );
 
-      expect(screen.getByTitle(finder)).toContainHTML(expected);
+      expect(result.getByTitle(finder)).toContainHTML(expected);
     });
     it('should receive a success state when all resources has settled.', async () => {
       const expected = 'Message A';
@@ -212,7 +214,7 @@ describe('waitForAny', () => {
         return <p title="pending">Pending</p>;
       }
 
-      render(
+      const result = render(
         <GraphDomain>
           <Suspense fallback={<Pending />}>
             <Consumer />
@@ -220,8 +222,10 @@ describe('waitForAny', () => {
         </GraphDomain>,
       );
 
-      step();
-      expect(await waitFor(() => screen.getByTitle('success'))).toContainHTML(expected);
+      act(() => {
+        jest.runAllTimers();
+      });
+      expect(await waitFor(() => result.getByTitle('success'))).toContainHTML(expected);
     });
     it('should receive a failure state upon rejection.', async () => {
       const values = waitForAny([
@@ -244,7 +248,7 @@ describe('waitForAny', () => {
       }
 
       supressWarnings();
-      render(
+      const result = render(
         <GraphDomain>
           <ErrorBound fallback={<Failure />}>
             <Suspense fallback={<Pending />}>
@@ -254,9 +258,10 @@ describe('waitForAny', () => {
         </GraphDomain>,
       );
 
-      step(3);
-
-      expect(await waitFor(() => screen.getByTitle('failure'))).toContainHTML('Error');
+      act(() => {
+        jest.runAllTimers();
+      });
+      expect(await waitFor(() => result.getByTitle('failure'))).toContainHTML('Error');
       restoreWarnings();
     });
   });

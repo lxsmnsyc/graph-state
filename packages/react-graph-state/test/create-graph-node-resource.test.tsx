@@ -1,6 +1,9 @@
 import React, { Suspense } from 'react';
 import {
-  act, cleanup, render, screen, waitFor,
+  act,
+  cleanup,
+  render,
+  waitFor,
 } from '@testing-library/react';
 import {
   createGraphNode,
@@ -18,15 +21,14 @@ import { restoreWarnings, supressWarnings } from './suppress-warnings';
 import '@testing-library/jest-dom/extend-expect';
 import '@testing-library/jest-dom';
 
-jest.useFakeTimers();
+beforeEach(() => {
+  jest.useFakeTimers();
+});
 
-const step = () => {
-  act(() => {
-    jest.advanceTimersByTime(1000);
-  });
-};
-
-afterEach(cleanup);
+afterEach(() => {
+  jest.useRealTimers();
+  cleanup();
+});
 
 const sleep = (count: number) => new Promise((resolve) => {
   setTimeout(resolve, count * 1000, true);
@@ -58,13 +60,13 @@ describe('createGraphNodeResource', () => {
         );
       }
 
-      render(
+      const result = render(
         <GraphDomain>
           <Consumer />
         </GraphDomain>,
       );
 
-      expect(screen.getByTitle(finder)).toContainHTML(expected);
+      expect(result.getByTitle(finder)).toContainHTML(expected);
     });
     it('should receive a success state upon resolution.', async () => {
       const expected = 'Hello World';
@@ -88,14 +90,17 @@ describe('createGraphNodeResource', () => {
         );
       }
 
-      render(
+      const result = render(
         <GraphDomain>
           <Consumer />
         </GraphDomain>,
       );
 
-      step();
-      expect(await waitFor(() => screen.getByTitle('success'))).toContainHTML(expected);
+      act(() => {
+        jest.runAllTimers();
+      });
+
+      expect(await waitFor(() => result.getByTitle('success'))).toContainHTML(expected);
     });
     it('should receive a failure state upon rejection.', async () => {
       const exampleAsync = createGraphNode({
@@ -118,14 +123,17 @@ describe('createGraphNodeResource', () => {
         );
       }
 
-      render(
+      const result = render(
         <GraphDomain>
           <Consumer />
         </GraphDomain>,
       );
 
-      step();
-      expect(await waitFor(() => screen.getByTitle('failure'))).toContainHTML('Error');
+      act(() => {
+        jest.runAllTimers();
+      });
+
+      expect(await waitFor(() => result.getByTitle('failure'))).toContainHTML('Error');
     });
   });
   describe('useGraphNodeResource', () => {
@@ -151,7 +159,7 @@ describe('createGraphNodeResource', () => {
         return <p title={finder}>Pending</p>;
       }
 
-      render(
+      const result = render(
         <GraphDomain>
           <Suspense fallback={<Pending />}>
             <Consumer />
@@ -159,7 +167,7 @@ describe('createGraphNodeResource', () => {
         </GraphDomain>,
       );
 
-      expect(screen.getByTitle(finder)).toContainHTML(expected);
+      expect(result.getByTitle(finder)).toContainHTML(expected);
     });
     it('should receive a success state upon resolution.', async () => {
       const expected = 'Hello World';
@@ -169,6 +177,7 @@ describe('createGraphNodeResource', () => {
           await sleep(1);
           return expected;
         },
+        key: 'Example',
       });
       const exampleResource = createGraphNodeResource(exampleAsync);
 
@@ -182,7 +191,7 @@ describe('createGraphNodeResource', () => {
         return <p title="pending">Pending</p>;
       }
 
-      render(
+      const result = render(
         <GraphDomain>
           <Suspense fallback={<Pending />}>
             <Consumer />
@@ -190,8 +199,11 @@ describe('createGraphNodeResource', () => {
         </GraphDomain>,
       );
 
-      step();
-      expect(await waitFor(() => screen.getByTitle('success'))).toContainHTML(expected);
+      act(() => {
+        jest.runAllTimers();
+      });
+
+      expect(await waitFor(() => result.getByTitle('success'))).toContainHTML(expected);
     });
     it('should receive a failure state upon rejection.', async () => {
       const exampleAsync = createGraphNode({
@@ -204,8 +216,7 @@ describe('createGraphNodeResource', () => {
 
       function Consumer(): JSX.Element {
         const value = useGraphNodeResource(exampleResource);
-
-        return <p title="success">{ value }</p>;
+        return <p title="success">{value}</p>;
       }
 
       function Pending(): JSX.Element {
@@ -217,7 +228,7 @@ describe('createGraphNodeResource', () => {
       }
 
       supressWarnings();
-      render(
+      const result = render(
         <GraphDomain>
           <ErrorBound fallback={<Failure />}>
             <Suspense fallback={<Pending />}>
@@ -227,8 +238,11 @@ describe('createGraphNodeResource', () => {
         </GraphDomain>,
       );
 
-      step();
-      expect(await waitFor(() => screen.getByTitle('failure'))).toContainHTML('Error');
+      act(() => {
+        jest.runAllTimers();
+      });
+
+      expect(await waitFor(() => result.getByTitle('failure'))).toContainHTML('Error');
       restoreWarnings();
     });
   });
