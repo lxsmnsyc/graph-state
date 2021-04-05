@@ -25,21 +25,23 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphDomainMemory, GraphNode, setGraphNodeState } from 'graph-state';
+import { GraphNode, setGraphNodeState } from 'graph-state';
 import {
   useCallbackCondition,
 } from '@lyonph/react-hooks';
-import { compareArray } from '../utils/compareTuple';
+import { GraphDomainCoreContext } from '../GraphDomainCore';
 
 export type GraphNodeMutate<S> = (action: S) => void;
 
 export default function useGraphNodeMutateBase<S, A>(
-  memory: GraphDomainMemory,
+  context: GraphDomainCoreContext,
   node: GraphNode<S, A>,
 ): GraphNodeMutate<S> {
   return useCallbackCondition(
-    (action: S) => setGraphNodeState(memory, node, action),
-    [memory, node],
-    compareArray,
+    (action: S) => setGraphNodeState(context.memory, node, action),
+    { context, node },
+    (prev, next) => (
+      !(Object.is(prev.context, next.context) && Object.is(prev.node, next.node))
+    ),
   );
 }

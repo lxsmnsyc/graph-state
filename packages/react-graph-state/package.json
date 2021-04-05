@@ -72,6 +72,8 @@
     "react"
   ],
   "dependencies": {
-    "@lyonph/react-hooks": "^0.3.3"
+    "@lyonph/react-hooks": "^0.3.3",
+    "react-scoped-model": "^2.0.2",
+    "react-store-adapter": "^0.2.1"
   }
 }

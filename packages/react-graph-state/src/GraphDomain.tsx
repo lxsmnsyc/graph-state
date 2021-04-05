@@ -25,21 +25,29 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import React, { ReactNode, useRef } from 'react';
-import GraphCoreComponent from './GraphDomainCore';
-import { GraphCoreValue, GraphCoreContext } from './GraphDomainContext';
+import React, { FC } from 'react';
+import { useScopedModelExists } from 'react-scoped-model';
+import { StoreAdapterRoot } from 'react-store-adapter';
+import GraphDomainCore from './GraphDomainCore';
 
-export interface GraphDomainProps {
-  children?: ReactNode;
-}
+const GraphDomain: FC = ({ children }) => {
+  const context = useScopedModelExists(GraphDomainCore);
 
-export default function GraphDomain({ children }: GraphDomainProps): JSX.Element {
-  const ref = useRef<GraphCoreValue>({});
+  if (context) {
+    return <>{children}</>;
+  }
 
   return (
-    <GraphCoreContext.Provider value={ref}>
-      <GraphCoreComponent />
-      { children }
-    </GraphCoreContext.Provider>
+    <StoreAdapterRoot>
+      <GraphDomainCore.Provider>
+        {children}
+      </GraphDomainCore.Provider>
+    </StoreAdapterRoot>
   );
+};
+
+if (process.env.NODE_ENV !== 'production') {
+  GraphDomain.displayName = 'GraphDomain';
 }
+
+export default GraphDomain;

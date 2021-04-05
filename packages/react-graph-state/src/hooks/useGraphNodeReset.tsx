@@ -27,13 +27,14 @@
  */
 import { GraphNode } from 'graph-state';
 import { useDebugValue } from 'react';
-import { useGraphDomainMemory } from '../GraphDomainContext';
+import { useGraphDomainCore, useGraphDomainRestriction } from '../GraphDomainCore';
 import useGraphNodeResetBase, { GraphNodeReset } from './useGraphNodeResetBase';
 
 export default function useGraphNodeReset<S, A>(
   node: GraphNode<S, A>,
 ): GraphNodeReset {
-  const reset = useGraphNodeResetBase(useGraphDomainMemory(), node);
+  useGraphDomainRestriction();
+  const reset = useGraphNodeResetBase(useGraphDomainCore(), node);
   useDebugValue(reset);
   return reset;
 }

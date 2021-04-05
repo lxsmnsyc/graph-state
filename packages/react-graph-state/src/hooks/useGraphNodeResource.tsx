@@ -27,9 +27,12 @@
  */
 import { GraphNodeResource } from 'graph-state';
 import { useDebugValue } from 'react';
+import { useGraphDomainRestriction } from '../GraphDomainCore';
 import useGraphNodeValue from './useGraphNodeValue';
 
 export default function useGraphNodeResource<T>(node: GraphNodeResource<T>): T {
+  useGraphDomainRestriction();
+
   const value = useGraphNodeValue(node);
 
   useDebugValue(value);

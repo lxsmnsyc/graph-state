@@ -25,23 +25,25 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphDomainMemory, GraphNode, runGraphNodeCompute } from 'graph-state';
+import { GraphNode, runGraphNodeCompute } from 'graph-state';
 import {
   useCallbackCondition,
 } from '@lyonph/react-hooks';
-import { compareArray } from '../utils/compareTuple';
+import { GraphDomainCoreContext } from '../GraphDomainCore';
 
 export type GraphNodeReset = () => void;
 
 export default function useGraphNodeResetBase<S, A>(
-  memory: GraphDomainMemory,
+  context: GraphDomainCoreContext,
   node: GraphNode<S, A>,
 ): GraphNodeReset {
   return useCallbackCondition(
     () => {
-      runGraphNodeCompute(memory, node);
+      runGraphNodeCompute(context.memory, node);
     },
-    [memory, node],
-    compareArray,
+    { context, node },
+    (prev, next) => (
+      !(Object.is(prev.context, next.context) && Object.is(prev.node, next.node))
+    ),
   );
 }
