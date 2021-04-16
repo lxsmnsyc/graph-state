@@ -29,13 +29,13 @@ import { useEffect } from 'react';
 import {
   GraphNode,
   GraphNodeListener,
-  subscribeGraphNode,
+  subscribe,
 } from 'graph-state';
 import { GraphDomainCoreContext } from '../GraphDomainCore';
 
-export default function useGraphNodeSnapshotBase<S, A>(
+export default function useGraphNodeSnapshotBase<S, A, R>(
   context: GraphDomainCoreContext,
-  node: GraphNode<S, A>,
+  node: GraphNode<S, A, R>,
   listener: GraphNodeListener<S>,
 ): void {
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function useGraphNodeSnapshotBase<S, A>(
       }
     };
 
-    const unsubscribe = subscribeGraphNode(context.memory, node, internalListener);
+    const unsubscribe = subscribe(context.memory, node, internalListener);
     return () => {
       mounted = false;
       unsubscribe();

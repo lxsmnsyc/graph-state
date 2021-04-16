@@ -25,7 +25,7 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphNode, runGraphNodeCompute } from 'graph-state';
+import { GraphNode, reset } from 'graph-state';
 import {
   useCallbackCondition,
 } from '@lyonph/react-hooks';
@@ -33,13 +33,13 @@ import { GraphDomainCoreContext } from '../GraphDomainCore';
 
 export type GraphNodeReset = () => void;
 
-export default function useGraphNodeResetBase<S, A>(
+export default function useGraphNodeResetBase<S, A, R>(
   context: GraphDomainCoreContext,
-  node: GraphNode<S, A>,
+  node: GraphNode<S, A, R>,
 ): GraphNodeReset {
   return useCallbackCondition(
     () => {
-      runGraphNodeCompute(context.memory, node);
+      reset(context.memory, node);
     },
     { context, node },
     (prev, next) => (

@@ -31,12 +31,12 @@ import {
   useRef,
 } from 'react';
 import {
-  createGraphDomainMemory,
-  destroyGraphDomainMemory,
   GraphDomainMemory,
   GraphNode,
-  getGraphNodeState,
-  subscribeGraphNode,
+  get,
+  createMemory,
+  destroyMemory,
+  subscribe,
 } from 'graph-state';
 import {
   useConstant,
@@ -51,14 +51,14 @@ import OutOfGraphDomainError from './utils/OutOfGraphDomainError';
 
 export interface GraphDomainCoreContext {
   memory: GraphDomainMemory;
-  get: <S, A>(node: GraphNode<S, A>) => StoreAdapter<S>;
+  get: <S, A, R>(node: GraphNode<S, A, R>) => StoreAdapter<S>;
 }
 
 const GraphDomainCore = createNullaryModel(() => {
   const isMounted = useRef(true);
 
   const memory = useConstant<GraphDomainMemory>(
-    () => createGraphDomainMemory(),
+    () => createMemory(),
   );
 
   const stores = useConstant(() => (
@@ -69,12 +69,12 @@ const GraphDomainCore = createNullaryModel(() => {
 
   useEffect(() => () => {
     isMounted.current = false;
-    destroyGraphDomainMemory(memory);
+    destroyMemory(memory);
   }, [memory]);
 
   return useConstant<GraphDomainCoreContext>(() => ({
     memory,
-    get: <S, A>(node: GraphNode<S, A>): StoreAdapter<S> => {
+    get: <S, A, R>(node: GraphNode<S, A, R>): StoreAdapter<S> => {
       const store = stores.get(node.key);
 
       if (store) {
@@ -82,11 +82,13 @@ const GraphDomainCore = createNullaryModel(() => {
       }
 
       const newStore = createStoreAdapter({
-        read: () => getGraphNodeState(memory, node),
-        subscribe: (callback) => subscribeGraphNode(memory, node, callback),
+        read: () => get(memory, node),
+        subscribe: (callback) => subscribe(memory, node, callback),
         keepAlive: true,
       });
+
       stores.set(node.key, newStore);
+
       return newStore;
     },
   }));

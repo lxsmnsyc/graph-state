@@ -27,24 +27,14 @@
  */
 import { useDebugValue } from 'react';
 import { GraphNode } from 'graph-state';
-import useGraphNodeValueBase, { UseGraphNodeValueOptions } from './useGraphNodeValueBase';
+import useGraphNodeValueBase from './useGraphNodeValueBase';
 import { useGraphDomainCore, useGraphDomainRestriction } from '../GraphDomainCore';
 
-function useGraphNodeValue<S, A>(
-  node: GraphNode<S, A>,
-): S;
 function useGraphNodeValue<S, A, R>(
-  node: GraphNode<S, A>,
-  options: UseGraphNodeValueOptions<S, R>,
-): R;
-function useGraphNodeValue<S, A, R>(
-  node: GraphNode<S, A>,
-  options?: UseGraphNodeValueOptions<S, R>,
-): R {
+  node: GraphNode<S, A, R>,
+): S {
   useGraphDomainRestriction();
-  const current = useGraphNodeValueBase(useGraphDomainCore(), node, {
-    ...(options ?? {}),
-  });
+  const current = useGraphNodeValueBase(useGraphDomainCore(), node);
   useDebugValue(current);
   return current;
 }

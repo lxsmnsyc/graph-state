@@ -27,21 +27,21 @@
  */
 import {
   GraphNode,
-  runGraphNodeDispatch,
+  dispatch,
 } from 'graph-state';
 import {
   useCallbackCondition,
 } from '@lyonph/react-hooks';
 import { GraphDomainCoreContext } from '../GraphDomainCore';
 
-export type GraphNodeDispatch<A> = (action: A) => Promise<void>;
+export type GraphNodeDispatch<A, R> = (action: A) => R;
 
-export default function useGraphNodeDispatchBase<S, A>(
+export default function useGraphNodeDispatchBase<S, A, R>(
   context: GraphDomainCoreContext,
-  node: GraphNode<S, A>,
-): GraphNodeDispatch<A> {
+  node: GraphNode<S, A, R>,
+): GraphNodeDispatch<A, R> {
   return useCallbackCondition(
-    (action: A) => runGraphNodeDispatch(context.memory, node, action),
+    (action: A) => dispatch(context.memory, node, action),
     { context, node },
     (prev, next) => (
       !(Object.is(prev.context, next.context) && Object.is(prev.node, next.node))
