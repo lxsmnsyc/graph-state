@@ -25,16 +25,40 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-export { default as useGraphNodeValue } from './hooks/useGraphNodeValue';
-export { default as useGraphNodeState } from './hooks/useGraphNodeState';
-export { default as useGraphNodeReset } from './hooks/useGraphNodeReset';
-export { default as useGraphNodeMutate } from './hooks/useGraphNodeMutate';
-export { default as useGraphNodeHydrate } from './hooks/useGraphNodeHydrate';
-export { default as useGraphNodeDispatch } from './hooks/useGraphNodeDispatch';
-export { default as useGraphNodeResource } from './hooks/useGraphNodeResource';
-export { default as useGraphNodeSnapshot } from './hooks/useGraphNodeSnapshot';
-export { default as useGraphNodeSelector } from './hooks/useGraphNodeSnapshot';
-export { default as GraphDomain } from './GraphDomain';
+import {
+  GraphNode,
+} from 'graph-state';
+import {
+  useMemoCondition,
+} from '@lyonph/react-hooks';
+import { useDebugValue } from 'react';
+import { useStoreAdapter } from 'react-store-adapter';
+import { useGraphDomainCore, useGraphDomainRestriction } from '../GraphDomainCore';
 
-export { GraphNodeDispatch } from './hooks/useGraphNodeDispatchBase';
-export { GraphNodeReset } from './hooks/useGraphNodeResetBase';
+export interface UseSelectorOptions<T, R> {
+  getSnapshot?: (value: T) => R;
+  shouldUpdate?: (prev: R, next: R) => boolean;
+}
+
+function useGraphNodeSelector<S, A, R, T>(
+  node: GraphNode<S, A, R>,
+  options: UseSelectorOptions<S, T>,
+): T {
+  useGraphDomainRestriction();
+  const context = useGraphDomainCore();
+  const store = useMemoCondition(
+    () => context.get(node),
+    { context, node },
+    (prev, next) => (
+      !(Object.is(prev.context, next.context) && Object.is(prev.node, next.node))
+    ),
+  );
+
+  const value = useStoreAdapter(store, options);
+
+  useDebugValue(value);
+
+  return value;
+}
+
+export default useGraphNodeSelector;
