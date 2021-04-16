@@ -1,7 +1,7 @@
 /** @jsx h */
 import 'preact/debug';
 import { h, Fragment, VNode } from 'preact';
-import { Suspense } from 'preact/compat';
+import { Suspense, useEffect } from 'preact/compat';
 import {
   createGraphNodeResource,
   createGraphNode,
@@ -146,9 +146,16 @@ function InnerApp(): VNode {
       <ResetTemperature />
       <Temperature />
       <Suspense fallback={<h1>Loading...</h1>}>
-        <DelayedTemperature />
+        <div>
+          <DelayedTemperature />
+        </div>
       </Suspense>
-      {/* <AsyncTemperature /> */}
+      <AsyncTemperature />
+      <Suspense fallback={<h1>Loading...</h1>}>
+        <div>
+          <DelayedTemperature />
+        </div>
+      </Suspense>
       <Timer />
     </>
   );
