@@ -35,10 +35,25 @@ import { useDebugValue } from 'preact/hooks';
 import { useStoreAdapter } from 'preact-store-adapter';
 import { GraphDomainCoreContext } from '../GraphDomainCore';
 
-export default function useGraphNodeValueBase<S, A>(
+export interface UseGraphNodeValueOptions<T, R> {
+  getSnapshot?: (value: T) => R;
+  shouldUpdate?: (prev: R, next: R) => boolean;
+}
+
+function useGraphNodeValueBase<S, A>(
   context: GraphDomainCoreContext,
   node: GraphNode<S, A>,
-): S {
+): S;
+function useGraphNodeValueBase<S, A, R>(
+  context: GraphDomainCoreContext,
+  node: GraphNode<S, A>,
+  options: UseGraphNodeValueOptions<S, R>,
+): R;
+function useGraphNodeValueBase<S, A, R>(
+  context: GraphDomainCoreContext,
+  node: GraphNode<S, A>,
+  options?: UseGraphNodeValueOptions<S, R>,
+): R {
   const store = useMemoCondition(
     () => context.get(node),
     { context, node },
@@ -47,9 +62,13 @@ export default function useGraphNodeValueBase<S, A>(
     ),
   );
 
-  const value = useStoreAdapter(store);
+  const value = useStoreAdapter(store, {
+    ...(options ?? {}),
+  });
 
   useDebugValue(value);
 
   return value;
 }
+
+export default useGraphNodeValueBase;
