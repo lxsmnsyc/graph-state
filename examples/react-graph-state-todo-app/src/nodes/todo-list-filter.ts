@@ -1,11 +1,11 @@
-import { createGraphNode } from 'graph-state';
+import { node } from 'graph-state';
 
 export type TodoListFilter =
   | 'all'
   | 'complete'
   | 'incomplete';
 
-const todoListFilter = createGraphNode<TodoListFilter>({
+const todoListFilter = node<TodoListFilter>({
   key: 'todoListFilter',
   get: 'all',
 });

@@ -1,12 +1,12 @@
-import { createGraphNode } from 'graph-state';
+import { node } from 'graph-state';
 import todoList from './todo-list';
 
-const submitInput = createGraphNode<undefined, string | undefined>({
+const submitInput = node<undefined, string, void>({
   key: 'submitInput',
   get: undefined,
-  set: ({ set }, value) => {
+  set: (context, value) => {
     if (value) {
-      set(todoList, (currentTodoList) => [
+      context.set(todoList, (currentTodoList) => [
         {
           id: currentTodoList.length,
           text: value,

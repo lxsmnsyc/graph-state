@@ -5,7 +5,7 @@ import TodoApp from './components/TodoApp';
 
 export default function App(): JSX.Element {
   return (
-    <GeistProvider theme={{ type: 'dark' }}>
+    <GeistProvider themeType="dark">
       <CssBaseline />
       <GraphDomain>
         <TodoApp />

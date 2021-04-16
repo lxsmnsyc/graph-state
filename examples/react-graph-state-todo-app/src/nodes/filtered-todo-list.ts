@@ -1,8 +1,8 @@
-import { createGraphNode } from 'graph-state';
+import { node } from 'graph-state';
 import todoList, { TodoListData } from './todo-list';
 import todoListFilter from './todo-list-filter';
 
-const filteredTodoList = createGraphNode<TodoListData[]>({
+const filteredTodoList = node<TodoListData[]>({
   key: 'filteredTodoList',
   get: ({ get }) => {
     const filter = get(todoListFilter);

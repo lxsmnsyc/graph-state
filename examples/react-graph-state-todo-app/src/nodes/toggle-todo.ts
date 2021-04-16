@@ -1,11 +1,11 @@
-import { createGraphNode } from 'graph-state';
+import { node } from 'graph-state';
 import todoList from './todo-list';
 
-const toggleTodo = createGraphNode<undefined, number>({
+const toggleTodo = node<undefined, number, void>({
   key: 'toggleTodo',
   get: undefined,
-  set: ({ set }, id) => {
-    set(todoList, (currentTodoList) => {
+  set: (context, id) => {
+    context.set(todoList, (currentTodoList) => {
       const index = currentTodoList.findIndex((data) => data.id === id);
 
       if (index !== -1) {

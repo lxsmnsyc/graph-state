@@ -1,4 +1,4 @@
-import { createGraphNode } from 'graph-state';
+import { node } from 'graph-state';
 
 export interface TodoListData {
   completed: boolean;
@@ -6,7 +6,7 @@ export interface TodoListData {
   id: number;
 }
 
-const todoList = createGraphNode<TodoListData[]>({
+const todoList = node<TodoListData[]>({
   key: 'todoList',
   get: [],
 });
