@@ -31,14 +31,14 @@ import {
 } from '@lyonph/react-hooks';
 import { GraphDomainCoreContext } from '../GraphDomainCore';
 
-export type GraphNodeMutate<S> = (action: S) => void;
+export type GraphNodeMutate<S> = (action: GraphNodeAtomAction<S>) => void;
 
 export default function useGraphNodeMutateBase<S, A, R>(
   context: GraphDomainCoreContext,
   node: GraphNode<S, A, R>,
 ): GraphNodeMutate<S> {
   return useCallbackCondition(
-    (action: GraphNodeAtomAction<S>) => set(context.memory, node, action),
+    (action) => set(context.memory, node, action),
     { context, node },
     (prev, next) => (
       !(Object.is(prev.context, next.context) && Object.is(prev.node, next.node))

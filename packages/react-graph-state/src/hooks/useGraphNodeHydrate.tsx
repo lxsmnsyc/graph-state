@@ -29,12 +29,13 @@ import {
   GraphNode,
   hydrate,
 } from 'graph-state';
-import { useGraphDomainCore } from '../GraphDomainCore';
+import { useGraphDomainCore, useGraphDomainRestriction } from '../GraphDomainCore';
 
 export default function useGraphNodeHydrate<S, A, R>(
   node: GraphNode<S, A, R>,
   value: S,
 ): void {
+  useGraphDomainRestriction();
   const context = useGraphDomainCore();
 
   hydrate(context.memory, node, value);
