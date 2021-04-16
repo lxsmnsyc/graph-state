@@ -38,3 +38,11 @@ export function ensure<T>(value: T | undefined): T {
 export function generateKey(): string {
   return Math.random().toString(36).substr(2, 9);
 }
+
+export function defaultShouldUpdate<S>(a: S, b: S): boolean {
+  return !Object.is(a, b);
+}
+
+export function defaultSerialize<P extends any[] = []>(...params: P): string {
+  return JSON.stringify(params);
+}

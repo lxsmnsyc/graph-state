@@ -25,79 +25,59 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { ensure, generateKey } from './utils';
-// Keys for accessing graph node instances
+import {
+  defaultSerialize,
+  defaultShouldUpdate,
+  ensure,
+  generateKey,
+} from './utils';
+
 export type GraphNodeKey = string | number;
 
-// An action for receiving the old state and returning a new state
-export type GraphNodeDraftStateAction<S> = (old: S) => S;
+export type GraphNodeShouldUpdate<S> = (prev: S, next: S) => boolean;
 
-// An action which sets the new state
-export type GraphNodeDraftState<S> = S | GraphNodeDraftStateAction<S>;
-
-export type GraphNodeResolve = <T>(promise: Promise<T>) => Promise<T>;
-
-export type GraphNodeMutateSelf<S> = (value: S) => void;
-export type GraphNodeSetSelf<A> = (value: A) => Promise<void>;
-export type GraphNodeGetSelf<S> = () => S;
-export type GraphNodeResetSelf = () => void;
+export type GraphNodeAtomLazyAction<S> = (prev: S) => S;
+export type GraphNodeAtomAction<S> = S | GraphNodeAtomLazyAction<S>;
 
 export type GraphNodeSubscriptionCleanup = () => void;
 export type GraphNodeSubscriptionCallback = () => void | undefined | GraphNodeSubscriptionCleanup;
 export type GraphNodeSubscription = (callback: GraphNodeSubscriptionCallback) => void;
 
-export interface GraphNodeContext<S, A = GraphNodeDraftState<S>> {
-  get: GraphNodeGetValue;
-  getSelf: GraphNodeGetSelf<S>;
-  set: GraphNodeSetValue;
-  setSelf: GraphNodeSetSelf<A>;
-  reset: GraphNodeResetValue;
-  resetSelf: GraphNodeResetSelf;
-  mutate: GraphNodeMutateValue;
-  mutateSelf: GraphNodeMutateSelf<S>;
-  resolve: GraphNodeResolve;
+export type GraphNodeResolve = <T>(promise: Promise<T>) => Promise<T>;
+
+export interface GraphNodeContext<S, A, R> {
+  get<S1, A1, R1>(node: GraphNode<S1, A1, R1>): S1;
+
+  set<S1, A1, R1>(node: GraphNode<S1, A1, R1>, action: A1): R1;
+
+  reset<S1, A1, R1>(node: GraphNode<S1, A1, R1>): void;
+
+  mutate<S1, A1, R1>(node: GraphNode<S1, A1, R1>, value: GraphNodeAtomAction<S1>): void;
+
   subscription: GraphNodeSubscription;
+
+  resolve: GraphNodeResolve;
+
+  setSelf(action: A): R;
+  getSelf(): S;
+  resetSelf(): void;
+  mutateSelf(value: GraphNodeAtomAction<S>): void;
 }
 
-export type GraphNodeGetSupplier<S, A = GraphNodeDraftState<S>> =
-  (facing: GraphNodeContext<S, A>) => S;
-export type GraphNodeGet<S, A = GraphNodeDraftState<S>> =
-  S | GraphNodeGetSupplier<S, A>;
+export type GraphNodeLazyGet<S, A, R> = (context: GraphNodeContext<S, A, R>) => S;
+export type GraphNodeGet<S, A, R> = S | GraphNodeLazyGet<S, A, R>;
+export type GraphNodeSet<S, A, R> = (context: GraphNodeContext<S, A, R>, action: A) => R;
 
-export type GraphNodeSet<S, A = GraphNodeDraftState<S>> =
-  (facing: GraphNodeContext<S, A>, action: A) => Promise<void>;
-
-export type GraphNodeShouldUpdate<S> =
-  (prev: S, next: S) => boolean;
-
-function DEFAULT_MEMO<S>(a: S, b: S): boolean {
-  return !Object.is(a, b);
-}
-
-export interface GraphNode<S, A = GraphNodeDraftState<S>> {
-  get: GraphNodeGet<S, A>;
+export interface GraphNode<S, A, R> {
   key: GraphNodeKey;
-  set?: GraphNodeSet<S, A>;
   shouldUpdate: GraphNodeShouldUpdate<S>;
+  get: GraphNodeGet<S, A, R>;
+  set: GraphNodeSet<S, A, R>;
 }
 
-export interface GraphNodeOptions<S, A = GraphNodeDraftState<S>> {
-  get: GraphNodeGet<S, A>;
-  key?: GraphNodeKey;
-  set?: GraphNodeSet<S, A>;
-  shouldUpdate?: GraphNodeShouldUpdate<S>;
-}
+export type GraphNodeAtom<S> = GraphNode<S, GraphNodeAtomAction<S>, void>;
 
-export type GraphNodeGetValue =
-  <S, A = GraphNodeDraftState<S>>(node: GraphNode<S, A>) => S;
-export type GraphNodeSetValue =
-  <S, A = GraphNodeDraftState<S>>(node: GraphNode<S, A>, action: A) => Promise<void>;
-export type GraphNodeMutateValue =
-  <S, A = GraphNodeDraftState<S>>(node: GraphNode<S, A>, value: S) => void;
-export type GraphNodeResetValue =
-  <S, A = GraphNodeDraftState<S>>(node: GraphNode<S, A>) => void;
-
-const NODES = new Map<GraphNodeKey, GraphNode<any, any>>();
+const NODES = new Map<GraphNodeKey, GraphNode<any, any, any>>();
 const KEYS = new Map<GraphNodeKey, GraphNodeKey>();
 
 function createKey(key?: GraphNodeKey): GraphNodeKey {
@@ -119,227 +99,176 @@ function createKey(key?: GraphNodeKey): GraphNodeKey {
   return generateKey();
 }
 
-function createRawGraphNode<S, A = GraphNodeDraftState<S>>(
-  {
-    key, get, set, shouldUpdate,
-  }: GraphNodeOptions<S, A>,
-): GraphNode<S, A> {
-  return {
-    get,
-    set,
-    key: createKey(key),
-    shouldUpdate: shouldUpdate ?? DEFAULT_MEMO,
-  };
+export interface GraphNodeAtomOptions<S> {
+  key?: GraphNodeKey;
+  shouldUpdate?: GraphNodeShouldUpdate<S>;
+  get: GraphNodeGet<S, GraphNodeAtomAction<S>, void>;
 }
 
-export function createGraphNode<S, A = GraphNodeDraftState<S>>(
-  options: GraphNodeOptions<S, A>,
-): GraphNode<S, A> {
+export interface GraphNodeOptions<S, A, R> {
+  key?: GraphNodeKey;
+  shouldUpdate?: GraphNodeShouldUpdate<S>;
+  get: GraphNodeGet<S, A, R>;
+  set: GraphNodeSet<S, A, R>;
+}
+
+function createRawGraphNode<S>(
+  options: GraphNodeAtomOptions<S>,
+): GraphNodeAtom<S>;
+function createRawGraphNode<S, A, R>(
+  options: GraphNodeOptions<S, A, R>,
+): GraphNode<S, A, R>;
+function createRawGraphNode<S, A, R>(
+  options: GraphNodeAtomOptions<S> | GraphNodeOptions<S, A, R>,
+): GraphNodeAtom<S> | GraphNode<S, A, R> {
+  const key = createKey(options.key);
+  const shouldUpdate = options.shouldUpdate ?? defaultShouldUpdate;
+
+  if ('set' in options) {
+    return {
+      get: options.get,
+      set: options.set,
+      key,
+      shouldUpdate,
+    };
+  }
+
+  const newNode: GraphNodeAtom<S> = {
+    get: options.get,
+    set: (context, action) => {
+      context.mutateSelf(action);
+    },
+    key,
+    shouldUpdate,
+  };
+
+  return newNode;
+}
+
+/**
+* Creates a graph-state node instance.
+*/
+export function node<S>(
+  options: GraphNodeAtomOptions<S>
+): GraphNodeAtom<S>;
+/**
+* Creates a graph-state node instance with a
+* custom dispatch behavior.
+*/
+export function node<S, A, R>(
+  options: GraphNodeOptions<S, A, R>
+): GraphNode<S, A, R>;
+export function node<S, A, R>(
+  options: GraphNodeAtomOptions<S> | GraphNodeOptions<S, A, R>,
+): GraphNodeAtom<S> | GraphNode<S, A, R> {
   if (options.key != null) {
     const currentNode = NODES.get(createKey(options.key));
     if (currentNode) {
       return currentNode;
     }
   }
-  const node = createRawGraphNode<S, A>(options);
-  NODES.set(node.key, node);
-  return node;
-}
-
-export interface GraphNodeAsyncPending<T> {
-  data: Promise<T>;
-  status: 'pending';
-}
-export interface GraphNodeAsyncSuccess<T> {
-  data: T;
-  status: 'success';
-}
-export interface GraphNodeAsyncFailure {
-  data: any;
-  status: 'failure';
-}
-export type GraphNodeAsyncResult<T> =
-  | GraphNodeAsyncPending<T>
-  | GraphNodeAsyncSuccess<T>
-  | GraphNodeAsyncFailure;
-
-export type GraphNodePromise<S> = GraphNode<Promise<S>>;
-export type GraphNodeResource<S> = GraphNode<GraphNodeAsyncResult<S>>;
-
-function promiseToResource<T>(
-  promise: Promise<T>,
-  set: GraphNodeMutateSelf<GraphNodeAsyncResult<T>>,
-): GraphNodeAsyncResult<T> {
-  promise.then(
-    (data) => set({
-      data,
-      status: 'success',
-    }),
-    (data) => set({
-      data,
-      status: 'failure',
-    }),
-  );
-
-  return {
-    data: promise,
-    status: 'pending',
-  };
+  const newNode = 'set' in options
+    ? createRawGraphNode(options)
+    : createRawGraphNode(options);
+  NODES.set(newNode.key, newNode);
+  return newNode;
 }
 
 /**
- * Converts a Promise-returning graph node into a Resource graph node
- * @param graphNode
- */
-export function createGraphNodeResource<S, A = GraphNodeDraftState<Promise<S>>>(
-  graphNode: GraphNode<Promise<S>, A>,
-): GraphNodeResource<S> {
-  return createGraphNode({
-    get: ({ get, mutateSelf }) => promiseToResource(get(graphNode), mutateSelf),
-    key: `Resource(${graphNode.key})`,
-  });
-}
-
+* Creates a graph-state node instance.
+* @deprecated Please use `node`
+*/
+export function createGraphNode<S>(
+  options: GraphNodeAtomOptions<S>
+): GraphNodeAtom<S>;
 /**
- * Converts a Resource graph node to a Promise-returning graph node
- * @param resource
- */
-export function fromResource<S>(
-  resource: GraphNodeResource<S>,
-): GraphNodePromise<S> {
-  return createGraphNode({
-    get: async ({ get }) => {
-      const result = get(resource);
-
-      if (result.status === 'failure') {
-        throw result.data;
-      }
-      return result.data;
-    },
-    key: `Promise(${resource.key})`,
-  });
+* Creates a graph-state node instance with a
+* custom dispatch behavior.
+* @deprecated Please use `node`
+*/
+export function createGraphNode<S, A, R>(
+  options: GraphNodeOptions<S, A, R>
+): GraphNode<S, A, R>;
+export function createGraphNode<S, A, R>(
+  options: GraphNodeAtomOptions<S> | GraphNodeOptions<S, A, R>,
+): GraphNodeAtom<S> | GraphNode<S, A, R> {
+  return 'set' in options
+    ? node(options)
+    : node(options);
 }
 
-function joinResourceKeys<S>(
-  resources: GraphNodeResource<S>[],
-): string {
-  return resources.map((resource) => resource.key).join(', ');
+export interface GraphNodeFactoryBaseOptions<S, P extends any[] = []> {
+  factoryKey: string;
+  key: (...args: P) => GraphNodeKey;
+  shouldUpdate: (...args: P) => GraphNodeShouldUpdate<S>;
 }
 
-/**
- * Waits for all Resource graph node to resolve.
- * Similar behavior with Promise.all
- * @param resources
- */
-export function waitForAll<S>(
-  resources: GraphNodeResource<S>[],
-): GraphNodeResource<S[]> {
-  const promises = resources.map((resource) => fromResource(resource));
+export type GraphNodeBaseFactory<S, P extends any[] = []> =
+  (...args: P) => GraphNodeAtom<S>;
+export type GraphNodeAtomFactory<S, P extends any[] = []> =
+  (...args: P) => GraphNodeAtom<S>;
+export type GraphNodeFactory<S, A, R, P extends any[] = []> =
+  (...args: P) => GraphNode<S, A, R>;
 
-  return createGraphNode({
-    get: ({ get, mutateSelf }) => (
-      promiseToResource(
-        Promise.all(
-          promises.map((promise) => get(promise)),
-        ),
-        mutateSelf,
-      )
-    ),
-    key: `WaitForAll(${joinResourceKeys(resources)})`,
+export interface GraphNodeAtomFactoryOptions<S, P extends any[] = []>
+  extends GraphNodeFactoryBaseOptions<S, P> {
+  get: (...args: P) => GraphNodeGet<S, GraphNodeAtomAction<S>, void>;
+}
+export interface GraphNodeFactoryOptions<S, A, R, P extends any[] = []>
+  extends GraphNodeFactoryBaseOptions<S, P> {
+  get: (...args: P) => GraphNodeGet<S, A, R>;
+  set: (...args: P) => GraphNodeSet<S, A, R>;
+}
+
+export function factory<S, P extends any[] = []>(
+  options: GraphNodeAtomFactoryOptions<S, P>
+): GraphNodeAtomFactory<S, P>;
+export function factory<S, A, R, P extends any[] = []>(
+  options: GraphNodeFactoryOptions<S, A, R, P>
+): GraphNodeFactory<S, A, R, P>;
+export function factory<S, A, R, P extends any[] = []>(
+  options: (
+    | GraphNodeAtomFactoryOptions<S, P>
+    | GraphNodeFactoryOptions<S, A, R, P>
+  ),
+): GraphNodeAtomFactory<S, P> | GraphNodeFactory<S, A, R, P> {
+  const factoryKey = `Factory[${options.factoryKey ?? generateKey()}]`;
+
+  if ('set' in options) {
+    return (...args: P) => node({
+      key: `${factoryKey}(${options.key ? options.key(...args) : defaultSerialize(args)}`,
+      get: options.get(...args),
+      set: options.set(...args),
+      shouldUpdate: options.shouldUpdate ? options.shouldUpdate(...args) : undefined,
+    });
+  }
+
+  return (...args: P) => node({
+    key: `${factoryKey}(${options.key ? options.key(...args) : defaultSerialize(args)}`,
+    get: options.get(...args),
+    shouldUpdate: options.shouldUpdate ? options.shouldUpdate(...args) : undefined,
   });
 }
 
 /**
- * Waits for any Resource graph node to resolve.
- * Similar behavior with Promise.race
- * @param resources
- */
-export function waitForAny<S>(
-  resources: GraphNodeResource<S>[],
-): GraphNodeResource<S> {
-  const promises = resources.map((resource) => fromResource(resource));
-
-  return createGraphNode({
-    get: ({ get, mutateSelf }) => (
-      promiseToResource(
-        Promise.race(
-          promises.map((promise) => get(promise)),
-        ),
-        mutateSelf,
-      )
-    ),
-    key: `WaitForAny(${joinResourceKeys(resources)})`,
-  });
-}
-
+* @deprecated Please use `factory`
+*/
+export function createGraphNodeFactory<S, P extends any[] = []>(
+  options: GraphNodeAtomFactoryOptions<S, P>
+): GraphNodeAtomFactory<S, P>;
 /**
- * Joins Resource graph nodes into a graph node that returns
- * an array of resources
- * @param resources
- */
-export function joinResources<T>(
-  resources: GraphNodeResource<T>[],
-): GraphNode<GraphNodeAsyncResult<T>[]> {
-  return createGraphNode({
-    get: ({ get }) => resources.map((resource) => get(resource)),
-    key: `JoinedResource(${joinResourceKeys(resources)})`,
-  });
-}
-
-export type GraphNodeFactoryKey<P extends any[] = []> =
-  (...params: P) => string;
-export type GraphNodeFactoryGet<S, A = GraphNodeDraftState<S>, P extends any[] = []> =
-  (...params: P) => GraphNodeGet<S, A>;
-export type GraphNodeFactorySet<S, A = GraphNodeDraftState<S>, P extends any[] = []> =
-  (...params: P) => GraphNodeSet<S, A>;
-export type GraphNodeFactoryShouldUpdate<S, P extends any[] = []> =
-  (...params: P) => GraphNodeShouldUpdate<S>;
-
-export interface GraphNodeFactoryOptions<S, A = GraphNodeDraftState<S>, P extends any[] = []> {
-  baseKey?: GraphNodeKey;
-  key?: GraphNodeFactoryKey<P>;
-  get: GraphNodeFactoryGet<S, A, P>;
-  set?: GraphNodeFactorySet<S, A, P>;
-  shouldUpdate?: GraphNodeFactoryShouldUpdate<S, P>;
-}
-
-export type GraphNodeFactory<S, A = GraphNodeDraftState<S>, P extends any[] = []> =
-  (...params: P) => GraphNode<S, A>;
-
-function defaultKeygen<P extends any[] = []>(...params: P): string {
-  return JSON.stringify(params);
-}
-
-export function createGraphNodeFactory<S, A = GraphNodeDraftState<S>, P extends any[] = []>(
-  {
-    key, get, set, baseKey,
-    shouldUpdate,
-  }: GraphNodeFactoryOptions<S, A, P>,
-): GraphNodeFactory<S, A, P> {
-  const factoryKey = `Factory[${baseKey ?? generateKey()}]`;
-  return (...params: P): GraphNode<S, A> => createGraphNode<S, A>({
-    key: `${factoryKey}(${key ? key(...params) : defaultKeygen(params)}`,
-    get: get(...params),
-    set: set ? set(...params) : undefined,
-    shouldUpdate: shouldUpdate ? shouldUpdate(...params) : undefined,
-  });
-}
-
-export type GraphNodeResourceFactory<S, P extends any[] = []> =
-  GraphNodeFactory<
-    GraphNodeAsyncResult<S>,
-    GraphNodeDraftState<GraphNodeAsyncResult<S>>,
-    P
-  >;
-
-export function createGraphNodeResourceFactory<
-  S,
-  A = GraphNodeDraftState<Promise<S>>,
-  P extends any[] = [],
->(
-  factory: GraphNodeFactory<Promise<S>, A, P>,
-): GraphNodeResourceFactory<S, P> {
-  return (...params: P): GraphNodeResource<S> => createGraphNodeResource(
-    factory(...params),
-  );
+* @deprecated Please use `factory`
+*/
+export function createGraphNodeFactory<S, A, R, P extends any[] = []>(
+  options: GraphNodeFactoryOptions<S, A, R, P>
+): GraphNodeFactory<S, A, R, P>;
+export function createGraphNodeFactory<S, A, R, P extends any[] = []>(
+  options: (
+    | GraphNodeAtomFactoryOptions<S, P>
+    | GraphNodeFactoryOptions<S, A, R, P>
+  ),
+): GraphNodeAtomFactory<S, P> | GraphNodeFactory<S, A, R, P> {
+  return 'set' in options
+    ? factory(options)
+    : factory(options);
 }

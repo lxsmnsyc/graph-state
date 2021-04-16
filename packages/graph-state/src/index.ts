@@ -27,3 +27,4 @@
  */
 export * from './graph-node';
 export * from './core';
+export * from './resource';
