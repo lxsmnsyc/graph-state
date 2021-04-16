@@ -30,8 +30,8 @@ import { useDebugValue } from 'preact/hooks';
 import { useGraphDomainCore, useGraphDomainRestriction } from '../GraphDomainCore';
 import useGraphNodeResetBase, { GraphNodeReset } from './useGraphNodeResetBase';
 
-export default function useGraphNodeReset<S, A>(
-  node: GraphNode<S, A>,
+export default function useGraphNodeReset<S, A, R>(
+  node: GraphNode<S, A, R>,
 ): GraphNodeReset {
   useGraphDomainRestriction();
   const reset = useGraphNodeResetBase(useGraphDomainCore(), node);

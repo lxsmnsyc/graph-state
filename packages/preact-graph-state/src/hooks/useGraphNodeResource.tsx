@@ -25,15 +25,17 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphNodeResource } from 'graph-state';
+import { get, GraphNodeResource } from 'graph-state';
 import { useDebugValue } from 'preact/hooks';
-import { useGraphDomainRestriction } from '../GraphDomainCore';
-import useGraphNodeValue from './useGraphNodeValue';
+import { useGraphDomainCore, useGraphDomainRestriction } from '../GraphDomainCore';
+import createResolvable from '../utils/resolvable';
+import useGraphNodeValueBase from './useGraphNodeValueBase';
 
-export default function useGraphNodeResource<T>(node: GraphNodeResource<T>): T {
+export default function useGraphNodeResource<S, F>(node: GraphNodeResource<S, F>): S {
   useGraphDomainRestriction();
+  const context = useGraphDomainCore();
 
-  const value = useGraphNodeValue(node);
+  const value = useGraphNodeValueBase(context, node);
 
   useDebugValue(value.status === 'success' ? value.data : value);
 
@@ -41,16 +43,81 @@ export default function useGraphNodeResource<T>(node: GraphNodeResource<T>): T {
     return value.data;
   }
 
-  // if (value.status === 'pending') {
-  //   // This is a hack/patch since Preact's Suspense has
-  //   // a different timing than React
+  // The following implementation is a HACK.
 
-  //   // This hack defers the resolving Promise further than
-  //   // the observed promise. This ensures that when
-  //   // the node value is read, it is already resolved.
-  //   throw value.data.then(() => new Promise((resolve) => {
-  //     setTimeout(resolve);
-  //   }));
-  // }
+  // Preact's Suspense resolution timing is different from React
+  // In here, we create a chain of promises that resolves the previous
+  // one to throttle the resolution. Until such a time that the
+  // resolution matches the unsafe state, it will defer the resolution
+  // timing.
+  if (value.status === 'pending') {
+    const current = context.cache.get(node.key);
+
+    if (current) {
+      if (current.status === 'success') {
+        context.cache.delete(node.key);
+        return current.data;
+      }
+      if (current.status === 'failure') {
+        context.cache.delete(node.key);
+        throw current.data;
+      }
+      if (current.status === 'pending' && current.promise === value.data) {
+        throw current.data.promise;
+      }
+    }
+
+    const resolvable = createResolvable();
+
+    if (current) {
+      resolvable.promise.then(() => {
+        current.data.resolve();
+      }, () => {
+        current.data.resolve();
+      });
+    }
+
+    const stage = (promise: Promise<any>): void => {
+      promise.then(
+        () => {
+          const cache = context.cache.get(node.key);
+          if (cache?.data === resolvable) {
+            const state = get(context.memory, node);
+
+            if (state.status === 'success' || state.status === 'failure') {
+              context.cache.set(node.key, state);
+              resolvable.resolve();
+            } else {
+              stage(state.data);
+            }
+          }
+        },
+        () => {
+          const cache = context.cache.get(node.key);
+          if (cache?.data === resolvable) {
+            const state = get(context.memory, node);
+
+            if (state.status === 'success' || state.status === 'failure') {
+              context.cache.set(node.key, state);
+              resolvable.resolve();
+            } else {
+              stage(state.data);
+            }
+          }
+        },
+      );
+    };
+
+    stage(value.data);
+
+    context.cache.set(node.key, {
+      status: 'pending',
+      data: resolvable,
+      promise: value.data,
+    });
+
+    throw resolvable.promise;
+  }
+
   throw value.data;
 }

@@ -31,12 +31,12 @@ import {
   useRef,
 } from 'preact/hooks';
 import {
-  createGraphDomainMemory,
-  destroyGraphDomainMemory,
   GraphDomainMemory,
   GraphNode,
-  getGraphNodeState,
-  subscribeGraphNode,
+  destroyMemory,
+  get,
+  subscribe,
+  createMemory,
 } from 'graph-state';
 import {
   useConstant,
@@ -48,17 +48,40 @@ import {
 } from 'preact-scoped-model';
 import { createStoreAdapter, StoreAdapter } from 'preact-store-adapter';
 import OutOfGraphDomainError from './utils/OutOfGraphDomainError';
+import { Resolvable } from './utils/resolvable';
+
+interface NodeCachePending {
+  status: 'pending';
+  data: Resolvable;
+  promise: Promise<any>
+}
+
+interface NodeCacheSuccess<T> {
+  status: 'success';
+  data: T;
+}
+
+interface NodeCacheFailure {
+  status: 'failure';
+  data: any;
+}
+
+export type Resource<T> =
+  | NodeCachePending
+  | NodeCacheSuccess<T>
+  | NodeCacheFailure;
 
 export interface GraphDomainCoreContext {
   memory: GraphDomainMemory;
-  get: <S, A>(node: GraphNode<S, A>) => StoreAdapter<S>;
+  get: <S, A, R>(node: GraphNode<S, A, R>) => StoreAdapter<S>;
+  cache: Map<string | number, Resource<any>>;
 }
 
 const GraphDomainCore = createNullaryModel(() => {
   const isMounted = useRef(true);
 
   const memory = useConstant<GraphDomainMemory>(
-    () => createGraphDomainMemory(),
+    () => createMemory(),
   );
 
   const stores = useConstant(() => (
@@ -69,12 +92,16 @@ const GraphDomainCore = createNullaryModel(() => {
 
   useEffect(() => () => {
     isMounted.current = false;
-    destroyGraphDomainMemory(memory);
+    destroyMemory(memory);
   }, [memory]);
+
+  const cache = useConstant(() => (
+    new Map<string | number, Resource<any>>()
+  ));
 
   return useConstant<GraphDomainCoreContext>(() => ({
     memory,
-    get: <S, A>(node: GraphNode<S, A>): StoreAdapter<S> => {
+    get: <S, A, R>(node: GraphNode<S, A, R>): StoreAdapter<S> => {
       const store = stores.get(node.key);
 
       if (store) {
@@ -82,13 +109,14 @@ const GraphDomainCore = createNullaryModel(() => {
       }
 
       const newStore = createStoreAdapter({
-        read: () => getGraphNodeState(memory, node),
-        subscribe: (callback) => subscribeGraphNode(memory, node, callback),
+        read: () => get(memory, node),
+        subscribe: (callback) => subscribe(memory, node, callback),
         keepAlive: true,
       });
       stores.set(node.key, newStore);
       return newStore;
     },
+    cache,
   }));
 }, {
   displayName: 'GraphDomainCore',

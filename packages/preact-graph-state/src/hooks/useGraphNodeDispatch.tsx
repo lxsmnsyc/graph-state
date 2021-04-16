@@ -30,9 +30,9 @@ import { useDebugValue } from 'preact/hooks';
 import { useGraphDomainCore } from '../GraphDomainCore';
 import useGraphNodeDispatchBase, { GraphNodeDispatch } from './useGraphNodeDispatchBase';
 
-export default function useGraphNodeDispatch<S, A>(
-  node: GraphNode<S, A>,
-): GraphNodeDispatch<A> {
+export default function useGraphNodeDispatch<S, A, R>(
+  node: GraphNode<S, A, R>,
+): GraphNodeDispatch<A, R> {
   const dispatch = useGraphNodeDispatchBase(useGraphDomainCore(), node);
   useDebugValue(dispatch);
   return dispatch;

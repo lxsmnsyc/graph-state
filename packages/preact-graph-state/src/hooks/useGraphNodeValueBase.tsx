@@ -40,20 +40,10 @@ export interface UseGraphNodeValueOptions<T, R> {
   shouldUpdate?: (prev: R, next: R) => boolean;
 }
 
-function useGraphNodeValueBase<S, A>(
-  context: GraphDomainCoreContext,
-  node: GraphNode<S, A>,
-): S;
 function useGraphNodeValueBase<S, A, R>(
   context: GraphDomainCoreContext,
-  node: GraphNode<S, A>,
-  options: UseGraphNodeValueOptions<S, R>,
-): R;
-function useGraphNodeValueBase<S, A, R>(
-  context: GraphDomainCoreContext,
-  node: GraphNode<S, A>,
-  options?: UseGraphNodeValueOptions<S, R>,
-): R {
+  node: GraphNode<S, A, R>,
+): S {
   const store = useMemoCondition(
     () => context.get(node),
     { context, node },
@@ -62,9 +52,7 @@ function useGraphNodeValueBase<S, A, R>(
     ),
   );
 
-  const value = useStoreAdapter(store, {
-    ...(options ?? {}),
-  });
+  const value = useStoreAdapter(store);
 
   useDebugValue(value);
 

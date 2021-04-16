@@ -30,8 +30,8 @@ import { useDebugValue } from 'preact/hooks';
 import { useGraphDomainCore, useGraphDomainRestriction } from '../GraphDomainCore';
 import useGraphNodeMutateBase, { GraphNodeMutate } from './useGraphNodeMutateBase';
 
-export default function useGraphNodeMutate<S, A>(
-  node: GraphNode<S, A>,
+export default function useGraphNodeMutate<S, A, R>(
+  node: GraphNode<S, A, R>,
 ): GraphNodeMutate<S> {
   useGraphDomainRestriction();
   const dispatch = useGraphNodeMutateBase(useGraphDomainCore(), node);

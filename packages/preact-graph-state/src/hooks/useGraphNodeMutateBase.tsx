@@ -25,20 +25,20 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-import { GraphNode, setGraphNodeState } from 'graph-state';
+import { GraphNode, GraphNodeAtomAction, set } from 'graph-state';
 import {
   useCallbackCondition,
 } from '@lyonph/preact-hooks';
 import { GraphDomainCoreContext } from '../GraphDomainCore';
 
-export type GraphNodeMutate<S> = (action: S) => void;
+export type GraphNodeMutate<S> = (action: GraphNodeAtomAction<S>) => void;
 
-export default function useGraphNodeMutateBase<S, A>(
+export default function useGraphNodeMutateBase<S, A, R>(
   context: GraphDomainCoreContext,
-  node: GraphNode<S, A>,
+  node: GraphNode<S, A, R>,
 ): GraphNodeMutate<S> {
   return useCallbackCondition(
-    (action: S) => setGraphNodeState(context.memory, node, action),
+    (action) => set(context.memory, node, action),
     { context, node },
     (prev, next) => (
       !(Object.is(prev.context, next.context) && Object.is(prev.node, next.node))

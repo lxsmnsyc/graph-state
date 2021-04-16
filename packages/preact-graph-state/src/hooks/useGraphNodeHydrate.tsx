@@ -27,20 +27,15 @@
  */
 import {
   GraphNode,
-  hasGraphNodeState,
-  hydrateGraphNodeState,
+  hydrate,
 } from 'graph-state';
 import { useGraphDomainCore } from '../GraphDomainCore';
 
-export default function useGraphNodeHydrate<S, A>(
-  node: GraphNode<S, A>,
+export default function useGraphNodeHydrate<S, A, R>(
+  node: GraphNode<S, A, R>,
   value: S,
 ): void {
   const context = useGraphDomainCore();
 
-  const notHydrated = !hasGraphNodeState(context.memory, node);
-
-  if (notHydrated) {
-    hydrateGraphNodeState(context.memory, node, value);
-  }
+  hydrate(context.memory, node, value);
 }

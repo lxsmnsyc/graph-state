@@ -29,8 +29,8 @@ import { GraphNode, GraphNodeListener } from 'graph-state';
 import { useGraphDomainCore, useGraphDomainRestriction } from '../GraphDomainCore';
 import useGraphNodeSnapshotBase from './useGraphNodeSnapshotBase';
 
-export default function useGraphNodeSnapshot<S, A>(
-  node: GraphNode<S, A>,
+export default function useGraphNodeSnapshot<S, A, R>(
+  node: GraphNode<S, A, R>,
   listener: GraphNodeListener<S>,
 ): void {
   useGraphDomainRestriction();

@@ -36,7 +36,7 @@
     "eslint": "^7.14.0",
     "eslint-config-lxsmnsyc": "^0.1.20",
     "graph-state": "1.6.1",
-    "preact": "^10.5.7",
+    "preact": "^10.5.13",
     "pridepack": "^0.8.0",
     "ts-jest": "^26.4.4",
     "tslib": "^2.0.3",
@@ -44,7 +44,7 @@
   },
   "peerDependencies": {
     "graph-state": "^1.0.0",
-    "preact": "^10.5.5"
+    "preact": "^10.0.0"
   },
   "publishConfig": {
     "access": "public"

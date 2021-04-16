@@ -26,25 +26,39 @@
  * @copyright Alexis Munsayac 2020
  */
 import {
-  dispatch,
   GraphNode,
 } from 'graph-state';
 import {
-  useCallbackCondition,
+  useMemoCondition,
 } from '@lyonph/preact-hooks';
-import { GraphDomainCoreContext } from '../GraphDomainCore';
+import { useDebugValue } from 'preact/hooks';
+import { useStoreAdapter } from 'preact-store-adapter';
+import { useGraphDomainCore, useGraphDomainRestriction } from '../GraphDomainCore';
 
-export type GraphNodeDispatch<A, R> = (action: A) => R;
+export interface UseSelectorOptions<T, R> {
+  getSnapshot?: (value: T) => R;
+  shouldUpdate?: (prev: R, next: R) => boolean;
+}
 
-export default function useGraphNodeDispatchBase<S, A, R>(
-  context: GraphDomainCoreContext,
+function useGraphNodeSelector<S, A, R, T>(
   node: GraphNode<S, A, R>,
-): GraphNodeDispatch<A, R> {
-  return useCallbackCondition(
-    (action: A) => dispatch(context.memory, node, action),
+  options: UseSelectorOptions<S, T>,
+): T {
+  useGraphDomainRestriction();
+  const context = useGraphDomainCore();
+  const store = useMemoCondition(
+    () => context.get(node),
     { context, node },
     (prev, next) => (
       !(Object.is(prev.context, next.context) && Object.is(prev.node, next.node))
     ),
   );
+
+  const value = useStoreAdapter(store, options);
+
+  useDebugValue(value);
+
+  return value;
 }
+
+export default useGraphNodeSelector;

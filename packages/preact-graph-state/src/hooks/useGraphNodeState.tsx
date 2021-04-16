@@ -32,9 +32,9 @@ import useGraphNodeDispatchBase, { GraphNodeDispatch } from './useGraphNodeDispa
 import useGraphNodeResetBase, { GraphNodeReset } from './useGraphNodeResetBase';
 import useGraphNodeValueBase from './useGraphNodeValueBase';
 
-export default function useGraphNodeState<S, A>(
-  node: GraphNode<S, A>,
-): [S, GraphNodeDispatch<A>, GraphNodeReset] {
+export default function useGraphNodeState<S, A, R>(
+  node: GraphNode<S, A, R>,
+): [S, GraphNodeDispatch<A, R>, GraphNodeReset] {
   useGraphDomainRestriction();
   const context = useGraphDomainCore();
   const state = useGraphNodeValueBase(context, node);

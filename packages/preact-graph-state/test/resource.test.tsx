@@ -171,7 +171,7 @@ describe('createGraphNodeResource', () => {
 
       expect(result.getByTitle(finder)).toContainHTML(expected);
     });
-    it.skip('should receive a success state upon resolution.', async () => {
+    it('should receive a success state upon resolution.', async () => {
       const expected = 'Hello World';
 
       const exampleAsync = createGraphNode({
@@ -205,9 +205,9 @@ describe('createGraphNodeResource', () => {
         jest.runAllTimers();
       });
 
-      expect(result.getByTitle('success')).toContainHTML(expected);
+      expect(await waitFor(() => result.getByTitle('success'))).toContainHTML(expected);
     });
-    it.skip('should receive a failure state upon rejection.', async () => {
+    it('should receive a failure state upon rejection.', async () => {
       const exampleAsync = createGraphNode({
         get: async () => {
           await sleep(1);
