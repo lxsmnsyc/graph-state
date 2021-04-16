@@ -111,7 +111,7 @@ function exposeToWindow(
   }
 }
 
-export function createGraphDomainMemory(
+export function createMemory(
   batcher: Batcher = defaultBatcher,
 ): GraphDomainMemory {
   const memory = {
@@ -123,6 +123,14 @@ export function createGraphDomainMemory(
 
   return memory;
 }
+/**
+ * @deprecated
+ */
+export function createGraphDomainMemory(
+  batcher: Batcher = defaultBatcher,
+): GraphDomainMemory {
+  return createMemory(batcher);
+}
 
 function createVersion(): GraphNodeVersion {
   return {
@@ -131,9 +139,14 @@ function createVersion(): GraphNodeVersion {
   };
 }
 
+interface Hydrate<S> {
+  value: S;
+}
+
 function getInstance<S, A, R>(
   memory: GraphDomainMemory,
   node: GraphNode<S, A, R>,
+  hydrateValue?: Hydrate<S>,
 ): GraphNodeInstance<S> {
   if (memory.nodes.has(node.key)) {
     return ensure(memory.nodes.get(node.key));
@@ -149,7 +162,9 @@ function getInstance<S, A, R>(
     dependencies,
     state: {
       version: 0,
-      value: createState(memory, node, getterVersion, dependencies),
+      value: hydrateValue
+        ? hydrateValue.value
+        : createState(memory, node, getterVersion, dependencies),
     },
   };
 
@@ -383,9 +398,9 @@ export function hydrate<S, A, R>(
   node: GraphNode<S, A, R>,
   value: S,
 ): void {
-  const actualNode = getInstance(memory, node);
-  actualNode.state.value = value;
-  actualNode.state.version += 1;
+  getInstance(memory, node, {
+    value,
+  });
 }
 /**
  * @deprecated
