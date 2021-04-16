@@ -33,6 +33,7 @@ export { default as useGraphNodeHydrate } from './hooks/useGraphNodeHydrate';
 export { default as useGraphNodeDispatch } from './hooks/useGraphNodeDispatch';
 export { default as useGraphNodeResource } from './hooks/useGraphNodeResource';
 export { default as useGraphNodeSnapshot } from './hooks/useGraphNodeSnapshot';
+export { default as useGraphNodeSelector } from './hooks/useGraphNodeSelector';
 export { default as GraphDomain } from './GraphDomain';
 
 export { GraphNodeDispatch } from './hooks/useGraphNodeDispatchBase';
