@@ -25,7 +25,7 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
-export { default as createSWRGraphNode } from './create-swr-graph-node';
-export { default as createSWRGraphNodeFactory } from './create-swr-graph-node-factory';
+export * from './swr';
+export * from './swr-factory';
 export * from './types';
 export { mutate, trigger, subscribe } from './global';

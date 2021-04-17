@@ -39,7 +39,7 @@ import {
 } from './types';
 import { getKey } from './utils';
 
-export default function createSWRGraphNode<S>(
+export function swr<S>(
   options: SWRGraphNodeOptions<S>,
 ): SWRGraphNode<S> {
   const { key, setup, ...swrOptions } = options;
@@ -81,4 +81,13 @@ export default function createSWRGraphNode<S>(
     mutate: (data, shouldRevalidate = true) => store.mutate([], data, shouldRevalidate),
     resource,
   };
+}
+
+/**
+ * @deprecated
+ */
+export function createSWRGraphNode<S>(
+  options: SWRGraphNodeOptions<S>,
+): SWRGraphNode<S> {
+  return swr(options);
 }

@@ -5,7 +5,7 @@ import {
   useGraphNodeState,
 } from 'react-graph-state';
 import { node } from 'graph-state';
-import { createSWRGraphNode } from 'swr-graph-state';
+import { swr } from 'swr-graph-state';
 
 const API = 'https://dog.ceo/api/breed/';
 const API_SUFFIX = '/images/random';
@@ -19,7 +19,7 @@ const dogBreed = node({
   get: 'shiba',
 });
 
-const dogAPI = createSWRGraphNode<APIResult>({
+const dogAPI = swr<APIResult>({
   key: 'dogAPI',
   setup: ({ get }) => {
     const breed = get(dogBreed);

@@ -39,7 +39,7 @@ import {
 } from './types';
 import { ensure, getKey } from './utils';
 
-export default function createSWRGraphNodeFactory<S, P extends any[] = []>(
+export function swrFactory<S, P extends any[] = []>(
   options: SWRGraphNodeFactoryOptions<S, P>,
 ): SWRGraphNodeFactory<S, P> {
   const { key, setup, ...swrOptions } = options;
@@ -90,4 +90,13 @@ export default function createSWRGraphNodeFactory<S, P extends any[] = []>(
     ),
     resource,
   };
+}
+
+/**
+ * @deprecated
+ */
+export function createSWRGraphNodeFactory<S, P extends any[] = []>(
+  options: SWRGraphNodeFactoryOptions<S, P>,
+): SWRGraphNodeFactory<S, P> {
+  return swrFactory(options);
 }
