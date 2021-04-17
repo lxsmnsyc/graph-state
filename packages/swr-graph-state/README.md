@@ -40,7 +40,7 @@ const dogAPI = swr<APIResult>({
     return async () => {
       const response = await fetch(`${API}${breed}${API_SUFFIX}`);
       return (await response.json()) as APIResult;
-    },
+    };
   },
   revalidateOnFocus: true,
   revalidateOnNetwork: true,
