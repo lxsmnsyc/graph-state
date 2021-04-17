@@ -31,7 +31,6 @@ export interface SWRGraphNode<S> {
   subscribe: (listener: (result: MutationResult<S>) => void) => () => void;
   trigger: (shouldRevalidate?: boolean) => void;
   mutate: (data: MutationResult<S>, shouldRevalidate?: boolean) => void;
-  hydrate: (data: MutationResult<S>) => void;
 }
 
 export interface SWRGraphNodeFactory<S, P extends any[] = []> {
@@ -39,5 +38,4 @@ export interface SWRGraphNodeFactory<S, P extends any[] = []> {
   subscribe: (args: P, listener: (result: MutationResult<S>) => void) => () => void;
   trigger: (args: P, shouldRevalidate?: boolean) => void;
   mutate: (args: P, data: MutationResult<S>, shouldRevalidate?: boolean) => void;
-  hydrate: (args: P, data: MutationResult<S>) => void;
 }

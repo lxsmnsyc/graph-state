@@ -73,7 +73,6 @@ export function swr<S>(
   });
 
   return {
-    hydrate: (data) => store.mutate([], data),
     subscribe: (listener) => store.subscribe([], (value) => {
       listener(value.result);
     }),

@@ -78,7 +78,6 @@ export function swrFactory<S, P extends any[] = []>(
   });
 
   return {
-    hydrate: (args, data) => store.mutate(args, data),
     subscribe: (args, listener) => store.subscribe(args, (value) => {
       listener(value.result);
     }),
