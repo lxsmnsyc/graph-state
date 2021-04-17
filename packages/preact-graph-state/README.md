@@ -23,7 +23,7 @@ Graph nodes, by themselves, are meaningless. They needed a domain to begin compu
 ```tsx
 import { GraphDomain } from 'preact-graph-state';
 
-const messageNode = createGraphNode({
+const messageNode = node({
   get: 'Hello World',
 });
 
@@ -37,6 +37,7 @@ function App() {
 ```
 
 There are also 8 hooks:
+
 - `useGraphNodeValue`: reads a graph node's value. Subscribes to the graph node's state updates.
 - `useGraphNodeDispatch`: provides a callback that allows graph node's state mutation or runs `set` field.
 - `useGraphNodeReset`: provides a callback for resetting (recomputing) a graph node's value.
@@ -44,7 +45,8 @@ There are also 8 hooks:
 - `useGraphNodeHydrate`: hydrates a node instance with a given initial state, then resets the node after commit. Useful for prefetched data.
 - `useGraphNodeResource`: treats the graph node as a valid Preact resource, suspending the component if the graph node's resource is pending.
 - `useGraphNodeSnapshot`: attaches a listener to the node for state updates.
-- `useGraphNodeMutate`: silently mutates a graph node's state. **USE WITH CAUTION**: this hook is only recommended to be used by independent nodes.
+- `useGraphNodeMutate`: provides a callback that allows graph node's state mutation.
+- `useGraphNodeSelector`: similar to `useGraphNodeValue`, but allows transformation of received value and conditional re-rendering.
 
 If one of these hooks are used to access a graph node, that graph node is registered within `<GraphDomain>` and creates a lifecycle.
 
@@ -86,11 +88,11 @@ function MessageInput() {
 If a graph node has a defined `set` function, `useGraphNodeDispatch` will not overwrite the graph node's state and thus, can accept any kind of value for dispatch. `set` will receive this value, allowing for custom graph node logic:
 
 ```tsx
-const countNode = createGraphNode({
+const countNode = node({
   get: 0,
 });
 
-const reducerNode = createGraphNode({
+const reducerNode = node({
   get: ({ get }) => get(countNode),
   set: ({ set }, action) => {
     switch (action) {
@@ -142,11 +144,40 @@ useGraphNodeSnapshot(node, (state) => {
 
 ##### `useGraphNodeMutate`
 
+This is a hook that returns a callback similar to `setState` that allows state mutation for the given graph node.
+
+```tsx
+const setState = useGraphNodeMutate(node);
+
+// Rewrite!
+setState(newState);
+
+// Derived
+setState((prevState) => diff(prevState, newState));
+```
+
+##### `useGraphNodeHydrate`
+
 **USE WITH CAUTION**
 Synchronously and silently mutates a graph node's state. This is only recommended for independent nodes as a form of lazy state hydration.
 
 ```tsx
-useGraphNodeMutate(countNode, 100);
+useGraphNodeHydrate(countNode, 100);
+```
+
+##### `useGraphNodeSelector`
+
+Similar to `useGraphNodeValue` but allows transformation of received value and conditional re-rendering.
+
+```tsx
+const name = useGraphNodeSelector(userNode, {
+  getSnapshot: (value) => {
+    return value.name;
+  },
+  shouldUpdate: (prev, next) => {
+    return prev !== next;
+  },
+});
 ```
 
 ##### `useGraphNodeResource`
