@@ -167,10 +167,19 @@ export function joinResources<S>(
 export type GraphNodeResourceFactory<S, P extends any[] = []> =
   GraphNodeAtomFactory<ResourceResult<S>, P>;
 
-export function createGraphNodeResourceFactory<S, P extends any[] = []>(
+export function resourceFactory<S, P extends any[] = []>(
   factory: GraphNodeBaseFactory<Promise<S>, P>,
 ): GraphNodeResourceFactory<S, P> {
   return (...params: P) => resource(
     factory(...params),
   );
+}
+
+/**
+ * @deprecated
+ */
+export function createGraphNodeResourceFactory<S, P extends any[] = []>(
+  factory: GraphNodeBaseFactory<Promise<S>, P>,
+): GraphNodeResourceFactory<S, P> {
+  return resourceFactory(factory);
 }
