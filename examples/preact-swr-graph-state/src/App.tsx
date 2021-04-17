@@ -1,10 +1,12 @@
-import { VNode } from 'preact';
-import { Suspense } from 'preact/compat';
+/** @jsx h */
+import { h, VNode } from 'preact';
+import { Suspense, useMemo } from 'preact/compat';
 import {
   GraphDomain,
   useGraphNodeResource,
+  useGraphNodeState,
 } from 'preact-graph-state';
-import { createGraphNode } from 'graph-state';
+import { node } from 'graph-state';
 import { createSWRGraphNode } from 'swr-graph-state';
 
 const API = 'https://dog.ceo/api/breed/';
@@ -15,26 +17,60 @@ interface APIResult {
   status: string;
 }
 
-const dogBreed = createGraphNode({
+const dogBreed = node({
   get: 'shiba',
 });
 
 const dogAPI = createSWRGraphNode<APIResult>({
   key: 'dogAPI',
-  fetch: async ({ get }) => {
+  setup: ({ get }) => {
     const breed = get(dogBreed);
-    const response = await fetch(`${API}${breed}${API_SUFFIX}`);
-    return (await response.json()) as APIResult;
+    return async () => {
+      const response = await fetch(`${API}${breed}${API_SUFFIX}`);
+      if (response.ok) {
+        return (await response.json()) as APIResult;
+      }
+      throw new Error('Not found');
+    };
   },
   revalidateOnFocus: true,
   revalidateOnNetwork: true,
-  ssr: false,
 });
 
 function DogImage(): VNode {
   const data = useGraphNodeResource(dogAPI.resource);
 
   return <img src={data.message} alt={data.message} />;
+}
+
+function debounce<P extends any[] = []>(callback: (...args: P) => void): (...args: P) => void {
+  let timeout: number;
+  return (...args): void => {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(() => {
+      callback(...args);
+    });
+  };
+}
+
+function SetBreed(): JSX.Element {
+  const [state, setState] = useGraphNodeState(dogBreed);
+
+  const onChange = useMemo(() => debounce((value: string) => {
+    setState(value);
+  }), [setState]);
+
+  return (
+    <input
+      type="text"
+      value={state}
+      onChange={(e) => {
+        onChange(e.currentTarget.value);
+      }}
+    />
+  );
 }
 
 function Trigger(): VNode {
@@ -54,10 +90,21 @@ export default function App(): VNode {
   return (
     <GraphDomain>
       <Trigger />
+      <SetBreed />
+      <p>
+        Pressing the Trigger button revalidates the image below.
+      </p>
       <div>
         <Suspense fallback={<h1>Loading...</h1>}>
           <DogImage />
         </Suspense>
+        <p>
+          Image above will automatically update when the page
+          gets re-focused or network goes back online.
+        </p>
+        <p>
+          Image response has a fresh age of 2 seconds and a stale age of 30 seconds.
+        </p>
       </div>
     </GraphDomain>
   );

@@ -26,243 +26,59 @@
  * @copyright Alexis Munsayac 2020
  */
 import {
-  createGraphNode,
-  GraphNodeAsyncResult,
+  node,
 } from 'graph-state';
 import {
-  getMutation,
-  setMutation,
+  createSWRStore,
   MutationResult,
-} from './cache/mutation-cache';
+} from 'swr-store';
 import {
-  addRevalidationListener,
-  removeRevalidationListener,
-  getRevalidation,
-  setRevalidation,
-} from './cache/revalidation-cache';
-import DEFAULT_OPTIONS from './core/default-options';
-import registerRevalidation from './core/register-revalidation';
-import {
-  hydrate,
-  mutate,
-  subscribe,
-  trigger,
-} from './global';
-import {
-  SWRGraphNodeFullOptions,
-  SWRGraphNodeInterface,
+  SWRGraphNode,
+  SWRGraphNodeFetch,
   SWRGraphNodeOptions,
 } from './types';
-import IS_CLIENT from './utils/is-client';
-import NEVER_PROMISE from './utils/never-promise';
+import { getKey } from './utils';
 
-export default function createSWRGraphNode<T>(
-  options: SWRGraphNodeOptions<T>,
-): SWRGraphNodeInterface<T> {
-  const fullOptions: SWRGraphNodeFullOptions<T> = {
-    ...DEFAULT_OPTIONS,
-    ...options,
-  };
+export default function createSWRGraphNode<S>(
+  options: SWRGraphNodeOptions<S>,
+): SWRGraphNode<S> {
+  const { key, setup, ...swrOptions } = options;
 
-  registerRevalidation(fullOptions.key, fullOptions, fullOptions.refreshInterval);
+  let fetcher: SWRGraphNodeFetch<S>;
 
-  const { key, initialData } = fullOptions;
+  const store = createSWRStore({
+    key: () => getKey(key),
+    get: () => fetcher(),
 
-  // This is a graph node that manages
-  // the revalidation state of the resource node.
-  const revalidateNode = createGraphNode<boolean>({
-    key: `SWR.Revalidate[${key}]`,
-    get: ({ mutateSelf, subscription }) => {
-      subscription(() => {
-        addRevalidationListener(key, mutateSelf);
-        return () => {
-          removeRevalidationListener(key, mutateSelf);
-        };
-      });
-
-      return !!getRevalidation(key);
-    },
-    shouldUpdate: () => true,
+    ...swrOptions,
   });
 
-  const { freshAge, staleAge } = fullOptions;
-
-  const resource = createGraphNode<GraphNodeAsyncResult<T>>({
+  const resource = node<MutationResult<S>>({
     key: `SWR[${key}]`,
     get: (context) => {
-      const shouldRevalidate = context.get(revalidateNode);
+      const newFetcher = setup(context);
 
-      // Capture timestamp
-      const timestamp = Date.now();
+      fetcher = newFetcher;
 
-      // Get current mutation
-      let currentMutation = getMutation<T>(key);
+      context.subscription(() => (
+        store.subscribe([], (currentMutation) => {
+          context.mutateSelf(currentMutation.result);
+        })
+      ));
 
-      // Hydrate mutation
-      if (!currentMutation && initialData) {
-        currentMutation = {
-          result: {
-            data: initialData,
-            status: 'success',
-          },
-          timestamp,
-        };
-        setMutation(key, currentMutation);
-      }
-
-      // Opt-out of fetching process
-      // if running on server
-      if (!IS_CLIENT) {
-        // If there is no mutation, resolve to pending
-        if (!currentMutation) {
-          return {
-            status: 'pending',
-            data: NEVER_PROMISE as Promise<T>,
-          };
-        }
-        return {
-          ...currentMutation.result,
-        };
-      }
-
-      if (currentMutation) {
-        if (!shouldRevalidate) {
-          return {
-            ...currentMutation.result,
-          };
-        }
-        // If mutation is still fresh, return mutation
-        if (currentMutation.timestamp + freshAge > timestamp) {
-          return {
-            ...currentMutation.result,
-          };
-        }
-      }
-
-      setRevalidation(key, false, false);
-
-      // Perform fetch
-      const pendingData = fullOptions.fetch(context);
-
-      let result: MutationResult<T>;
-
-      if (pendingData instanceof Promise) {
-        // Capture result
-        result = {
-          data: pendingData,
-          status: 'pending',
-        };
-
-        // Watch for promise resolutions
-        // to update cache data
-        pendingData.then(
-          (data) => {
-            const mutation = getMutation<T>(key);
-
-            const shouldUpdate = (): boolean => {
-              // Case 1: There's no mutation
-              if (mutation == null) {
-                return true;
-              }
-
-              // Case 2: Timestamp expired
-              if (mutation.timestamp > timestamp) {
-                return false;
-              }
-
-              // Case 3: There's a stale data
-              if (mutation.result.status === 'success') {
-                // Deep compare stale data
-                return !fullOptions.compare(
-                  mutation.result.data,
-                  data,
-                );
-              }
-
-              // Always update
-              return true;
-            };
-
-            if (shouldUpdate()) {
-              setMutation(key, {
-                result: {
-                  data,
-                  status: 'success',
-                },
-                timestamp: mutation?.timestamp ?? Date.now(),
-              });
-              setRevalidation(key, true);
-            }
-          },
-          (data) => {
-            const mutation = getMutation<T>(key);
-
-            const shouldUpdate = (): boolean => {
-              // Case 1: There's no mutation
-              if (mutation == null) {
-                return true;
-              }
-
-              // Case 2: Timestamp expired
-              if (mutation.timestamp > timestamp) {
-                return false;
-              }
-
-              // Always update
-              return true;
-            };
-
-            if (shouldUpdate()) {
-              setMutation(key, {
-                result: {
-                  data,
-                  status: 'failure',
-                },
-                timestamp: mutation?.timestamp ?? Date.now(),
-              });
-              setRevalidation(key, true);
-            }
-          },
-        );
-
-        // If there's an existing mutation
-        // and mutation is stale
-        // update timestamp and return
-        if (
-          currentMutation
-          && currentMutation.timestamp + freshAge + staleAge > timestamp
-        ) {
-          // Updating this means that the freshness or the staleness
-          // of a mutation resets
-          currentMutation.timestamp = timestamp;
-          return {
-            ...currentMutation.result,
-          };
-        }
-      } else {
-        result = {
-          data: pendingData,
-          status: 'success',
-        };
-      }
-
-      // Otherwise, set the new mutation
-      setMutation(key, {
-        result,
-        timestamp,
+      return store.get([], {
+        shouldRevalidate: true,
       });
-
-      return {
-        ...result,
-      };
     },
   });
 
   return {
-    hydrate: (data) => hydrate(key, data),
-    subscribe: (listener) => subscribe(key, listener),
-    trigger: (shouldRevalidate = true) => trigger(key, shouldRevalidate),
-    mutate: (data, shouldRevalidate = true) => mutate(key, data, shouldRevalidate),
+    hydrate: (data) => store.mutate([], data),
+    subscribe: (listener) => store.subscribe([], (value) => {
+      listener(value.result);
+    }),
+    trigger: (shouldRevalidate = true) => store.trigger([], shouldRevalidate),
+    mutate: (data, shouldRevalidate = true) => store.mutate([], data, shouldRevalidate),
     resource,
   };
 }

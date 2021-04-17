@@ -10986,6 +10986,13 @@ svgo@^1.0.0, svgo@^1.3.2:
     unquote "~1.1.1"
     util.promisify "~1.0.0"
 
+swr-store@^0.8.2:
+  version "0.8.2"
+  resolved "https://registry.yarnpkg.com/swr-store/-/swr-store-0.8.2.tgz#63a0f266ae6029cd1b122d2e5d6ef9e5b39bc550"
+  integrity sha512-LdeIyJ7SMiQUWhIUKiN0KelkiQ6z9CVyT6EBmplFudhtvGvXcriobXUD34Pe67gm1986fXcGDwDGuOflF6Ncxw==
+  dependencies:
+    dequal "^2.0.2"
+
 symbol-tree@^3.2.2, symbol-tree@^3.2.4:
   version "3.2.4"
   resolved "https://registry.yarnpkg.com/symbol-tree/-/symbol-tree-3.2.4.tgz#430637d248ba77e078883951fb9aa0eed7c63fa2"

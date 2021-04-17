@@ -1,74 +1,24 @@
-import { dequal } from 'dequal/lite';
 import {
-  addMutationListener,
-  getMutation,
-  MutationListener,
+  trigger as swrTrigger,
+  mutate as swrMutate,
+  subscribe as swrSubscribe,
   MutationResult,
-  removeMutationListener,
-  setMutation,
-} from './cache/mutation-cache';
-import {
-  setRevalidation,
-} from './cache/revalidation-cache';
+} from 'swr-store';
+import { getKey } from './utils';
 
-export function trigger(
-  key: string,
-  shouldRevalidate = true,
-): void {
-  setRevalidation(key, shouldRevalidate);
+export function mutate<S>(key: string, data: MutationResult<S>, shouldRevalidate = true): void {
+  return swrMutate(getKey(key), data, shouldRevalidate);
 }
 
-export function hydrate<T>(
-  key: string,
-  data: MutationResult<T>,
-): void {
-  if (!getMutation(key)) {
-    setMutation(key, {
-      result: {
-        ...data,
-      },
-      timestamp: Date.now(),
-    });
-  }
+export function trigger(key: string, shouldRevalidate = true): void {
+  return swrTrigger(getKey(key), shouldRevalidate);
 }
 
-export function mutate<T>(
+export function subscribe<S>(
   key: string,
-  data: MutationResult<T>,
-  shouldRevalidate = true,
-  compare: (a: T, b: T) => boolean = dequal,
-): void {
-  setRevalidation(key, shouldRevalidate);
-
-  const current = getMutation<T>(key);
-
-  if (
-    current
-    && current.result.status === 'success' && data.status === 'success'
-    && compare(current.result.data, data.data)
-  ) {
-    return;
-  }
-
-  setMutation(key, {
-    result: {
-      ...data,
-    },
-    timestamp: Date.now(),
-  });
-}
-
-export function subscribe<T>(
-  key: string,
-  listener: MutationListener<T>,
+  listener: (value: MutationResult<S>) => void,
 ): () => void {
-  const wrappedListener: MutationListener<T> = (value) => {
-    listener({
-      ...value,
-    });
-  };
-  addMutationListener(key, wrappedListener);
-  return () => {
-    removeMutationListener(key, wrappedListener);
-  };
+  return swrSubscribe<S>(key, (value) => {
+    listener(value.result);
+  });
 }
