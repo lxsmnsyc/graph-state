@@ -17,23 +17,23 @@ export interface ResourceSuccess<S> {
   data: S;
 }
 
-export interface ResourceFailure<F> {
+export interface ResourceFailure {
   status: 'failure';
-  data: F;
+  data: any;
 }
 
-export type ResourceResult<S, F> =
+export type ResourceResult<S> =
   | ResourcePending<S>
   | ResourceSuccess<S>
-  | ResourceFailure<F>;
+  | ResourceFailure;
 
 export type GraphNodePromise<S> = GraphNode<Promise<S>, any, any>;
-export type GraphNodeResource<S, F> = GraphNode<ResourceResult<S, F>, any, any>;
+export type GraphNodeResource<S> = GraphNode<ResourceResult<S>, any, any>;
 
-function promiseToResource<S, F>(
+function promiseToResource<S>(
   promise: Promise<S>,
-  mutate: GraphNodeContext<ResourceResult<S, F>, any, any>['mutateSelf'],
-): ResourceResult<S, F> {
+  mutate: GraphNodeContext<ResourceResult<S>, any, any>['mutateSelf'],
+): ResourceResult<S> {
   promise.then(
     (data) => mutate({
       status: 'success',
@@ -54,9 +54,9 @@ function promiseToResource<S, F>(
 /**
  * Converts a Promise-returning graph node into a Resource graph node
  */
-export function resource<S, F>(
+export function resource<S>(
   reference: GraphNodePromise<S>,
-): GraphNodeAtom<ResourceResult<S, F>> {
+): GraphNodeAtom<ResourceResult<S>> {
   return node({
     get: (context) => (
       promiseToResource(
@@ -72,9 +72,9 @@ export function resource<S, F>(
  * Converts a Promise-returning graph node into a Resource graph node
  * @deprecated Please use `resource`
  */
-export function createGraphNodeResource<S, F>(
+export function createGraphNodeResource<S>(
   reference: GraphNodePromise<S>,
-): GraphNodeAtom<ResourceResult<S, F>> {
+): GraphNodeAtom<ResourceResult<S>> {
   return resource(reference);
 }
 
@@ -82,8 +82,8 @@ export function createGraphNodeResource<S, F>(
  * Converts a Resource graph node to a Promise-returning graph node
  * @param resource
  */
-export function fromResource<S, F>(
-  reference: GraphNodeResource<S, F>,
+export function fromResource<S>(
+  reference: GraphNodeResource<S>,
 ): GraphNodeAtom<Promise<S>> {
   return node({
     get: async (context) => {
@@ -98,8 +98,8 @@ export function fromResource<S, F>(
   });
 }
 
-function joinResourceKeys<S, F>(
-  resources: GraphNodeResource<S, F>[],
+function joinResourceKeys<S>(
+  resources: GraphNodeResource<S>[],
 ): string {
   return resources.map((reference) => reference.key).join(', ');
 }
@@ -109,9 +109,9 @@ function joinResourceKeys<S, F>(
  * Similar behavior with Promise.all
  * @param resources
  */
-export function waitForAll<S, F>(
-  resources: GraphNodeResource<S, F>[],
-): GraphNodeAtom<ResourceResult<S[], F>> {
+export function waitForAll<S>(
+  resources: GraphNodeResource<S>[],
+): GraphNodeAtom<ResourceResult<S[]>> {
   const promises = resources.map((reference) => fromResource(reference));
 
   return node({
@@ -132,9 +132,9 @@ export function waitForAll<S, F>(
  * Similar behavior with Promise.race
  * @param resources
  */
-export function waitForAny<S, F>(
-  resources: GraphNodeResource<S, F>[],
-): GraphNodeAtom<ResourceResult<S, F>> {
+export function waitForAny<S>(
+  resources: GraphNodeResource<S>[],
+): GraphNodeAtom<ResourceResult<S>> {
   const promises = resources.map((reference) => fromResource(reference));
 
   return node({
@@ -155,21 +155,21 @@ export function waitForAny<S, F>(
  * an array of resources
  * @param resources
  */
-export function joinResources<S, F>(
-  resources: GraphNodeResource<S, F>[],
-): GraphNodeAtom<ResourceResult<S, F>[]> {
+export function joinResources<S>(
+  resources: GraphNodeResource<S>[],
+): GraphNodeAtom<ResourceResult<S>[]> {
   return node({
     get: ({ get }) => resources.map((reference) => get(reference)),
     key: `JoinedResource(${joinResourceKeys(resources)})`,
   });
 }
 
-export type GraphNodeResourceFactory<S, F, P extends any[] = []> =
-  GraphNodeAtomFactory<ResourceResult<S, F>, P>;
+export type GraphNodeResourceFactory<S, P extends any[] = []> =
+  GraphNodeAtomFactory<ResourceResult<S>, P>;
 
-export function createGraphNodeResourceFactory<S, F, P extends any[] = []>(
+export function createGraphNodeResourceFactory<S, P extends any[] = []>(
   factory: GraphNodeBaseFactory<Promise<S>, P>,
-): GraphNodeResourceFactory<S, F, P> {
+): GraphNodeResourceFactory<S, P> {
   return (...params: P) => resource(
     factory(...params),
   );

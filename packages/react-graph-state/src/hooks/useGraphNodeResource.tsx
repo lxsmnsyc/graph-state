@@ -30,7 +30,7 @@ import { useDebugValue } from 'react';
 import { useGraphDomainRestriction } from '../GraphDomainCore';
 import useGraphNodeValue from './useGraphNodeValue';
 
-export default function useGraphNodeResource<S, F>(node: GraphNodeResource<S, F>): S {
+export default function useGraphNodeResource<S>(node: GraphNodeResource<S>): S {
   useGraphDomainRestriction();
 
   const value = useGraphNodeValue(node);

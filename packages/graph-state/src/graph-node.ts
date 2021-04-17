@@ -199,8 +199,8 @@ export function createGraphNode<S, A, R>(
 
 export interface GraphNodeFactoryBaseOptions<S, P extends any[] = []> {
   factoryKey: string;
-  key: (...args: P) => GraphNodeKey;
-  shouldUpdate: (...args: P) => GraphNodeShouldUpdate<S>;
+  key?: (...args: P) => GraphNodeKey;
+  shouldUpdate?: (...args: P) => GraphNodeShouldUpdate<S>;
 }
 
 export type GraphNodeBaseFactory<S, P extends any[] = []> =

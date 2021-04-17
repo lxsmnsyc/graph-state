@@ -31,7 +31,7 @@ import { useGraphDomainCore, useGraphDomainRestriction } from '../GraphDomainCor
 import createResolvable from '../utils/resolvable';
 import useGraphNodeValueBase from './useGraphNodeValueBase';
 
-export default function useGraphNodeResource<S, F>(node: GraphNodeResource<S, F>): S {
+export default function useGraphNodeResource<S>(node: GraphNodeResource<S>): S {
   useGraphDomainRestriction();
   const context = useGraphDomainCore();
 
