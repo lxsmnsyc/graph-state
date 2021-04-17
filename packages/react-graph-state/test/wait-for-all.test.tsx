@@ -3,8 +3,8 @@ import {
   act, cleanup, render, waitFor,
 } from '@testing-library/react';
 import {
-  createGraphNode,
-  createGraphNodeResource,
+  node,
+  resource,
   waitForAll,
 } from 'graph-state';
 import {
@@ -39,32 +39,32 @@ const sleep = (count: number) => new Promise((resolve) => {
 });
 
 describe('waitForAll', () => {
-  const resourceA = createGraphNodeResource(
-    createGraphNode<Promise<string>>({
+  const resourceA = resource(
+    node<Promise<string>>({
       get: async () => {
         await sleep(1);
         return 'Message A';
       },
     }),
   );
-  const resourceB = createGraphNodeResource(
-    createGraphNode<Promise<string>>({
+  const resourceB = resource(
+    node<Promise<string>>({
       get: async () => {
         await sleep(2);
         return 'Message B';
       },
     }),
   );
-  const resourceC = createGraphNodeResource(
-    createGraphNode<Promise<string>>({
+  const resourceC = resource(
+    node<Promise<string>>({
       get: async () => {
         await sleep(3);
         return 'Message C';
       },
     }),
   );
-  const resourceF = createGraphNodeResource<string>(
-    createGraphNode<Promise<string>>({
+  const resourceF = resource<string>(
+    node<Promise<string>>({
       get: async () => Promise.reject(new Error('Message F')),
     }),
   );

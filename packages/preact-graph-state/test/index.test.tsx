@@ -4,7 +4,7 @@ import {
   act, cleanup, fireEvent, render,
 } from '@testing-library/preact';
 import {
-  createGraphNode,
+  node,
 } from 'graph-state';
 import {
   GraphDomain,
@@ -29,7 +29,7 @@ describe('useGraphNodeValue', () => {
     const expected = 'Hello World';
     const finder = 'example';
 
-    const exampleNode = createGraphNode({
+    const exampleNode = node({
       get: expected,
     });
 
@@ -57,11 +57,11 @@ describe('useGraphNodeValue', () => {
     const expected = 'Hello World';
     const finder = 'example';
 
-    const exampleNode = createGraphNode({
+    const exampleNode = node({
       get: expected,
     });
 
-    const exampleNode2 = createGraphNode<string>({
+    const exampleNode2 = node<string>({
       get: ({ get }) => get(exampleNode),
     });
 
@@ -89,7 +89,7 @@ describe('useGraphNodeValue', () => {
     const finder = 'example';
     const expected = 'Changed';
 
-    const exampleNode = createGraphNode<string>({
+    const exampleNode = node<string>({
       get: ({ mutateSelf }) => {
         setTimeout(mutateSelf, 1000, expected);
 
@@ -121,7 +121,7 @@ describe('useGraphNodeValue', () => {
     const finder = 'example';
     const expected = 'Changed';
 
-    const exampleNode = createGraphNode<string>({
+    const exampleNode = node<string>({
       get: ({ mutateSelf }) => {
         setTimeout(mutateSelf, 1000, expected);
 
@@ -129,7 +129,7 @@ describe('useGraphNodeValue', () => {
       },
     });
 
-    const exampleNode2 = createGraphNode<string>({
+    const exampleNode2 = node<string>({
       get: ({ get }) => get(exampleNode),
     });
 
@@ -154,7 +154,7 @@ describe('useGraphNodeValue', () => {
     expect(result.getByTitle(finder)).toContainHTML(expected);
   });
   it('should throw an error if the graph domain is not mounted before accessing.', () => {
-    const exampleNode = createGraphNode({
+    const exampleNode = node({
       get: 'Example',
     });
 
@@ -177,7 +177,7 @@ describe('useGraphNodeDispatch', () => {
     const expected = 'Changed';
     const finder = 'example';
 
-    const exampleNode = createGraphNode({
+    const exampleNode = node({
       get: 'Initial',
     });
 
@@ -225,11 +225,11 @@ describe('useGraphNodeDispatch', () => {
     const expected = 'Changed';
     const finder = 'example';
 
-    const exampleNode = createGraphNode({
+    const exampleNode = node({
       get: 'Initial',
     });
 
-    const exampleNode2 = createGraphNode<string>({
+    const exampleNode2 = node<string>({
       get: ({ get }) => get(exampleNode),
     });
 
@@ -279,11 +279,11 @@ describe('useGraphNodeDispatch', () => {
     const expected = 'Changed';
     const finder = 'example';
 
-    const exampleNode = createGraphNode({
+    const exampleNode = node({
       get: 'Initial',
     });
 
-    const exampleNode2 = createGraphNode<string, string>({
+    const exampleNode2 = node<string, string, void>({
       get: ({ get }) => get(exampleNode),
       set: ({ set }, newValue) => set(exampleNode, newValue),
     });
@@ -330,7 +330,7 @@ describe('useGraphNodeDispatch', () => {
   });
 
   it('should throw an error if the graph domain is not mounted before accessing.', () => {
-    const exampleNode = createGraphNode({
+    const exampleNode = node({
       get: 'Example',
     });
 

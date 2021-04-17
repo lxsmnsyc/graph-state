@@ -6,8 +6,8 @@ import {
   waitFor,
 } from '@testing-library/react';
 import {
-  createGraphNode,
-  createGraphNodeResource,
+  node,
+  resource,
 } from 'graph-state';
 import {
   GraphDomain,
@@ -34,19 +34,19 @@ const sleep = (count: number) => new Promise((resolve) => {
   setTimeout(resolve, count * 1000, true);
 });
 
-describe('createGraphNodeResource', () => {
+describe('resource', () => {
   describe('useGraphNodeValue', () => {
     it('should receive a pending state on initial render.', () => {
       const finder = 'example';
       const expected = 'Pending';
 
-      const exampleAsync = createGraphNode({
+      const exampleAsync = node({
         get: async () => {
           await sleep(1);
           return 'Hello World';
         },
       });
-      const exampleResource = createGraphNodeResource(exampleAsync);
+      const exampleResource = resource(exampleAsync);
 
       function Consumer(): JSX.Element {
         const value = useGraphNodeValue(exampleResource);
@@ -71,13 +71,13 @@ describe('createGraphNodeResource', () => {
     it('should receive a success state upon resolution.', async () => {
       const expected = 'Hello World';
 
-      const exampleAsync = createGraphNode({
+      const exampleAsync = node({
         get: async () => {
           await sleep(1);
           return expected;
         },
       });
-      const exampleResource = createGraphNodeResource(exampleAsync);
+      const exampleResource = resource(exampleAsync);
 
       function Consumer(): JSX.Element {
         const value = useGraphNodeValue(exampleResource);
@@ -103,13 +103,13 @@ describe('createGraphNodeResource', () => {
       expect(await waitFor(() => result.getByTitle('success'))).toContainHTML(expected);
     });
     it('should receive a failure state upon rejection.', async () => {
-      const exampleAsync = createGraphNode({
+      const exampleAsync = node({
         get: async () => {
           await sleep(1);
           throw new Error('failed');
         },
       });
-      const exampleResource = createGraphNodeResource(exampleAsync);
+      const exampleResource = resource(exampleAsync);
 
       function Consumer(): JSX.Element {
         const value = useGraphNodeValue(exampleResource);
@@ -141,13 +141,13 @@ describe('createGraphNodeResource', () => {
       const finder = 'example';
       const expected = 'Pending';
 
-      const exampleAsync = createGraphNode({
+      const exampleAsync = node({
         get: async () => {
           await sleep(1);
           return 'Hello World';
         },
       });
-      const exampleResource = createGraphNodeResource(exampleAsync);
+      const exampleResource = resource(exampleAsync);
 
       function Consumer(): JSX.Element {
         const value = useGraphNodeResource(exampleResource);
@@ -172,14 +172,14 @@ describe('createGraphNodeResource', () => {
     it('should receive a success state upon resolution.', async () => {
       const expected = 'Hello World';
 
-      const exampleAsync = createGraphNode({
+      const exampleAsync = node({
         get: async () => {
           await sleep(1);
           return expected;
         },
         key: 'Example',
       });
-      const exampleResource = createGraphNodeResource(exampleAsync);
+      const exampleResource = resource(exampleAsync);
 
       function Consumer(): JSX.Element {
         const value = useGraphNodeResource(exampleResource);
@@ -206,13 +206,13 @@ describe('createGraphNodeResource', () => {
       expect(await waitFor(() => result.getByTitle('success'))).toContainHTML(expected);
     });
     it('should receive a failure state upon rejection.', async () => {
-      const exampleAsync = createGraphNode({
+      const exampleAsync = node({
         get: async () => {
           await sleep(1);
           throw new Error('failed');
         },
       });
-      const exampleResource = createGraphNodeResource(exampleAsync);
+      const exampleResource = resource(exampleAsync);
 
       function Consumer(): JSX.Element {
         const value = useGraphNodeResource(exampleResource);
