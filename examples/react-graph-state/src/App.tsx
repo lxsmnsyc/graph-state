@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
 import {
-  createGraphNodeResource,
-  createGraphNode,
+  resource,
+  node,
 } from 'graph-state';
 import {
   GraphDomain,
@@ -12,12 +12,12 @@ import {
   useGraphNodeHydrate,
 } from 'react-graph-state';
 
-const temperatureF = createGraphNode({
+const temperatureF = node({
   key: 'Fahrenheit',
   get: 32,
 });
 
-const temperatureC = createGraphNode<number, number>({
+const temperatureC = node<number, number, void>({
   key: 'Celsius',
   get: ({ get }) => {
     const fahrenheit = get(temperatureF);
@@ -31,7 +31,7 @@ const sleep = (time: number) => new Promise((resolve) => {
   setTimeout(resolve, time, true);
 });
 
-const temperature = createGraphNode<Promise<string>>({
+const temperature = node<Promise<string>>({
   key: 'Temperature',
   get: async ({ get }) => {
     const fahrenheit = get(temperatureF);
@@ -43,7 +43,7 @@ const temperature = createGraphNode<Promise<string>>({
   },
 });
 
-const asyncTemperature = createGraphNodeResource(temperature);
+const asyncTemperature = resource(temperature);
 
 function ResetTemperature(): JSX.Element {
   const resetTemperature = useGraphNodeReset(temperatureF);
@@ -113,7 +113,7 @@ function AsyncTemperature(): JSX.Element {
   return <h1>{ value.data }</h1>;
 }
 
-const timer = createGraphNode<number>({
+const timer = node<number>({
   key: 'Timer',
   get: ({ mutateSelf, subscription }) => {
     let count = 0;

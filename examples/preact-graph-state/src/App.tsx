@@ -1,10 +1,10 @@
 /** @jsx h */
 import 'preact/debug';
 import { h, Fragment, VNode } from 'preact';
-import { Suspense, useEffect } from 'preact/compat';
+import { Suspense } from 'preact/compat';
 import {
-  createGraphNodeResource,
-  createGraphNode,
+  resource,
+  node,
 } from 'graph-state';
 import {
   GraphDomain,
@@ -15,11 +15,11 @@ import {
   useGraphNodeHydrate,
 } from 'preact-graph-state';
 
-const temperatureF = createGraphNode({
+const temperatureF = node({
   get: 32,
 });
 
-const temperatureC = createGraphNode<number, number>({
+const temperatureC = node<number, number, void>({
   get: ({ get }) => {
     const fahrenheit = get(temperatureF);
 
@@ -32,7 +32,7 @@ const sleep = (time: number) => new Promise((resolve) => {
   setTimeout(resolve, time, true);
 });
 
-const temperature = createGraphNode<Promise<string>>({
+const temperature = node<Promise<string>>({
   get: async ({ get }) => {
     const fahrenheit = get(temperatureF);
     const celsius = get(temperatureC);
@@ -43,7 +43,7 @@ const temperature = createGraphNode<Promise<string>>({
   },
 });
 
-const asyncTemperature = createGraphNodeResource(temperature);
+const asyncTemperature = resource(temperature);
 
 function ResetTemperature(): VNode {
   const resetTemperature = useGraphNodeReset(temperatureF);
@@ -113,7 +113,7 @@ function AsyncTemperature(): VNode {
   return <h1>{ value.data }</h1>;
 }
 
-const timer = createGraphNode<number>({
+const timer = node<number>({
   get: ({ mutateSelf, subscription }) => {
     let count = 0;
     subscription(() => {
