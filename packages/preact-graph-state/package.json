@@ -1,5 +1,5 @@
 {
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Preact bindings for `graph-state`",
   "author": "Alexis Munsayac",
   "main": "dist/cjs/index.js",
@@ -35,7 +35,7 @@
     "@types/node": "^14.14.41",
     "eslint": "^7.24.0",
     "eslint-config-lxsmnsyc": "^0.2.1",
-    "graph-state": "2.0.0",
+    "graph-state": "2.1.0",
     "preact": "^10.5.13",
     "pridepack": "^0.9.2",
     "ts-jest": "^26.5.5",
