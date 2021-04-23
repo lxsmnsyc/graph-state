@@ -143,6 +143,13 @@ function getInstance<S, A, R>(
 
   memory.nodes.set(node.key, baseNode);
 
+  exposeNode(memory.key, node.key, {
+    state: baseNode.state.value,
+    dependents: parseDependencies(baseNode.dependents),
+    dependencies: parseDependencies(baseNode.dependencies),
+    listeners: baseNode.listeners.size,
+  });
+
   return baseNode;
 }
 
@@ -446,7 +453,20 @@ export function subscribe<S, A, R>(
   const actualNode = getInstance(memory, node);
   actualNode.listeners.add(listener);
 
+  exposeNode(memory.key, node.key, {
+    state: actualNode.state.value,
+    dependents: parseDependencies(actualNode.dependents),
+    dependencies: parseDependencies(actualNode.dependencies),
+    listeners: actualNode.listeners.size,
+  });
+
   return () => {
+    exposeNode(memory.key, node.key, {
+      state: actualNode.state.value,
+      dependents: parseDependencies(actualNode.dependents),
+      dependencies: parseDependencies(actualNode.dependencies),
+      listeners: actualNode.listeners.size,
+    });
     actualNode.listeners.delete(listener);
   };
 }
