@@ -6,21 +6,21 @@
     "build": "parcel build index.html"
   },
   "dependencies": {
-    "@geist-ui/react": "^2.1.3",
+    "@geist-ui/react": "^2.1.5",
     "@geist-ui/react-icons": "^1.0.1",
     "graph-state": "2.0.0",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
     "react-graph-state": "2.0.0"
   },
   "devDependencies": {
     "@types/react": "^17.0.3",
-    "@types/react-dom": "^17.0.0",
-    "eslint": "^7.14.0",
-    "eslint-config-lxsmnsyc": "^0.1.20",
+    "@types/react-dom": "^17.0.3",
+    "eslint": "^7.24.0",
+    "eslint-config-lxsmnsyc": "^0.2.1",
     "parcel-bundler": "^1.12.4",
-    "tslib": "^2.0.3",
-    "typescript": "^4.1.2"
+    "tslib": "^2.2.0",
+    "typescript": "^4.2.4"
   },
   "private": true
 }

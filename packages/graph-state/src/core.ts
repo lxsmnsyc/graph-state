@@ -25,6 +25,7 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2020
  */
+import { exposeMemory, exposeNode } from './devtools';
 import {
   GraphNode,
   GraphNodeAtomAction,
@@ -34,7 +35,7 @@ import {
   GraphNodeLazyGet,
   GraphNodeSubscriptionCleanup,
 } from './graph-node';
-import { ensure } from './utils';
+import { ensure, generateKey } from './utils';
 
 export type GraphNodeDependencies = Set<GraphNode<any, any, any>>;
 
@@ -66,23 +67,12 @@ export type Batcher = (callback: () => void) => void;
 export interface GraphDomainMemory {
   nodes: GraphNodeInstanceMap;
   batcher: Batcher;
+  key: string;
 }
 
 function defaultBatcher(callback: () => void): void {
   callback();
 }
-export interface GraphNodeDebugData {
-  id: GraphNodeKey;
-  state?: any;
-  dependents: GraphNodeKey[];
-  dependencies: GraphNodeKey[];
-}
-
-interface WithGraphStateDomainMemory {
-  withGraphStateDomainMemory: GraphNodeDebugData[];
-}
-
-declare const window: typeof globalThis & WithGraphStateDomainMemory;
 
 function parseDependencies(
   dependencies: GraphNodeDependencies,
@@ -92,34 +82,17 @@ function parseDependencies(
   );
 }
 
-function parseGraphDomainMemory(
-  memory: GraphDomainMemory,
-): GraphNodeDebugData[] {
-  return Array.from(memory.nodes).map(([key, value]) => ({
-    id: key,
-    state: value.state.value,
-    dependents: parseDependencies(value.dependents),
-    dependencies: parseDependencies(value.dependencies),
-  }));
-}
-
-function exposeToWindow(
-  memory: GraphDomainMemory,
-): void {
-  if (process.env.NODE_ENV !== 'production' && typeof window !== 'undefined') {
-    window.withGraphStateDomainMemory = parseGraphDomainMemory(memory);
-  }
-}
-
 export function createMemory(
   batcher: Batcher = defaultBatcher,
+  key?: string,
 ): GraphDomainMemory {
   const memory = {
+    key: key ?? generateKey(),
     nodes: new Map(),
     batcher,
   };
 
-  exposeToWindow(memory);
+  exposeMemory(memory.key);
 
   return memory;
 }
@@ -444,7 +417,12 @@ export function set<S, A, R>(
         });
       }
 
-      exposeToWindow(memory);
+      exposeNode(memory.key, node.key, {
+        state: newState,
+        dependents: parseDependencies(actualNode.dependents),
+        dependencies: parseDependencies(actualNode.dependencies),
+        listeners: actualNode.listeners.size,
+      });
     });
   }
 }
