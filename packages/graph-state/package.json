@@ -56,6 +56,6 @@
     "atomic"
   ],
   "dependencies": {
-    "superjson": "^1.7.4"
+    "ecmason": "^0.1.3"
   }
 }

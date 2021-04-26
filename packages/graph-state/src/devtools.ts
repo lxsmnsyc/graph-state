@@ -25,23 +25,44 @@
  * @author Alexis Munsayac <alexis.munsayac@gmail.com>
  * @copyright Alexis Munsayac 2021
  */
-import superjson from 'superjson';
+import { addTransformer, stringify, withRecursionTracker } from 'ecmason';
 import { GraphNodeKey } from './graph-node';
 
-superjson.registerCustom<(...args: any[]) => any, string>({
-  isApplicable: (v): v is ((...args: any[]) => any) => typeof v === 'function',
+addTransformer<Promise<any>, null>('object', {
+  tag: 'PROMISE',
+  check: (value): value is Promise<any> => value instanceof Promise,
+  serialize: () => null,
+  deserialize: () => Promise.resolve(),
+});
+addTransformer<(...args: any[]) => any, string>('primitive', {
+  tag: 'FUNCTION',
+  check: (v): v is ((...args: any[]) => any) => typeof v === 'function',
   serialize: (v) => `ƒ ${v.name} () { }`,
   deserialize: (v) => {
     const newFunc = () => { /* noop */ };
-    newFunc.name = v.substring(2, v.length - 7);
+    newFunc.name = v;
     return newFunc;
   },
-}, 'function');
-superjson.registerCustom<Promise<any>, string>({
-  isApplicable: (v): v is Promise<any> => v instanceof Promise,
-  serialize: () => '« Promise »',
-  deserialize: () => Promise.resolve(),
-}, 'promise');
+});
+
+interface ErrorECMASon {
+  name: string;
+  message: string;
+}
+
+addTransformer('object', withRecursionTracker<Error, ErrorECMASon>({
+  tag: 'ERROR',
+  check: (v): v is Error => v instanceof Error,
+  serialize: (v) => ({
+    name: v.name,
+    message: v.message,
+  }),
+  deserialize: (v) => {
+    const error = new Error(v.message);
+    error.name = v.name;
+    return error;
+  },
+}));
 
 function updateData<T>(type: string, data: T): void {
   if (process.env.NODE_ENV !== 'production' && typeof document !== 'undefined') {
@@ -73,6 +94,6 @@ export function exposeNode(
   updateData('NODE', {
     memory,
     key,
-    data: superjson.stringify(data),
+    data: stringify(data),
   });
 }

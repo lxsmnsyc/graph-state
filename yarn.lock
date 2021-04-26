@@ -4585,6 +4585,11 @@ ecc-jsbn@~0.1.1:
     jsbn "~0.1.0"
     safer-buffer "^2.1.0"
 
+ecmason@^0.1.3:
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/ecmason/-/ecmason-0.1.3.tgz#e86493105f1441f2ab9a94e0c7a62b5ff26fb15d"
+  integrity sha512-SQeo9Q0m6w37/TUTddLWcKBCEwY2nPiITQDIODV34t+yGb9xgk+MsN84a/Y1G7nKNmAU7+mkarPXwr15yUZ3RQ==
+
 ee-first@1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/ee-first/-/ee-first-1.1.1.tgz#590c61156b0ae2f4f0255732a158b266bc56b21d"
