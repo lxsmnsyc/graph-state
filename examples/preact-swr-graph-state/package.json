@@ -1,16 +1,16 @@
 {
   "name": "preact-swr-graph-state-vite",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "graph-state": "2.1.0",
+    "graph-state": "2.1.1",
     "preact": "^10.5.13",
-    "preact-graph-state": "2.1.0",
-    "swr-graph-state": "2.1.0"
+    "preact-graph-state": "2.1.1",
+    "swr-graph-state": "2.1.1"
   },
   "devDependencies": {
     "@prefresh/vite": "^2.2.1",
