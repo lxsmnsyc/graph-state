@@ -1,5 +1,5 @@
 /** @jsx h */
-import { h, VNode } from 'preact';
+import { VNode } from 'preact';
 import { Suspense, useMemo } from 'preact/compat';
 import {
   GraphDomain,

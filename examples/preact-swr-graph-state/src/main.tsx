@@ -1,5 +1,5 @@
 /** @jsx h */
-import { h, render } from 'preact';
+import { render } from 'preact';
 import App from './App';
 
 const element = document.getElementById('root');

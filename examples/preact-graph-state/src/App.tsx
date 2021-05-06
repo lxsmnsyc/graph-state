@@ -1,6 +1,6 @@
 /** @jsx h */
 import 'preact/debug';
-import { h, Fragment, VNode } from 'preact';
+import { VNode } from 'preact';
 import { Suspense } from 'preact/compat';
 import {
   resource,
