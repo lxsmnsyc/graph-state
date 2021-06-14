@@ -76,7 +76,9 @@ function updateData<T>(type: string, data: T): void {
 }
 
 export function exposeMemory(memory: string): void {
-  updateData('MEMORY', memory);
+  if (process.env.NODE_ENV !== 'production' && typeof document !== 'undefined') {
+    updateData('MEMORY', memory);
+  }
 }
 
 export interface GraphNodeDebugData {
@@ -91,9 +93,11 @@ export function exposeNode(
   key: GraphNodeKey,
   data: GraphNodeDebugData,
 ): void {
-  updateData('NODE', {
-    memory,
-    key,
-    data: stringify(data),
-  });
+  if (process.env.NODE_ENV !== 'production' && typeof document !== 'undefined') {
+    updateData('NODE', {
+      memory,
+      key,
+      data: stringify(data),
+    });
+  }
 }
