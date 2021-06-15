@@ -1,17 +1,17 @@
 {
   "name": "react-swr-graph-state-vite",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "serve": "vite preview"
   },
   "dependencies": {
-    "graph-state": "2.1.3",
+    "graph-state": "2.1.4",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "react-graph-state": "2.1.3",
-    "swr-graph-state": "2.1.3"
+    "react-graph-state": "2.1.4",
+    "swr-graph-state": "2.1.4"
   },
   "devDependencies": {
     "@types/react": "^17.0.11",
