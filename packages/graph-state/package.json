@@ -30,7 +30,7 @@
     "@types/node": "^15.12.2",
     "eslint": "^7.28.0",
     "eslint-config-lxsmnsyc": "^0.2.1",
-    "pridepack": "^0.9.3",
+    "pridepack": "^0.10.0",
     "tslib": "^2.3.0",
     "typescript": "^4.3.2"
   },
@@ -55,6 +55,6 @@
     "atomic"
   ],
   "dependencies": {
-    "ecmason": "^0.2.0"
+    "ecmason": "^0.2.1"
   }
 }

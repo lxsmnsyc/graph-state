@@ -31,7 +31,7 @@
     "eslint": "^7.28.0",
     "eslint-config-lxsmnsyc": "^0.2.1",
     "graph-state": "2.1.3",
-    "pridepack": "^0.9.3",
+    "pridepack": "^0.10.0",
     "tslib": "^2.3.0",
     "typescript": "^4.3.2"
   },
@@ -64,6 +64,6 @@
     "data fetching"
   ],
   "dependencies": {
-    "swr-store": "^0.9.3"
+    "swr-store": "^0.9.4"
   }
 }
